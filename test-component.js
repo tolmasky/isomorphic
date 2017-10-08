@@ -1,7 +1,6 @@
 
 const React = require("react");
 
-console.log("hello. wow.");
 module.exports = function ()
 {
     return  <html>
@@ -10,8 +9,27 @@ module.exports = function ()
                 </head>
                 <body>
                     <isomorphic>
-                        <div>hi</div>
+                        <Counter/>
                     </isomorphic>
                 </body>
             </html>
+}
+
+class Counter extends React.Component
+{
+    constructor(props)
+    {
+        super(props);
+        this.state = { count: 0 };
+    }
+
+    render()
+    {
+        return  <div>
+                    The Count is: { this.state.count }
+                    <input  type = "button"
+                            value = "up!"
+                            onClick = { () => this.setState({ count: this.state.count + 1 }) }/>
+                </div>;
+    }
 }

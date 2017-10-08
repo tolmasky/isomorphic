@@ -103,11 +103,10 @@ module.exports = function ({ types: t, products })
         const task = route(source, true);
         const uid = scope.generateUidIdentifier("uid");
         const name = t.JSXIdentifier(uid.name);
-        const openingElement = tAssign(node.openingElement,
-        {
-            name,
-            attributes: node.openingElement.attributes.concat(tAssetCall(task))
-        });
+        console.log(source);
+        const attributes = node.openingElement.attributes
+            .concat(tAssetCall({ ...task, entrypoint: source.replace(/^~\//g, "/") }));
+        const openingElement = tAssign(node.openingElement, { name, attributes });
         const closingElement = tAssign(node.closingElement, { name });
         const element = tAssign(node, { openingElement, closingElement });
         const replacement = t.callExpression(

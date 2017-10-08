@@ -33,12 +33,14 @@ function forSource(dependencies, { input, output, excludes = [] })
     gulp.task(output, dependencies, function ()
     {console.log("BUILDING " + output);
         var bundle = browserify({
-            entries: input,
+            entries: "./rehydrate",
+            require: input,
             extensions: [".js"],
             debug: true,
             cache: {},
             packageCache: {},
-            fullPaths: true,
+            fullPaths: false,
+            basedir: "..",
             transform: [babelify]
         })
 
@@ -50,7 +52,16 @@ function forSource(dependencies, { input, output, excludes = [] })
     return [output];
 }
 
-gulp.task("default", ["scripts"], function ()
+gulp.task("fix-scripts", ["scripts"], function ()
+{
+    for (const { output } of sources)
+        fs.writeFileSync(output,
+            fs.readFileSync(output, "utf-8").replace(destination, ""),
+            "utf-8");
+});
+
+
+gulp.task("default", ["fix-scripts"], function ()
 {
     const checksums = assets
         .map(({ URL, output, input }) =>
