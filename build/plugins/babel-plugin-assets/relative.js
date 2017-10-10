@@ -14,14 +14,15 @@ module.exports = function relative(from, to)
     
     if (fromAbsolute && !toAbsolute)
         return normalize(join(from, to));
-    
+
     const fromComponents = from.split("/").filter(x => !!x);
     const toComponents = to.split("/").filter(x => !!x);
     const different = fromComponents.findIndex(
         (item, index) => item !== toComponents[index]);
-    
-    const lhs = join(...ofSize(fromComponents.length - different).map(() => ".."));
-    const rhs = join(...toComponents.slice(different));
+    const backtrack = different < 0 ? fromComponents.length : different;
+
+    const lhs = join(...ofSize(fromComponents.length - backtrack).map(() => ".."));
+    const rhs = join(...toComponents.slice(backtrack));
     
     return join(lhs, rhs);
 }

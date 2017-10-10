@@ -1,21 +1,7 @@
 
 const React = require("react");
 
-module.exports = function ()
-{
-    return  <html>
-                <head>
-                    <title>HELLO!</title>
-                </head>
-                <body>
-                    <isomorphic>
-                        <Counter/>
-                    </isomorphic>
-                </body>
-            </html>
-}
-
-class Counter extends React.Component
+module.exports = class Counter extends React.Component
 {
     constructor(props)
     {
@@ -25,11 +11,18 @@ class Counter extends React.Component
 
     render()
     {
-        return  <div>
-                    The Count is: { this.state.count }
-                    <input  type = "button"
-                            value = "up!"
-                            onClick = { () => this.setState({ count: this.state.count + 1 }) }/>
-                </div>;
+        return  <html>
+                    <head>
+                        <title>{ this.state.count }</title>
+                    </head>
+                    <body>
+                        <isomorphic>
+                            The Count is: { this.state.count }
+                            <input  type = "button"
+                                    value = "up!"
+                                    onClick = { () => this.setState({ count: this.state.count + 1 }) }/>
+                        </isomorphic>
+                    </body>
+                </html>;
     }
 }

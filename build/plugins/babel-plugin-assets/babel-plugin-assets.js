@@ -2,7 +2,7 @@
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 const parseOptions = require("./parse-options");
 const relative = require("./relative");
-const { dirname, join } = require("path");
+const { dirname, join, normalize } = require("path");
 
 
 module.exports = function ({ types: t, products })
@@ -10,7 +10,9 @@ module.exports = function ({ types: t, products })
     const script = subresource("script", { type: "text/javascript" });
     const link = subresource("link", { rel: "stylesheet", type: "text/css" });
     const img = subresource("img", { });
-    const tags = { script, link, img, isomorphic };
+    const html = subresource("html", { }, { asset:"", compile:"entrypoint", require: true });
+    const isomorphic = subresource("isomorphic", { }, { require: true });
+    const tags = { script, link, img, html, isomorphic };
 
     return { visitor: { JSXElement, CallExpression } };
 
@@ -57,24 +59,27 @@ module.exports = function ({ types: t, products })
         path.replaceWith(tString(relative(dirname(source), task.output)));
     }
 
-    function subresource(tag, defaults)
+    function subresource(tag, defaults, options = { })
     {
         const toAttribute = (name, string) =>
             t.JSXAttribute(t.JSXIdentifier(name), t.StringLiteral(string));
         const defaultAttributes = Object
             .keys(defaults)
             .map(name => toAttribute(name, defaults[name]));
+        const asset = options.asset || "asset";
+        const compile = options.compile || "compile";
 
-        return function ({ node }, source, route)
+        return function (path, source, route)
         {
+            const { node } = path;
             // An element may have multiple copies of the same attribute,
             // as well as spread elements. This returns the last (and thus
             // "effective", copy of each.
             const openingElement = node.openingElement;
             const [extracted, attributes] = partitionAttributes(
-                ["asset", "compile"], openingElement.attributes);
-            const assetAttribute = getOnlyStringLiteral(extracted["asset"]);
-            const compileAttribute = getOnlyStringLiteral(extracted["compile"]);
+                [asset, compile], openingElement.attributes);
+            const assetAttribute = getOnlyStringLiteral(extracted[asset]);
+            const compileAttribute = getOnlyStringLiteral(extracted[compile]);
 
             if (assetAttribute && compileAttribute)
                 throw new TypeError("Can't have both asset and compile attributes.");
@@ -83,7 +88,7 @@ module.exports = function ({ types: t, products })
                 return;
 
             const attribute = (assetAttribute || compileAttribute);
-            const input = rooted(source, attribute.value.value);
+            const input = rooted(dirname(source), attribute.value.value);
             const task = route(input, !!compileAttribute);
             const replacement = tAssign(node,
             {
@@ -94,26 +99,28 @@ module.exports = function ({ types: t, products })
                 })
             });
 
-            return { replacement, task };
+            if (!options.require)
+                return { task, replacement };
+
+            return { task, replacement: wrappedRequire(replacement, path.scope) };
         }
     }
 
-    function isomorphic({ node, scope }, source, route)
+    function wrappedRequire(node, scope)
     {
-        const task = route(source, true);
-        const uid = scope.generateUidIdentifier("uid");
-        const name = t.JSXIdentifier(uid.name);
-        console.log(source);
-        const attributes = node.openingElement.attributes
-            .concat(tAssetCall({ ...task, entrypoint: source.replace(/^~\//g, "/") }));
-        const openingElement = tAssign(node.openingElement, { name, attributes });
-        const closingElement = tAssign(node.closingElement, { name });
-        const element = tAssign(node, { openingElement, closingElement });
-        const replacement = t.callExpression(
-            t.arrowFunctionExpression([uid], element),
-            [tRequire("./isomorphic")]);
+        const { openingElement, closingElement } = node;
+        const tag = openingElement.name.name;
+        const identifier = scope.generateUidIdentifier("_" + tag);
+        const name = t.JSXIdentifier(identifier.name);
+        const renamed = tAssign(node,
+        {
+            openingElement: tAssign(openingElement, { name }),
+            closingElement: closingElement && tAssign(closingElement, { name })
+        });
 
-        return { replacement, task };
+        return  t.callExpression(
+                    t.arrowFunctionExpression([identifier], renamed),
+                    [tRequire(`./internal/${tag}`)]);
     }
 
     function tRequire(path)
@@ -145,7 +152,7 @@ module.exports = function ({ types: t, products })
         if (path.substr(0, "~/".length) === "~/")
             return path;
 
-        return relative(dirname(source), path);
+        return normalize(join(source, relative(dirname(source), path)));
     }
 
     function partitionAttributes(names, attributes)
