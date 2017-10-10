@@ -5,7 +5,7 @@ const { createElement } = require("react");
 module.exports = spectate;
 
 function spectate(element)
-{console.log("IN FOR", element);
+{
     if (typeof element === "undefined" ||
         typeof element === "string" ||
         typeof element === "number")

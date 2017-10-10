@@ -33,7 +33,7 @@ function forSource(dependencies, { input, output, excludes = [] })
     gulp.task(output, dependencies, function ()
     {console.log("BUILDING " + output);
         var bundle = browserify({
-            entries: "./rehydrate",
+            entries: "./internal/hydrate",
             require: input,
             extensions: [".js"],
             debug: true,

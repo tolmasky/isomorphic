@@ -6,7 +6,7 @@ const { dataset, previousSibling } = getScriptTag();
 
 const props = fromHTMLSafeText(dataset.props) || { };
 const Entrypoint = require(fromHTMLSafeText(dataset.entrypoint));
-const spectate = require("./internal/spectate");
+const spectate = require("./spectate");
 
 hydrate(spectate(<Entrypoint { ...props } />), previousSibling);
 
