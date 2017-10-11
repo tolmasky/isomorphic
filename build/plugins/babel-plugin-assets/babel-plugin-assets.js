@@ -4,6 +4,8 @@ const parseOptions = require("./parse-options");
 const relative = require("./relative");
 const { dirname, join, normalize } = require("path");
 
+const Module = require("module");
+
 
 module.exports = function ({ types: t, products })
 {
@@ -25,8 +27,9 @@ module.exports = function ({ types: t, products })
             return;
 
         const { route } = parseOptions(state.opts || { });
-        const source = state.file.opts.filename;
-        const { replacement, task } = tags[tag](path, source, route) || { };
+        const root = state.file.opts.sourceRoot;
+        const source = state.file.opts.filename.replace(/^~/g, root);
+        const { replacement, task } = tags[tag](path, root, source, route) || { };
 
         if (replacement)
             path.replaceWith(replacement);
@@ -69,7 +72,7 @@ module.exports = function ({ types: t, products })
         const asset = options.asset || "asset";
         const compile = options.compile || "compile";
 
-        return function (path, source, route)
+        return function (path, root, source, route)
         {
             const { node } = path;
             // An element may have multiple copies of the same attribute,
@@ -88,14 +91,16 @@ module.exports = function ({ types: t, products })
                 return;
 
             const attribute = (assetAttribute || compileAttribute);
-            const input = rooted(dirname(source), attribute.value.value);
+            const input = requireResolveFrom(attribute.value.value, source, root);
+            const entrypoint2 = attribute.value.value;
+            const entrypoint = input.replace(/^~/, "");
             const task = route(input, !!compileAttribute);
             const replacement = tAssign(node,
             {
                 openingElement: tAssign(openingElement,
                 {
                     attributes: defaultAttributes
-                        .concat(attributes, tAssetCall({ ...task, tag }))
+                        .concat(attributes, tAssetCall({ ...task, entrypoint2, entrypoint, tag }))
                 })
             });
 
@@ -104,6 +109,11 @@ module.exports = function ({ types: t, products })
 
             return { task, replacement: wrappedRequire(replacement, path.scope) };
         }
+    }
+
+    function requireResolveFrom(path, from, root)
+    {
+        return Module._resolveFilename(path, new Module(from)).replace(root, "~");
     }
 
     function wrappedRequire(node, scope)

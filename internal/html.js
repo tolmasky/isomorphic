@@ -5,14 +5,16 @@ const { createElement } = require("react");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 const isomorphic = require("./isomorphic");
 const onServer = typeof window === "undefined";
+const Module = require("module");
 
 
-module.exports = function _html({ children, entrypoint, ...rest })
+module.exports = function _html({ children, entrypoint2, entrypoint, __filename, ...rest })
 {
-    const FIXME = require("../test-component");
-    const props = { entrypoint: "/test-component.js", ...rest };
-    
-    return reify(props, <FIXME { ...props }>{ children }</FIXME>);
+    const module = Object.assign(new Module(__filename), { filename: __filename });
+    const Component = module.require(entrypoint2);
+    const props = { entrypoint, ...rest, children };
+
+    return reify(props, <Component { ...props } />);
 }
 
 function reify(forwarded, children)

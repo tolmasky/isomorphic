@@ -7,9 +7,6 @@ const onServer = typeof window === "undefined";
 
 module.exports = function ({ entrypoint, children, props, URL, ...rest })
 {
-    if (!onServer)
-        return children;
-
     // This gets us our data-reactroot property.
     const __html = renderToString(children);
 
