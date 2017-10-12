@@ -1,53 +1,38 @@
 
-const React = require("react");
-const { createElement } = require("react");
-
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-const isomorphic = require("./isomorphic");
-const onServer = typeof window === "undefined";
 const Module = require("module");
 
+const React = require("react");
+const { renderToString, renderToStaticMarkup } = require("react-dom/server");
+const toHTMLSafeText = x => encodeURIComponent(JSON.stringify(x));
+const inject = require("./inject-until-isomorphic")(serialize);
 
-module.exports = function _html({ children, entrypoint2, entrypoint, __filename, ...rest })
+
+module.exports = function _html({ entrypoint2, entrypoint, __filename, URL, ...rest })
 {
     const module = Object.assign(new Module(__filename), { filename: __filename });
     const Component = module.require(entrypoint2);
-    const props = { entrypoint, ...rest, children };
+    const __injected_props = { entrypoint, URL, props: rest }; 
 
-    return reify(props, <Component { ...props } />);
+    return inject(React.createElement(Component, rest), __injected_props);
 }
 
-function reify(forwarded, children)
+function serialize(element)
 {
-    return reify(children);
+    if (!element ||
+        typeof element !== "object" ||
+        element.type !== "isomorphic")
+        return element;
 
-    function reify(element)
-    {
-        if (typeof element === "undefined" ||
-            typeof element === "string" ||
-            typeof element === "number")
-            return element;
+    // This gets us our data-reactroot property.
+    const { __injected_props, children, ...rest } = element.props;
 
-        if (Array.isArray(element))
-            return element.map(reify);
+    const { URL, props, entrypoint } = __injected_props;
+    const __html = renderToString(children);
 
-        const { type, props } = element;
-
-        // If we've found the isomorphic tag, consider it a boundary:
-        // don't reify further!
-        if (type === "isomorphic")
-            return createElement(isomorphic, { ...props, ...forwarded });
-
-        const hasChildren = hasOwnProperty.call(props, "children");
-        const children = hasChildren && reify(props.children);
-        const reifiedProps = { ...props, ...(hasChildren && { children }) };
-
-        if (typeof type === "string")
-            return createElement(type, reifiedProps);
-
-        if (Object.getPrototypeOf(type) === Function.prototype)
-            return reify(type(reifiedProps));
-
-        return reify((new type(reifiedProps)).render());
-    }
+    return  [
+                <div { ...rest } dangerouslySetInnerHTML = { { __html } } />,
+                <script src = { URL }
+                    data-props = { toHTMLSafeText(props || { }) }
+                    data-entrypoint = { toHTMLSafeText(entrypoint) } />
+            ];
 }
