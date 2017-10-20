@@ -1,0 +1,15 @@
+{
+  "name": "isomorphic-serialization",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./object-serialization",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Francisco Ryan Tolmasky I",
+  "license": "MIT",
+  "dependencies": {
+    "immutable": "^3.6.2",
+    "ramda": "^0.22.1"
+  }
+}
