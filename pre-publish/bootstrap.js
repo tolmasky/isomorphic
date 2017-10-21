@@ -15,7 +15,7 @@ Module._resolveLookupPaths = function(request, parent, newReturn)
     return [result[0], result[1].concat(join(__dirname, "node_modules"), packages)];
 }
 
-
+require("../isomorphic-preset");
 require("babel-register")(
 {
     presets: [

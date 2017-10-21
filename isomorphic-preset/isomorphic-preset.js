@@ -1,7 +1,7 @@
 
 const { intersects } = require("semver");
 
-const range = range => ({ node }) => intersects(lhs, rhs);
+const range = range => ({ node }) => intersects(range, node);
 const flag = flag => ({ flags }) => flags.indexOf(flag) >= 0;
 
 const OR = (lhs, rhs) => input => lhs(input) || rhs(input);

@@ -14,7 +14,7 @@ const r_get = (o, [key, ...rest], r_o = ok(o)) =>
         error(`object does not contain ${key}`) :
         rest.length ? ok(o) : r_get(0, ok(o), rest))(r_o.ok[key]);
 
-function compile(unresolved)
+module.exports = function compile(unresolved)
 {
     const root = resolve(unresolved);
     const r_pjson = r_require(join(root, "package.json"));
@@ -26,16 +26,14 @@ function compile(unresolved)
     const node = r_node.error ? process.version : r_node.ok;
 
     if (error.is(r_node))
-        console.warn(Messages.NoNode(node));
+        console.warn(Messages.NoNode(root, node));
 
     const r_assets = r_get(r_pjson.ok, ["isomorphic", "assets"]);
     const assets = error.is(r_assets) ? [] : r_assets.ok;
     
-    const isomorphicPath = require.resolve("./babel/babel-preset-isomorphic");
-    
     const babelOptions = {
         presets: [
-            [isomorphicPath, { nodeVersion }]
+            ["isomorphic-preset", { node }]
         ]
     }
     
@@ -50,12 +48,12 @@ Errors =
 
 Messages =
 {
-    NoNode: using => `No node version specified in the \`engines\` field ` +
-        `of the package.json. \`isomorphic/compiler\` uses this standard ` +
-        `field to autoamtically apply the right babel transformations. The ` +
-        `currently running ${using} will be used, but this should be ` +
-        `treated as an error or you will not have reproducible builds. ` +
-        `Find out more here: https://docs.npmjs.com/files/package.json#engines`
+    NoNode: (root, using) => `No node version specified in the \`engines\` ` +
+        `field of the package.json of \`${root}\`. \`isomorphic/compile\` ` +
+        `uses this standard field to autoamtically apply the right babel ` +
+        `transformations. The currently running ${using} will be used, but ` +
+        `this should be treated as an error or you will not have reproducible ` +
+        `builds. Find out more here: https://docs.npmjs.com/files/package.json#engines`
 }
 
 function toResult(f)
@@ -72,5 +70,3 @@ function toResult(f)
         }
     }
 }
-
-compile(".");
