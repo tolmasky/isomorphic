@@ -8,6 +8,9 @@
   },
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
+  "engines": {
+    "node": "4.x.x"
+  },
   "dependencies": {
     "immutable": "^3.6.2",
     "ramda": "^0.22.1"

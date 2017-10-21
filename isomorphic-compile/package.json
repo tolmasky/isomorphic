@@ -8,7 +8,10 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "engines": {
+    "node": "4.x.x"
+  },
   "dependencies": {
     "babel-plugin-transform-es2015-for-of": "^6.23.0",
     "semver": "^5.4.1"
