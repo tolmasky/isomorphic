@@ -1,0 +1,16 @@
+{
+  "name": "isomorphic-compile",
+  "version": "1.0.0",
+  "description": "",
+  "main": "compile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-plugin-transform-es2015-for-of": "^6.23.0",
+    "semver": "^5.4.1"
+  }
+}

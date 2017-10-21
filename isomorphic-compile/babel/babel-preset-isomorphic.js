@@ -1,8 +1,8 @@
 
+const { intersects } = require("semver");
 
-const { satisfies } = require("semver");
-const range = aRange => ({ nodeVersion }) => satisfies(nodeVersion, aRange);
-const flag = aFlag => ({ nodeFlags }) => nodeFlags.indexOf(aFlag) >= 0;
+const range = range => ({ node }) => intersects(lhs, rhs);
+const flag = flag => ({ flags }) => flags.indexOf(flag) >= 0;
 
 const OR = (lhs, rhs) => input => lhs(input) || rhs(input);
 const AND = (lhs, rhs) => input => lhs(input) && rhs(input);
@@ -13,7 +13,7 @@ const ALWAYS = () => true;
 const ReactJSXPlugin = require("babel-plugin-transform-react-jsx");
 
 
-module.exports = function (_, { nodeVersion, nodeFlags = [], JSXPragma })
+module.exports = function (_, { node, flags = [], JSXPragma })
 {
     return  {
                 "parserOpts":
@@ -22,7 +22,7 @@ module.exports = function (_, { nodeVersion, nodeFlags = [], JSXPragma })
                     "strictMode": false
                 },
                 "plugins": plugins
-                    .filter(([predicate]) => predicate({ nodeVersion, nodeFlags }))
+                    .filter(([predicate]) => predicate({ node, flags }))
                     .map(function ([predicate, plugin])
                     {
                         return  plugin === ReactJSXPlugin && JSXPragma ? 
@@ -39,7 +39,8 @@ var plugins =
     [range("< 0.12"), require("babel-plugin-transform-es2015-typeof-symbol")],
 
     [AND(range("< 0.13.0"), NOT(flag("--harmony-generators"))),
-        [require("babel-plugin-transform-regenerator"), { async: false, asyncGenerators: false }]],
+        [require("babel-plugin-transform-regenerator"),
+        { async: false, asyncGenerators: false }]],
 
     [range("< 4"), require("babel-plugin-transform-es2015-template-literals")],
     [range("< 4"), require("babel-plugin-transform-es2015-literals")],
@@ -69,18 +70,6 @@ var plugins =
     [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
     [ALWAYS, ReactJSXPlugin]
 
-
-
-
-
-
-    [always, require("./plugins/babel-plugin-transform-sloppy-mode")],
-
-
-    [always, require("babel-plugin-transform-object-rest-spread")],
-    [always, ReactJSXPlugin],
-
-    [satisfies("< 7.6.0"), require("./plugins/babel-plugin-transform-inline-async-generator")]
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],
 //    [always, require("babel-plugin-transform-es2015-modules-commonjs")]
 ];
