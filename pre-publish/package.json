@@ -1,0 +1,17 @@
+{
+  "name": "pre-publish",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bootstrap.js",
+  "dependencies": {
+    "babel-register": "^6.26.0",
+    "commander": "^2.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

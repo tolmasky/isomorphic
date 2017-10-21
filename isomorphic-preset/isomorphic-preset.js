@@ -51,8 +51,8 @@ var plugins =
     [range("< 4"), require("babel-plugin-transform-es2015-object-super")],
     [range("< 4"), require("babel-plugin-transform-es2015-classes")],
 
-    [range(">= 4 < 6"), require("./plugins/babel-plugin-transform-strict-classes")],
-    [range("4.x.x"), require("./plugins/babel-plugin-transform-super-spread")],
+    [range(">= 4 < 6"), require("./babel-plugin-transform-strict-classes")],
+    [range("4.x.x"), require("./babel-plugin-transform-super-spread")],
 
     [range("< 5"), require("babel-plugin-transform-es2015-spread")],
 
@@ -63,7 +63,7 @@ var plugins =
     [range("< 6"), require("babel-plugin-transform-es2015-block-scoping")],
 
     [range("< 7"), require("babel-plugin-transform-es2015-parameters")],
-    [range("< 7.6.0"), require("./plugins/babel-plugin-transform-inline-async-generator")],
+    [range("< 7.6.0"), require("./babel-plugin-transform-inline-async-generator")],
 
     [ALWAYS, require("babel-plugin-transform-es2015-function-name")],
 
