@@ -15,10 +15,13 @@ Module._resolveLookupPaths = function(request, parent, newReturn)
     return [result[0], result[1].concat(join(__dirname, "node_modules"), packages)];
 }
 
-require("../isomorphic-preset");
+require("isomorphic-preset");
 require("babel-register")(
 {
     presets: [
-        ["../isomorphic-preset", { node: "4.x.x" }]
+        ["isomorphic-preset", { node: "4.x.x", react: false }]
+    ],
+    plugins: [
+        "generic-jsx/babel-plugin-transform-generic-jsx"
     ]
 });

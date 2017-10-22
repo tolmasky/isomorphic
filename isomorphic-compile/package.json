@@ -13,6 +13,8 @@
     "node": "4.x.x"
   },
   "dependencies": {
-    "semver": "^5.4.1"
+    "generic-jsx": "^17.0.0",
+    "semver": "^5.4.1",
+    "uuid": "^3.1.0"
   }
 }

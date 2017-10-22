@@ -3,6 +3,7 @@ const { intersects } = require("semver");
 
 const range = range => ({ node }) => intersects(range, node);
 const flag = flag => ({ flags }) => flags.indexOf(flag) >= 0;
+const react = ({ react }) => !!react;
 
 const OR = (lhs, rhs) => input => lhs(input) || rhs(input);
 const AND = (lhs, rhs) => input => lhs(input) && rhs(input);
@@ -13,7 +14,7 @@ const ALWAYS = () => true;
 const ReactJSXPlugin = require("babel-plugin-transform-react-jsx");
 
 
-module.exports = function (_, { node, flags = [], JSXPragma })
+module.exports = function (_, { node, flags = [], react, JSXPragma })
 {
     return  {
                 "parserOpts":
@@ -68,7 +69,7 @@ var plugins =
     [ALWAYS, require("babel-plugin-transform-es2015-function-name")],
 
     [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
-    [ALWAYS, ReactJSXPlugin]
+    [react, ReactJSXPlugin]
 
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],
 //    [always, require("babel-plugin-transform-es2015-modules-commonjs")]

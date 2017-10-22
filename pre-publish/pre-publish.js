@@ -4,7 +4,7 @@ const path = require("path");
 const resolve = aPath => path.resolve(__dirname, aPath);
 
 const options = require("commander")
-    .option("--source [source]", "source", resolve(".."))
+    .option("--source [source]", "source", resolve("../isomorphic-compile"))
     .option("--destination [destination]", "destination", resolve("./build-products"))
     .option("--cache [cache]", "cache", resolve("./build-products/cache"))
     .option("--no-register")
