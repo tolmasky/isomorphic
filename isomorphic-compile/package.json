@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "generic-jsx": "^17.0.0",
+    "micromatch": "^3.1.3",
     "semver": "^5.4.1",
     "uuid": "^3.1.0"
   }
