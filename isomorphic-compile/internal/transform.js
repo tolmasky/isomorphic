@@ -29,8 +29,7 @@ module.exports = function transform({ cache, path, options })
 // only cache if its under X KB. But we still get the benefit of caching it in
 // memory.
 function parse({ children:[options], contents })
-{console.log(options);
-options.plugins.push("jsx");
+{
     return babylon.parse(contents, options);
 }
 

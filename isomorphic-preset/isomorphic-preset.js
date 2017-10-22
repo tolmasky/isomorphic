@@ -14,16 +14,16 @@ const ALWAYS = () => true;
 const ReactJSXPlugin = require("babel-plugin-transform-react-jsx");
 
 
-module.exports = function (_, { node, flags = [], react, JSXPragma })
+module.exports = function (_, { node, flags = [], react, JSXPragma, ...rest })
 {
     return  {
-                "parserOpts":
+                /*"parserOpts":
                 {
                     "allowReturnOutsideFunction": true,
                     "strictMode": false
-                },
+                },*/
                 "plugins": plugins
-                    .filter(([predicate]) => predicate({ node, flags }))
+                    .filter(([predicate]) => predicate({ node, flags, react }))
                     .map(function ([predicate, plugin])
                     {
                         return  plugin === ReactJSXPlugin && JSXPragma ? 
@@ -69,6 +69,7 @@ var plugins =
     [ALWAYS, require("babel-plugin-transform-es2015-function-name")],
 
     [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
+
     [react, ReactJSXPlugin]
 
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],

@@ -42,11 +42,10 @@ console.log(path);
         return <copy { ...{ path, destination } }/>;
 
     const options = { 
-        parserOpts: {
+        /*parserOpts: {
             "allowReturnOutsideFunction": true,
-            "strictMode": false,
-            "plugins": ["jsx"]
-        },
+            "strictMode": false
+        },*/
         presets: [
             ["isomorphic-preset", { node: "4.x.x", react: true }]
         ]

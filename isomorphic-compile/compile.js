@@ -34,17 +34,23 @@ module.exports = function compile(unresolved)
     const r_assets = r_get(r_pjson.ok, ["isomorphic", "assets"]);
     const assets = error.is(r_assets) ? [] : r_assets.ok;
     
-    const babelOptions = {
-        presets: [
-            ["isomorphic-preset", { node }]
-        ]
-    }
+    const transforms = [
+        {
+            "match": "**/*.js",
+            "transform": "isomorphic-compile/babel",
+            "options": {
+                presets: [
+                    ["isomorphic-preset", { node, react: true }]
+                ]
+            }
+        }
+    ]
 
     const cache = "./build-products/cache";
     const destination = "./build/" + uuid();
     const exclude = ["**/node_modules", "*/build"];
 
-    console.log("-->" + resolve__(<project { ...{ root, exclude, cache, destination } } />));
+    console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination } } />));
 }
 
 Errors =
