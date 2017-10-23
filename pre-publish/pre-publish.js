@@ -12,10 +12,11 @@ require("./bootstrap");
 const compile = require("../isomorphic-compile");
 //const compileCLI = relative("../isomorphic-compile/bin/isomorphic-compile-cli");
 const cache = relative("build-products/cache");
-const destination = getUniqueDestination();
+const now = require("moment")().format('MMMM Do YYYY, h.mm.ss A');
+const destination = relative(`build-products/${now}`);
 
 
-["isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
+["isomorphic", "isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
     .map(name => compile(
     {
         root: relative(join("..", name)),
@@ -24,17 +25,3 @@ const destination = getUniqueDestination();
     }));
 
 console.log(`Completed at ${destination}`);
-
-function getUniqueDestination()
-{
-    const path = relative(`build-products/${randomstring.generate(
-    {
-        length: 12,
-        charset: "abcdefghijklmnopqrstuvwxyz0123456789"
-    })}`);
-
-    if (existsSync(path))
-        return getUniqueDestination();
-
-    return path;
-}

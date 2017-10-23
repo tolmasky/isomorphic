@@ -8,6 +8,7 @@
     "babel-register": "^6.26.0",
     "commander": "^2.11.0",
     "generic-jsx": "^17.0.0",
+    "moment": "^2.19.1",
     "randomstring": "^1.1.5"
   },
   "devDependencies": {},
