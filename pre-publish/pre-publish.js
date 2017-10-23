@@ -7,23 +7,21 @@ const randomstring = require("randomstring");
 
 const relative = path => resolve(join(__dirname, path));
 
+require("./bootstrap");
 
-const compileCLI = relative("../isomorphic-compile/bin/isomorphic-compile-cli");
+const compile = require("../isomorphic-compile");
+//const compileCLI = relative("../isomorphic-compile/bin/isomorphic-compile-cli");
 const cache = relative("build-products/cache");
 const destination = getUniqueDestination();
 
-spawnSync("node", [ '--require',
-  '/Users/tolmasky/Development/isomorphic/pre-publish/bootstrap']);
 
 ["isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
-    .map(name => spawnSync("node",
-    [
-        "--require", relative("./bootstrap"),
-        compileCLI,
-        "--root", relative(join("..", name)),
-        "--cache", cache,
-        "--destination", join(destination, name)
-    ], { stdio:[0, 1, 2] } ));
+    .map(name => compile(
+    {
+        root: relative(join("..", name)),
+        cache,
+        destination: join(destination, name)
+    }));
 
 console.log(`Completed at ${destination}`);
 
