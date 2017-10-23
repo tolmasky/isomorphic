@@ -1,5 +1,5 @@
 
-const { dirname, extname, join } = require("path");
+const { dirname, basename, extname, join } = require("path");
 
 const { readdirSync, copyFileSync } = require("fs");
 const { execSync } = require("child_process");
@@ -10,7 +10,7 @@ const tstat = path => ["file", "directory"][internalModuleStat(path)];
 
 const micromatch = require("micromatch");
 
-const bundle = require("./bundle");
+const entrypoint = require("./entrypoint");
 
 
 module.exports = function project({ root, destination, cache, exclude, transforms })
@@ -20,26 +20,35 @@ module.exports = function project({ root, destination, cache, exclude, transform
     const optimized = transforms.map(({ match, ...rest }) =>
         ({ match: toMatcher(match), ...rest }));
 
-    return  <assets { ...{ root, destination, cache } }>
+    return  <entrypoints { ...{ root, destination, cache } }>
                 <item   path = { root }
                         cache = { mkdirp(cache) }
                         exclude = { toMatcher(exclude) }
                         transforms = { optimized }
                         destination = { destination } />
-            </assets>
+            </entrypoints>
 }
 
-function assets({ root, children, cache, destination })
-{return;
-    const entrypoints = new Set();
-    console.log(children);
+function entrypoints({ children, visited, cache, destination, root })
+{
+    const subentrypoints = new Set();
+
     for (const child of children)
         if (child)
-            for (const entrypoint of child.entrypoints)
-                entrypoints.add(entrypoint);
+            for (const entrypoint of child.entrypoints || [])
+                subentrypoints.add(entrypoint);
 
-    return Array.from(entrypoints, entrypoint =>
-        <bundle { ...{ path:join(root, entrypoint + ".js"), cache, destination } } />);
+    if (subentrypoints.size <= 0)
+        return "done.";
+
+    const output = path => join(destination, basename(path) + ".bundle.js");
+
+    return  <entrypoints { ...{ cache, cache, destination } }>
+                { Array.from(subentrypoints, path =>
+                    <entrypoint
+                        { ...{ path:join(root, path + ".js"), destination: output(path), cache } } />)
+                }
+            </entrypoints>
 }
 
 function item({ path, exclude, ...rest })

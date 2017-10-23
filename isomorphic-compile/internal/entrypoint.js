@@ -7,7 +7,7 @@ const builtIn = require("./built-in");
 const transform = require("../babel");
 
 
-module.exports = function entrypoint({ children, path, cache, options })
+module.exports = function entrypoint({ path, cache, options })
 {
     return  <dependencies { ...{ visited: new Set(), cache, options } } >
                 <file { ...{ path, cache, options } } />

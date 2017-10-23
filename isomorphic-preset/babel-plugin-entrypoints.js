@@ -21,7 +21,7 @@ module.exports = function ({ types: t })
 
         if (!hasOwnProperty.call(tags, tag))
             return;
-console.log(tags[tag](path, state.file.metadata["isomorphic"]));
+
         path.replaceWith(tags[tag](path, state.file.metadata["isomorphic"]));
     }
 
