@@ -16,7 +16,7 @@ const now = require("moment")().format('MMMM Do YYYY, h.mm.ss A');
 const destination = relative(`build-products/${now}`);
 
 
-["isomorphic", "isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
+["examples", "isomorphic", "isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
     .map(name => compile(
     {
         root: relative(join("..", name)),

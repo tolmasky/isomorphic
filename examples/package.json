@@ -1,0 +1,32 @@
+{
+  "name": "Isomorphic Counter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "routes.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Francisco Ryan Tolmasky I",
+  "license": "MIT",
+  "engines": {
+    "node": "8.x.x"
+  },
+  "isomorphic": {
+    "assets": {
+      "/(*/):name.js": {
+        "output": "/assets/:name.bundle.js",
+        "public": "/assets/:name.bundle.js",
+        "transform": "isomorphic/compile/babel"
+      },
+      "/(*/):name.less": {
+        "output": "/assets/:name.less",
+        "public": "/assets/styles/:names.css",
+        "transform": "isomorphic/compile/less"
+      }
+    }
+  },
+  "dependencies": {
+    "react": "^16.0.0"
+  }
+}

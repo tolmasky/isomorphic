@@ -10,19 +10,36 @@ const tstat = path => ["file", "directory"][internalModuleStat(path)];
 
 const micromatch = require("micromatch");
 
+const bundle = require("./bundle");
 
-module.exports = function project({ root, destination, cache, exclude, transforms, assets })
+
+module.exports = function project({ root, destination, cache, exclude, transforms })
 {
     mkdirp(dirname(destination));
 
     const optimized = transforms.map(({ match, ...rest }) =>
         ({ match: toMatcher(match), ...rest }));
 
-    return  <item   path = { root }
-                    cache = { mkdirp(cache) }
-                    exclude = { toMatcher(exclude) }
-                    transforms = { optimized }
-                    destination = { destination } />;
+    return  <assets { ...{ root, destination, cache } }>
+                <item   path = { root }
+                        cache = { mkdirp(cache) }
+                        exclude = { toMatcher(exclude) }
+                        transforms = { optimized }
+                        destination = { destination } />
+            </assets>
+}
+
+function assets({ root, children, cache, destination })
+{return;
+    const entrypoints = new Set();
+    console.log(children);
+    for (const child of children)
+        if (child)
+            for (const entrypoint of child.entrypoints)
+                entrypoints.add(entrypoint);
+
+    return Array.from(entrypoints, entrypoint =>
+        <bundle { ...{ path:join(root, entrypoint + ".js"), cache, destination } } />);
 }
 
 function item({ path, exclude, ...rest })
@@ -53,6 +70,8 @@ function file({ path, destination, cache, transforms })
 function copy({ children:[nested], destination, path = nested.include })
 {
     copyFileSync(path, destination);
+
+    return nested;
 }
 
 function directory({ path, destination, ...rest })
@@ -63,12 +82,6 @@ function directory({ path, destination, ...rest })
         <item   path = { join(path, name) }
                 destination = { join(destination, name) }
                 { ...rest } />);
-}
-
-function optimize(transforms)
-{
-    return transforms.map(({ match, ...rest }) =>
-    ({ match: toMatcher(transform.match), ...rest }));
 }
 
 function toMatcher(match)

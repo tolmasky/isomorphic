@@ -66,7 +66,11 @@ var plugins =
     [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
 
     [option("generic-jsx"), require("generic-jsx/babel-plugin-transform-generic-jsx")],
-    [option("react"), ReactJSXPlugin]
+    [option("react"), ReactJSXPlugin],
+
+    [ALWAYS, require("./babel-plugin-metadata")],
+    [ALWAYS, require("./babel-plugin-entrypoints")],
+    [ALWAYS, require("./babel-plugin-dependencies")]
 
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],
 //    [always, require("babel-plugin-transform-es2015-modules-commonjs")]
