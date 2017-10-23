@@ -7,6 +7,11 @@ const builtIn = require("./built-in");
 const transform = require("../babel");
 const bundle = require("./bundle");
 
+const DEFAULT_options = {
+                presets: [
+                    ["isomorphic-preset", { node:"4.x.x", "generic-jsx": true }]
+                ]
+            }
 
 module.exports = function entrypoints({ children, visited, cache, destination })
 {
@@ -18,10 +23,10 @@ module.exports = function entrypoints({ children, visited, cache, destination })
 
     const output = path => join(destination, basename(path) + ".bundle.js");
 
-    return  <entrypoints { ...{ visited: updated, cache, destination } }>
+    return  <entrypoints { ...{ visited: updated, cache, destination, options: DEFAULT_options } }>
                 { Array.from(subentrypoints, path =>
                     <entrypoint
-                        { ...{ path, destination: output(path), cache } } />)
+                        { ...{ path, destination: output(path), cache, options: DEFAULT_options } } />)
                 }
             </entrypoints>
 }
@@ -63,7 +68,7 @@ function resolve(path, from)
 }
 
 function file({ cache, path, options })
-{console.log("TIME FOR " + path);
+{
     if (builtIn.is(path))
         return <builtIn name = { path } />;
 
