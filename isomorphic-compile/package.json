@@ -12,6 +12,17 @@
   "engines": {
     "node": "4.x.x"
   },
+  "isomorphic": {
+    "transforms": [ {
+      "match": "**/*.js",
+      "transform": "isomorphic-compile/babel",
+      "options": {
+        "presets": [
+            ["isomorphic-preset", { "node": "4.x.x", "generic-jsx": true }]
+        ]
+      }
+    } ]
+  },
   "dependencies": {
     "babel-core": "^6.26.0",
     "commander": "^2.11.0",

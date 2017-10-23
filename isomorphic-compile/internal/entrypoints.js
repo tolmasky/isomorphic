@@ -9,7 +9,7 @@ const bundle = require("./bundle");
 
 const DEFAULT_options = {
                 presets: [
-                    ["isomorphic-preset", { node:"4.x.x", "generic-jsx": true }]
+                    ["isomorphic-preset", { node:"4.x.x", "react": true }]
                 ]
             }
 

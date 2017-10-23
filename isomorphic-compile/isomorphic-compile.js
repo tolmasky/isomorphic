@@ -31,24 +31,31 @@ module.exports = function compile({ root: unresolved, cache, destination })
     if (error.is(r_node))
         console.warn(Messages.NoNode(root, node));
 
+    const r_transforms = r_get(r_pjson.ok, ["isomorphic", "transforms"]);
+    const transforms = error.is(r_transforms) ?
+        getDefaultTransforms(node) : r_transforms.ok;
+
     const r_assets = r_get(r_pjson.ok, ["isomorphic", "assets"]);
     const assets = error.is(r_assets) ? [] : r_assets.ok;
-
-    const transforms = [
-        {
-            "match": "**/*.js",
-            "transform": "isomorphic-compile/babel",
-            "options": {
-                presets: [
-                    ["isomorphic-preset", { node, "generic-jsx": true }]
-                ]
-            }
-        }
-    ]
 
     const exclude = ["**/node_modules", "*/build"];
 
     console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination } } />));
+}
+
+function getDefaultTransforms(node)
+{
+    return [
+        {
+            "match": "**/*.js",
+            "transform": "isomorphic-compile/babel",
+            "options": {
+                "presets": [
+                    ["isomorphic-preset", { node, "react": true }]
+                ]
+            }
+        }
+    ];
 }
 
 Errors =
