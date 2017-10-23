@@ -10,7 +10,7 @@ const tstat = path => ["file", "directory"][internalModuleStat(path)];
 
 const micromatch = require("micromatch");
 
-const entrypoint = require("./entrypoint");
+const entrypoints = require("./entrypoints");
 
 
 module.exports = function project({ root, destination, cache, exclude, transforms })
@@ -26,28 +26,6 @@ module.exports = function project({ root, destination, cache, exclude, transform
                         exclude = { toMatcher(exclude) }
                         transforms = { optimized }
                         destination = { destination } />
-            </entrypoints>
-}
-
-function entrypoints({ children, visited, cache, destination, root })
-{
-    const subentrypoints = new Set();
-
-    for (const child of children)
-        if (child)
-            for (const entrypoint of child.entrypoints || [])
-                subentrypoints.add(entrypoint);
-
-    if (subentrypoints.size <= 0)
-        return "done.";
-
-    const output = path => join(destination, basename(path) + ".bundle.js");
-
-    return  <entrypoints { ...{ cache, cache, destination } }>
-                { Array.from(subentrypoints, path =>
-                    <entrypoint
-                        { ...{ path:join(root, path + ".js"), destination: output(path), cache } } />)
-                }
             </entrypoints>
 }
 

@@ -1,17 +1,8 @@
 
 const { existsSync, readFileSync, appendFileSync, unlinkSync } = require("fs");
 
-const entrypoint = require("./entrypoint");
 
-
-module.exports = function bundle({ path, destination, cache, options })
-{
-    return  <concatenate path = { path } destination = { destination } >
-                <entrypoint { ...{ path, cache, options } } />
-            </concatenate>
-}
-
-function concatenate({ destination, path, children })
+module.exports = function bundle({ destination, path, children })
 {
     if (existsSync(destination))
         unlinkSync(destination);
