@@ -12,7 +12,7 @@ const r_get = (o, [key, ...rest], r_o = ok(o)) =>
     error.is(r_o) ? r_o :
     (o => o === undefined || o === null ?
         error(`object does not contain ${key}`) :
-        rest.length ? ok(o) : r_get(0, ok(o), rest))(r_o.ok[key]);
+        rest.length ? r_get(0, rest, ok(o)) : ok(o))(r_o.ok[key]);
 const uuid = require("uuid").v4;
 const resolve__ = require("./internal/resolve");
 const project = require("./internal/project");
@@ -33,14 +33,14 @@ module.exports = function compile(unresolved)
 
     const r_assets = r_get(r_pjson.ok, ["isomorphic", "assets"]);
     const assets = error.is(r_assets) ? [] : r_assets.ok;
-    
+
     const transforms = [
         {
             "match": "**/*.js",
             "transform": "isomorphic-compile/babel",
             "options": {
                 presets: [
-                    ["isomorphic-preset", { node, react: true }]
+                    ["isomorphic-preset", { node, "generic-jsx": true }]
                 ]
             }
         }

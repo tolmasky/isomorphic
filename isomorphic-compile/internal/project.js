@@ -9,17 +9,19 @@ const { internalModuleStat } = process.binding("fs");
 const tstat = path => ["file", "directory"][internalModuleStat(path)];
 
 const micromatch = require("micromatch");
-const transform = require("./transform");
 
 
-module.exports = function project({ root, destination, cache, exclude, assets })
+module.exports = function project({ root, destination, cache, exclude, transforms, assets })
 {
     mkdirp(dirname(destination));
-    mkdirp(cache);
+
+    const optimized = transforms.map(({ match, ...rest }) =>
+        ({ match: toMatcher(match), ...rest }));
 
     return  <item   path = { root }
-                    cache = { cache }
+                    cache = { mkdirp(cache) }
                     exclude = { toMatcher(exclude) }
+                    transforms = { optimized }
                     destination = { destination } />;
 }
 
@@ -32,27 +34,19 @@ function item({ path, exclude, ...rest })
 
     return <type { ...{ path, exclude, ...rest } } />;
 }
-Error.stackTraceLimit = 1000;
+
 function file({ path, destination, cache, transforms })
 {
-//    const { transform, checksum: transformChecksum } = findTransform.mcall(
-//        refine(state, "find-checksum"), source, transforms) || { };
-console.log(path);
-    if (extname(path) !== ".js")
+    const match = transforms.find(transform => transform.match(path));
+
+    if (!match)
         return <copy { ...{ path, destination } }/>;
 
-    const options = { 
-        /*parserOpts: {
-            "allowReturnOutsideFunction": true,
-            "strictMode": false
-        },*/
-        presets: [
-            ["isomorphic-preset", { node: "4.x.x", react: true }]
-        ]
-    };
+    const { transform: location, ...rest } = match;
+    const transform = require(location);
 
-    return  <copy destination = { destination }>
-                <transform { ...{ cache, path, options } } />
+    return  <copy { ...{ destination } }>
+                <transform { ...rest } { ...{ cache, path } } />
             </copy>;
 }
 
@@ -69,6 +63,12 @@ function directory({ path, destination, ...rest })
         <item   path = { join(path, name) }
                 destination = { join(destination, name) }
                 { ...rest } />);
+}
+
+function optimize(transforms)
+{
+    return transforms.map(({ match, ...rest }) =>
+    ({ match: toMatcher(transform.match), ...rest }));
 }
 
 function toMatcher(match)

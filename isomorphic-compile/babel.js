@@ -6,7 +6,7 @@ const babylon = require("babylon");
 const { transformFromAst } = require("babel-core");
 const File = require("babel-core/lib/transformation/file").default;
 
-const getMerkleChecksum = require("./get-merkle-checksum");
+const getMerkleChecksum = require("./internal/get-merkle-checksum");
 
 //const metadataPlugin = require("./babel-plugin-metadata");
 //const requiresPlugin = require("./babel-plugin-requires");

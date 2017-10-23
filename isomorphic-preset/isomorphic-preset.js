@@ -3,7 +3,7 @@ const { intersects } = require("semver");
 
 const range = range => ({ node }) => intersects(range, node);
 const flag = flag => ({ flags }) => flags.indexOf(flag) >= 0;
-const react = ({ react }) => !!react;
+const option = key => options => !!options[key];
 
 const OR = (lhs, rhs) => input => lhs(input) || rhs(input);
 const AND = (lhs, rhs) => input => lhs(input) && rhs(input);
@@ -14,19 +14,14 @@ const ALWAYS = () => true;
 const ReactJSXPlugin = require("babel-plugin-transform-react-jsx");
 
 
-module.exports = function (_, { node, flags = [], react, JSXPragma, ...rest })
+module.exports = function (_, { node, flags = [], JSXPragma, ...options })
 {
     return  {
-                /*"parserOpts":
-                {
-                    "allowReturnOutsideFunction": true,
-                    "strictMode": false
-                },*/
                 "plugins": plugins
-                    .filter(([predicate]) => predicate({ node, flags, react }))
+                    .filter(([predicate]) => predicate({ node, flags, ...options }))
                     .map(function ([predicate, plugin])
                     {
-                        return  plugin === ReactJSXPlugin && JSXPragma ? 
+                        return  plugin === ReactJSXPlugin && JSXPragma ?
                                 [plugin, { pragma: JSXPragma }] :
                                 plugin;
                     })
@@ -70,7 +65,8 @@ var plugins =
 
     [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
 
-    [react, ReactJSXPlugin]
+    [option("generic-jsx"), require("generic-jsx/babel-plugin-transform-generic-jsx")],
+    [option("react"), ReactJSXPlugin]
 
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],
 //    [always, require("babel-plugin-transform-es2015-modules-commonjs")]
