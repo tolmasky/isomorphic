@@ -15,15 +15,15 @@ const destination = getUniqueDestination();
 spawnSync("node", [ '--require',
   '/Users/tolmasky/Development/isomorphic/pre-publish/bootstrap']);
 
-["isomorphic-compile"].map(name =>
-    spawnSync("node",
+["isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
+    .map(name => spawnSync("node",
     [
         "--require", relative("./bootstrap"),
         compileCLI,
         "--root", relative(join("..", name)),
         "--cache", cache,
         "--destination", join(destination, name)
-    ], { stdio:[0,1,2] } ));
+    ], { stdio:[0, 1, 2] } ));
 
 console.log(`Completed at ${destination}`);
 
