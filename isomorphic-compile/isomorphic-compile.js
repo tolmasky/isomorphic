@@ -17,7 +17,7 @@ const uuid = require("uuid").v4;
 const resolve__ = require("./internal/resolve");
 const project = require("./internal/project");
 
-module.exports = function compile(unresolved)
+module.exports = function compile({ root: unresolved, cache, destination })
 {
     const root = resolve(unresolved);
     const r_pjson = r_require(join(root, "package.json"));
@@ -46,8 +46,6 @@ module.exports = function compile(unresolved)
         }
     ]
 
-    const cache = "./build-products/cache";
-    const destination = "./build/" + uuid();
     const exclude = ["**/node_modules", "*/build"];
 
     console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination } } />));

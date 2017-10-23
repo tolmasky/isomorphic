@@ -2,7 +2,7 @@
   "name": "isomorphic-compile",
   "version": "1.0.0",
   "description": "",
-  "main": "compile.js",
+  "main": "isomorphic-compile.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "babel-core": "^6.26.0",
+    "commander": "^2.11.0",
     "generic-jsx": "^17.0.0",
     "micromatch": "^3.1.3",
     "semver": "^5.4.1",

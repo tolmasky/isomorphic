@@ -7,7 +7,8 @@
     "babel-core": "^6.26.0",
     "babel-register": "^6.26.0",
     "commander": "^2.11.0",
-    "generic-jsx": "^17.0.0"
+    "generic-jsx": "^17.0.0",
+    "randomstring": "^1.1.5"
   },
   "devDependencies": {},
   "scripts": {
