@@ -29,7 +29,17 @@ module.exports = function(anObject)
         list = list.next;
     }
 
-    return { index:UID, objects:context.objects };
+    var UIDs = context.UIDs;
+    var serializedObjects = [];
+
+    analyzeUIDs(UIDs).forEach(function(aUID)
+    {
+        var serializedLocation = aUID.serializedLocation;
+        var serializedObject = context.objects[serializedLocation];
+        serializedObjects[aUID.__UNIQUE_ID] = serializedObject;
+    });
+
+    return { index:UID, objects:serializedObjects };
 };
 
 function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
@@ -62,22 +72,22 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     }
 
     var UIDs = aContext.UIDs;
-    var UID = hasHint ? aUIDHint : Call(MapGet, UIDs, anObject);
+    var UID = UIDForValue(anObject, UIDs);
 
-    if (typeof UID === "undefined")
-        UID = UIDs.size;
-    else if (UID < UIDs.size)
-        return UID; // iF the UID already exists the object has already been encoded.
+    if (UID)
+        return UID.increment(); // iF the UID already exists the object has already been encoded.
+
+    UID = new UIDWrapper(hasHint && aUIDHint);
 
     Call(MapSet, UIDs, anObject, UID);
 
     if (type === "boolean" ||
         type === "number" ||
         type === "string")
-        aContext.objects[UID] = anObject;
+        aContext.objects[UID.serializedLocation] = anObject;
     else
     {
-        aContext.objects[UID] = null;
+        aContext.objects[UID.serializedLocation] = null;
 
         var tail = { UID: UID, object: anObject };
 
@@ -113,9 +123,9 @@ function serializeObject(anObject, type, aUID, aContext)
         var object = anObject[key];
 
         var serializedValue = toObjectSerialization(object, aContext);
-        var potentiallySerializedKey = UIDForKey(key, aContext);
+        var serializedKey = toObjectSerialization(key, aContext);
 
-        serializedObject.push(potentiallySerializedKey, serializedValue);
+        serializedObject.push(serializedKey, serializedValue);
     }
 
     var isSetOrMap = type === 2 || type === 3;
@@ -123,7 +133,7 @@ function serializeObject(anObject, type, aUID, aContext)
     if (isSetOrMap)
         serializeKeys(serializedObject, anObject, type, aUID, aContext);
 
-    aContext.objects[aUID] = serializedObject;
+    aContext.objects[aUID.serializedLocation] = serializedObject;
 }
 
 
@@ -131,7 +141,7 @@ function serializeImmutable(anObject, type, aUID, aContext)
 {
     var serializedObject = [type];
     serializeKeys(serializedObject, anObject, type, aUID, aContext);
-    aContext.objects[aUID] = serializedObject;
+    aContext.objects[aUID.serializedLocation] = serializedObject;
 }
 
 // This will serialize the values in JS Maps and Sets, and all immutable collections.
@@ -150,8 +160,8 @@ function serializeKeys(serializedObject, anObject, type, aUID, aContext)
         // Don't store duplicate data from Sets.
         if (type !== 3 && type !== 6)
         {
-            var potentiallySerializedKey = UIDForKey(key, aContext);
-            serializedObject.push(potentiallySerializedKey);
+            var serializedKey = toObjectSerialization(key, aContext.UIDs, key, true);
+            serializedObject.push(serializedKey);
         }
 
         serializedObject.push(serializedValue);
@@ -163,19 +173,63 @@ function serializeKeys(serializedObject, anObject, type, aUID, aContext)
     }
 }
 
-function UIDForKey(aKey, aContext)
+function UIDForValue(aValue, UIDs)
 {
-    var UIDForKey = Call(MapGet, aContext.UIDs, aKey);
+    return Call(MapGet, UIDs, aValue);
+}
 
-    if (typeof UIDForKey === "undefined")
-        UIDForKey = aContext.UIDs.size;
 
-    // All non-strings must go through serialization.
-    if (typeof aKey !== "string")
-        return toObjectSerialization(aKey, aContext, UIDForKey, true);
+var UIDCount = 0;
 
-    // If the string is shorter than the UUID, just inline the key.
-    return MathLog(UIDForKey) / MathLN10 < aKey.length + 2
-           ? toObjectSerialization(aKey, aContext, UIDForKey, true)
-           : aKey;
+function UIDWrapper(potentialKeyID)
+{
+    this.serializedLocation = UIDCount;
+    this.references = 1;
+    this.potentialKeyID = typeof potentialKeyID === "string" && potentialKeyID;
+    UIDCount++;
+}
+
+UIDWrapper.prototype.toJSON = function()
+{
+    // console.log("TEESTING>>>>", this);
+    return this.__UNIQUE_ID;
+};
+
+UIDWrapper.prototype.increment = function()
+{
+    this.references += 1;
+    return this;
+};
+
+function analyzeUIDs(UIDsMap)
+{
+    var UIDs = Array.from(UIDsMap.values());
+
+    // console.log("SORT THIS SHIT", UIDsMap);
+
+    UIDs.sort(function(a, b)
+    {
+        return b.references - a.references;
+    });
+
+    var offset = 0;
+
+    UIDs.forEach(function(aUID, anIndex)
+    {
+        var potentialID = anIndex - offset;
+        var potentialKeyID = aUID.potentialKeyID;
+
+        var canStoreAsString = typeof potentialKeyID === "string";
+        var isShorterAsString = canStoreAsString && MathLog(potentialID) / MathLN10 > potentialKeyID.length + 2;
+
+        if (isShorterAsString)
+        {
+            aUID.__UNIQUE_ID = potentialKeyID;
+            offset++;
+        }
+        else
+            aUID.__UNIQUE_ID = potentialID;
+    });
+
+    return UIDs;
 }
