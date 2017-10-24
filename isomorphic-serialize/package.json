@@ -2,7 +2,7 @@
   "name": "isomorphic-serialization",
   "version": "1.0.0",
   "description": "",
-  "main": "./object-serialization",
+  "main": "./isomorphic-serialization",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
