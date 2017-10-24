@@ -35,12 +35,12 @@ module.exports = function compile({ root: unresolved, cache, destination })
     const transforms = error.is(r_transforms) ?
         getDefaultTransforms(node) : r_transforms.ok;
 
-    const r_assets = r_get(r_pjson.ok, ["isomorphic", "assets"]);
-    const assets = error.is(r_assets) ? [] : r_assets.ok;
+    const r_entrypoints = r_get(r_pjson.ok, ["isomorphic", "entrypoints"]);
+    const entrypoints = error.is(r_entrypoints) ? [] : r_entrypoints.ok;
 
     const exclude = ["**/node_modules", "*/build"];
 
-    console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination } } />));
+    console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />));
 }
 
 function getDefaultTransforms(node)

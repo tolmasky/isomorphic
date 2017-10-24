@@ -13,15 +13,16 @@
     "node": "8.x.x"
   },
   "isomorphic": {
-    "assets": {
-      "/(*/):name.js": {
+    "public": {
+        "/assets/*": ":asset-domain/assets/:name.bundle.js"
+    },
+    "entrypoints": {
+      "/(*_/):name.js": {
         "output": "/assets/:name.bundle.js",
-        "public": "/assets/:name.bundle.js",
         "transform": "isomorphic/compile/babel"
       },
-      "/(*/):name.less": {
-        "output": "/assets/:name.less",
-        "public": "/assets/styles/:names.css",
+      "/(*_/):name.less": {
+        "output": "/assets/styles/:name.css",
         "transform": "isomorphic/compile/less"
       }
     }

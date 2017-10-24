@@ -13,18 +13,19 @@ const micromatch = require("micromatch");
 const entrypoints = require("./entrypoints");
 
 
-module.exports = function project({ root, destination, cache, exclude, transforms })
+module.exports = function project({ root, destination, cache, exclude, ...rest })
 {
     mkdirp(dirname(destination));
 
-    const optimized = transforms.map(({ match, ...rest }) =>
+    const transforms = rest.transforms.map(({ match, ...rest }) =>
         ({ match: toMatcher(match), ...rest }));
+    const routes = rest.entrypoints;
 
-    return  <entrypoints { ...{ root, destination, cache } }>
+    return  <entrypoints { ...{ root, destination, cache, routes } }>
                 <item   path = { root }
                         cache = { mkdirp(cache) }
                         exclude = { toMatcher(exclude) }
-                        transforms = { optimized }
+                        transforms = { transforms }
                         destination = { destination } />
             </entrypoints>
 }

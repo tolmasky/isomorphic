@@ -1,11 +1,16 @@
 
+const { dirname } = require("path");
 const { existsSync, readFileSync, appendFileSync, unlinkSync } = require("fs");
+const { execSync } = require("child_process");
+const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 
 
 module.exports = function bundle({ destination, path, children })
 {
     if (existsSync(destination))
         unlinkSync(destination);
+
+    mkdirp(dirname(destination));
 
     const format = { "string": "utf-8" };
     const append = content =>

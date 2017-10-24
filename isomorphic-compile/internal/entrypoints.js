@@ -1,11 +1,13 @@
 
 const Module = require("module");
-const { basename, dirname, extname, join } = require("path");
+const { basename, dirname, extname, join, relative, resolve } = require("path");
 const { existsSync, readFileSync, writeFileSync } = require("fs");
 
 const builtIn = require("./built-in");
 const transform = require("../babel");
 const bundle = require("./bundle");
+const Route = require("route-parser");
+
 
 const DEFAULT_options = {
                 presets: [
@@ -13,7 +15,7 @@ const DEFAULT_options = {
                 ]
             }
 
-module.exports = function entrypoints({ children, visited, cache, destination })
+module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
 {
     const [_, subentrypoints, updated] =
         extract(visited, "entrypoint", children);
@@ -21,13 +23,10 @@ module.exports = function entrypoints({ children, visited, cache, destination })
     if (subentrypoints.size <= 0)
         return "DONE";
 
-    const output = path => join(destination, basename(path) + ".bundle.js");
+    const route = compileRoutes(rest.routes, rest.root, destination);
 
-    return  <entrypoints { ...{ visited: updated, cache, destination, options: DEFAULT_options } }>
-                { Array.from(subentrypoints, path =>
-                    <entrypoint
-                        { ...{ path, destination: output(path), cache, options: DEFAULT_options } } />)
-                }
+    return  <entrypoints { ...{ visited: updated, cache, destination, routes: route } }>
+                { Array.from(subentrypoints, path => route(path, { path, cache })) }
             </entrypoints>
 }
 
@@ -58,7 +57,7 @@ function dependencies({ children, visited, cache, options })
             ];
 }
 
-function resolve(path, from)
+function requireResolve(path, from)
 {
     const paths = Module._nodeModulePaths(dirname(from));
     const module = Object.assign(new Module(from),        
@@ -92,7 +91,7 @@ function extract(visited = new Set(), key, children)
 
         for (const entrypoint of child.entrypoints || [])
         {
-            const resolved = resolve(entrypoint, child.path);
+            const resolved = requireResolve(entrypoint, child.path);
             
             if (!visited.has(resolved))
             {
@@ -103,5 +102,34 @@ function extract(visited = new Set(), key, children)
         
         return { ...child, [key]: mapping };
     }), extracted, updated];
+}
+
+function compileRoutes(routes, source, destination)
+{
+    if (typeof routes === "function")
+        return routes;
+
+    const compiled = Object
+        .keys(routes)
+        .map(input => [Route(input), Route(routes[input].output)]);
+
+    return function (path, props)
+    {
+        const relativePath = "/" + relative(source, path);
+
+        for (const [inputRoute, outputRoute] of compiled)
+        {
+            const captures = inputRoute.match(relativePath);
+
+            if (captures === false)
+                continue;
+
+            const output = resolve(join(destination, outputRoute.reverse(captures)));
+
+            return <entrypoint { ...{ ...props, destination: output, options: DEFAULT_options } } />;
+        }
+
+        throw new Error(`Could not find matching entrypoint for ${path}`);
+    }
 }
 
