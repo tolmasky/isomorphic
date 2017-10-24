@@ -14,8 +14,8 @@ const r_get = (o, [key, ...rest], r_o = ok(o)) =>
         error(`object does not contain ${key}`) :
         rest.length ? r_get(0, rest, ok(o)) : ok(o))(r_o.ok[key]);
 const uuid = require("uuid").v4;
-const resolve__ = require("./internal/resolve");
-const project = require("./internal/project");
+const runtime = require("./runtime");
+const project = require("./project");
 
 module.exports = function compile({ root: unresolved, cache, destination })
 {
@@ -40,7 +40,7 @@ module.exports = function compile({ root: unresolved, cache, destination })
 
     const exclude = ["**/node_modules", "*/build"];
 
-    console.log("-->" + resolve__(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />));
+    console.log("-->" + runtime(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />));
 }
 
 function getDefaultTransforms(node)
@@ -48,7 +48,7 @@ function getDefaultTransforms(node)
     return [
         {
             "match": "**/*.js",
-            "transform": "isomorphic-compile/babel",
+            "transform": "isomorphic-compile/babel-transform",
             "options": {
                 "presets": [
                     ["isomorphic-preset", { node, "react": true }]

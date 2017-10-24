@@ -5,7 +5,7 @@ const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 
 
-module.exports = function bundle({ destination, path, children })
+module.exports = function concatenate({ destination, entrypoint, children })
 {
     if (existsSync(destination))
         unlinkSync(destination);
@@ -55,7 +55,7 @@ module.exports = function bundle({ destination, path, children })
     append("],");
     append(JSON.stringify(modules));
     append(",");
-    append(JSON.stringify(path));
+    append(JSON.stringify(entrypoint));
     append(")");
 
     return { entrypoints };
