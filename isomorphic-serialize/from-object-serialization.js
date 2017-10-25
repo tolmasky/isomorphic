@@ -18,16 +18,6 @@ module.exports = function(anObjectSerialization, options)
     return fromObjectSerialization(anObjectSerialization.index, context);
 };
 
-// function invoker(methodName)
-// {
-//     return function()
-//     {
-//         var anObject = arguments[arguments.length - 1];
-//         var args = Array.prototype.slice.apply(arguments, [0, arguments.length - 1]);
-//         return anObject[methodName].apply(anObject, args);
-//     };
-// }
-
 function fromObjectSerialization(index, context)
 {
     if (index === -1)

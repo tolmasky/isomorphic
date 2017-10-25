@@ -1,15 +1,14 @@
 
+const invoker = require("../utils").invoker;
 module.exports = deserializeKeyValueArray;
 
 function deserializeKeyValueArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
 {
+    var forceImmutable = context.options.immutable;
+    var set = forceImmutable ? invoker("set") : setValueForKey;
+
     // index 0 is the type, all other values are deseriailzed and inserted into the
     // deserialized array in their current order.
-
-    // var forceImmutable = context.options.immutable;
-    // var deserializedObjects = context.deserializedObjects;
-    // var anObjectSerialization = context.anObjectSerialization;
-
     var keyIndex = 1;
     var count = serializedArray.length;
 
@@ -27,7 +26,7 @@ function deserializeKeyValueArray(aDeserializedArray, serializedArray, context, 
     return aDeserializedArray;
 }
 
-function set(aKey, anItem, anObject)
+function setValueForKey(aKey, anItem, anObject)
 {
     anObject[aKey] = anItem;
 }

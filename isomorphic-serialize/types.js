@@ -1,6 +1,7 @@
 
 const I = require("immutable");
 const isArray = Array.isArray;
+const invoker = require("./utils").invoker;
 
 module.exports.getSerializer = getSerializer;
 module.exports.getDeserializer = getDeserializer;
@@ -108,14 +109,29 @@ function getMutator(anEncodedType, aContext)
 
 function getBase(encodedType, aContext)
 {
+    if (aContext.options.immutable)
+    {
+        switch(encodedType)
+        {
+            case GenericObject:
+                return [I.Map(), true];
+            case JustKeyValueArray:
+            case GaplessArray:
+            case GenericArray:
+                return [I.List(), true];
+            default:
+                throw new Error("unknown type...");
+        }
+    }
+
     switch(encodedType)
     {
         case GenericObject:
-            return {};
+            return [{}, false];
         case JustKeyValueArray:
         case GaplessArray:
         case GenericArray:
-            return [];
+            return [[], false];
         default:
             throw new Error("unknown type...");
     }
@@ -127,12 +143,14 @@ function getDeserializer(aSerializedObject, aContext)
     var base = getBase(encodedType, aContext);
     var mutator = getMutator(encodedType, aContext);
 
+    var withMutationsFunction = base[1] ? invoker("withMutations") : withMutations;
+
     return function(fromObjectSerialization)
     {
-        return withMutations(function(aDeserializedObject)
+        return withMutationsFunction(function(aDeserializedObject)
         {
             return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
-        }, base);
+        }, base[0]);
     };
 };
 
