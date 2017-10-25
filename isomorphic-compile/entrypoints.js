@@ -1,7 +1,8 @@
 
-const { join, relative, resolve } = require("path");
+const { basename, join, relative, resolve } = require("path");
 const Route = require("route-parser");
 const resolvedPathsInKey = require("./resolved-paths-in-key");
+const { execSync } = require("child_process");
 
 
 module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
@@ -49,10 +50,29 @@ function toRouter(routes, source, destination)
             const entrypoint = require(location);
             const computed = { cache, entrypoint: path, destination: output };
 
-            return <entrypoint { ...props } { ...computed } />;
+            return  <report destination = { output } started = { Date.now() } >
+                        <entrypoint { ...props } { ...computed } />
+                    </report>
         }
 
         throw new Error(`Could not find matching entrypoint for ${path}`);
     }
+}
+
+function report({ destination, started, children })
+{
+    const duration = (Date.now() - started) / 1000;
+    const bytes = execSync(`stat -f%z ${JSON.stringify(destination)}`)
+        .toString("utf-8")
+        .split("\n")[0];
+    const KiB = bytes > 1024 ? bytes / 1024 : 0;
+    const MiB = KiB > 1024 ? KiB / 1024 : 0;
+    const size =    MiB > 0 ? `${MiB.toFixed(2)} MiB` :
+                    KiB > 0 ? `${KiB.toFixed(2)} KiB` :
+                    `${bytes} B`;
+
+    console.log(`Generated ${basename(destination)} in ${duration} sec - ${size}`);
+
+    return children;
 }
 

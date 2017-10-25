@@ -40,7 +40,7 @@ module.exports = function compile({ root: unresolved, cache, destination })
 
     const exclude = ["**/node_modules", "*/build"];
 
-    console.log("-->" + runtime(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />));
+    return runtime(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />);
 }
 
 function getDefaultTransforms(node)
