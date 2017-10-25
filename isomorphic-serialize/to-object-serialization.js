@@ -1,10 +1,7 @@
 
 var Call = (Function.prototype.call).bind(Function.prototype.call);
 
-// var I = require("immutable");
-
 var Map = global.Map || require("native-map");
-// var Set = global.Set || false;
 
 var MapGet = Map.prototype.get;
 var MapSet = Map.prototype.set;
@@ -16,7 +13,7 @@ var types = require("./types");
 
 module.exports = function(anObject)
 {
-    var context = { UIDs: new Map(), objects:[] };
+    var context = { UIDs: new Map(), objects:[], types: new Map() };
     var UID = toObjectSerialization(anObject, context);
     var list = context.tail;
 
@@ -103,43 +100,6 @@ function completeObjectSerialization(anObject, aUID, aContext)
     var serializer = types.getSerializer(anObject, aContext);
     aContext.objects[aUID.serializedLocation] = serializer(toObjectSerialization);
 }
-
-
-// function serializeImmutable(anObject, type, aUID, aContext)
-// {
-//     var serializedObject = [type];
-//     serializeKeys(serializedObject, anObject, type, aUID, aContext);
-//     aContext.objects[aUID.serializedLocation] = serializedObject;
-// }
-
-// // This will serialize the values in JS Maps and Sets, and all immutable collections.
-// function serializeKeys(serializedObject, anObject, type, aUID, aContext)
-// {
-//     var keys = I.Seq(anObject.keys());
-//     var count = keys.count();
-//     var index = 0;
-
-//     for (; index < count; ++index)
-//     {
-//         var key = keys.get(index);
-//         var object = get(key, anObject);
-//         var serializedValue = toObjectSerialization(object, aContext);
-
-//         // Don't store duplicate data from Sets.
-//         if (type !== 3 && type !== 6)
-//         {
-//             var serializedKey = toObjectSerialization(key, aContext.UIDs, key, true);
-//             serializedObject.push(serializedKey);
-//         }
-
-//         serializedObject.push(serializedValue);
-//     }
-
-//     function get(aKey, anObject)
-//     {
-//         return anObject instanceof Set ? aKey : anObject.get(aKey);
-//     }
-// }
 
 function UIDForValue(aValue, UIDs)
 {
