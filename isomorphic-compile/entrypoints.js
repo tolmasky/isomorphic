@@ -4,12 +4,6 @@ const Route = require("route-parser");
 const resolvedPathsInKey = require("./entrypoints/resolved-paths-in-key");
 
 
-const DEFAULT_options = {
-                presets: [
-                    ["isomorphic-preset", { node:"4.x.x", "react": true }]
-                ]
-            }
-
 module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
 {
     const [_, subentrypoints, updated] =
