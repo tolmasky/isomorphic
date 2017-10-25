@@ -19,11 +19,11 @@
     "entrypoints": {
       "/(*_/):name.js": {
         "output": "/assets/:name.bundle.js",
-        "transform": "isomorphic-compile/entrypoints/bundle-js"
+        "transform": "isomorphic-compile/bundle-js"
       },
       "/(*_/):name.less": {
         "output": "/assets/styles/:name.css",
-        "transform": "isomorphic/compile/less"
+        "transform": "isomorphic-compile/less"
       }
     }
   },

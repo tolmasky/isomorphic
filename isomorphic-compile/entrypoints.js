@@ -1,7 +1,7 @@
 
 const { join, relative, resolve } = require("path");
 const Route = require("route-parser");
-const resolvedPathsInKey = require("./entrypoints/resolved-paths-in-key");
+const resolvedPathsInKey = require("./resolved-paths-in-key");
 
 
 module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
