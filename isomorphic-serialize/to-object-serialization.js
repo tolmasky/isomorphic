@@ -1,18 +1,16 @@
 
 var Call = (Function.prototype.call).bind(Function.prototype.call);
 
-var I = require("immutable");
+// var I = require("immutable");
 
 var Map = global.Map || require("native-map");
-var Set = global.Set || false;
+// var Set = global.Set || false;
 
 var MapGet = Map.prototype.get;
 var MapSet = Map.prototype.set;
 
 var MathLog = Math.log;
 var MathLN10 = Math.LN10;
-
-var ObjectKeys = Object.keys;
 
 var types = require("./types");
 
@@ -100,78 +98,48 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     return UID;
 }
 
-
 function completeObjectSerialization(anObject, aUID, aContext)
 {
-    var type = types.getType(anObject);
-
-    var serializer = types.isImmutableType(type) ? serializeImmutable : serializeObject;
-    serializer(anObject, type, aUID, aContext);
-}
-
-function serializeObject(anObject, type, aUID, aContext)
-{
-    var serializedObject = [type];
-
-    var keys = ObjectKeys(anObject);
-    var count = keys.length;
-    var index = 0;
-
-    for (; index < count; ++index)
-    {
-        var key = keys[index];
-        var object = anObject[key];
-
-        var serializedValue = toObjectSerialization(object, aContext);
-        var serializedKey = toObjectSerialization(key, aContext);
-
-        serializedObject.push(serializedKey, serializedValue);
-    }
-
-    var isSetOrMap = type === 2 || type === 3;
-
-    if (isSetOrMap)
-        serializeKeys(serializedObject, anObject, type, aUID, aContext);
-
-    aContext.objects[aUID.serializedLocation] = serializedObject;
+    var serializer = types.getSerializer(anObject, aContext);
+    aContext.objects[aUID.serializedLocation] = serializer(toObjectSerialization);
 }
 
 
-function serializeImmutable(anObject, type, aUID, aContext)
-{
-    var serializedObject = [type];
-    serializeKeys(serializedObject, anObject, type, aUID, aContext);
-    aContext.objects[aUID.serializedLocation] = serializedObject;
-}
+// function serializeImmutable(anObject, type, aUID, aContext)
+// {
+//     var serializedObject = [type];
+//     serializeKeys(serializedObject, anObject, type, aUID, aContext);
+//     aContext.objects[aUID.serializedLocation] = serializedObject;
+// }
 
-// This will serialize the values in JS Maps and Sets, and all immutable collections.
-function serializeKeys(serializedObject, anObject, type, aUID, aContext)
-{
-    var keys = I.Seq(anObject.keys());
-    var count = keys.count();
-    var index = 0;
+// // This will serialize the values in JS Maps and Sets, and all immutable collections.
+// function serializeKeys(serializedObject, anObject, type, aUID, aContext)
+// {
+//     var keys = I.Seq(anObject.keys());
+//     var count = keys.count();
+//     var index = 0;
 
-    for (; index < count; ++index)
-    {
-        var key = keys.get(index);
-        var object = get(key, anObject);
-        var serializedValue = toObjectSerialization(object, aContext);
+//     for (; index < count; ++index)
+//     {
+//         var key = keys.get(index);
+//         var object = get(key, anObject);
+//         var serializedValue = toObjectSerialization(object, aContext);
 
-        // Don't store duplicate data from Sets.
-        if (type !== 3 && type !== 6)
-        {
-            var serializedKey = toObjectSerialization(key, aContext.UIDs, key, true);
-            serializedObject.push(serializedKey);
-        }
+//         // Don't store duplicate data from Sets.
+//         if (type !== 3 && type !== 6)
+//         {
+//             var serializedKey = toObjectSerialization(key, aContext.UIDs, key, true);
+//             serializedObject.push(serializedKey);
+//         }
 
-        serializedObject.push(serializedValue);
-    }
+//         serializedObject.push(serializedValue);
+//     }
 
-    function get(aKey, anObject)
-    {
-        return anObject instanceof Set ? aKey : anObject.get(aKey);
-    }
-}
+//     function get(aKey, anObject)
+//     {
+//         return anObject instanceof Set ? aKey : anObject.get(aKey);
+//     }
+// }
 
 function UIDForValue(aValue, UIDs)
 {
@@ -191,7 +159,6 @@ function UIDWrapper(potentialKeyID)
 
 UIDWrapper.prototype.toJSON = function()
 {
-    // console.log("TEESTING>>>>", this);
     return this.__UNIQUE_ID;
 };
 
@@ -204,8 +171,6 @@ UIDWrapper.prototype.increment = function()
 function analyzeUIDs(UIDsMap)
 {
     var UIDs = Array.from(UIDsMap.values());
-
-    // console.log("SORT THIS SHIT", UIDsMap);
 
     UIDs.sort(function(a, b)
     {

@@ -1,57 +1,143 @@
 
 const I = require("immutable");
 const isArray = Array.isArray;
-const isMap = anObject => anObject instanceof Map;
-const isSet = anObject => anObject instanceof Set;
+
+module.exports.getSerializer = getSerializer;
+module.exports.getDeserializer = getDeserializer;
 
 
-module.exports.ObjectType = 0;
-module.exports.ArrayType = 1;
-module.exports.MapType = 2;
-module.exports.SetType = 3;
-module.exports.ImmutableMapType = 4;
-module.exports.ImmutableListType = 5;
-module.exports.ImmutableSetType = 6;
+var GenericObject = 0;
+var JustKeyValueArray = 1;
+var GaplessArray = 2;
+var GenericArray = 3;
+var NoKeyValueSet = 4;
+var GenericSet = 5;
+var NoKeyValueMap = 6;
+var GenericMap = 7;
+// FIXME: Immutable key/values?
+var ImmutableMap = 8;
+var ImmutableSet = 9;
+var ImmutableList = 10;
 
-module.exports.EmptyType = [
-    () => ({}),
-    () => [],
-    () => new Map(),
-    () => new Set(),
-    I.Map,
-    I.List,
-    I.Set
-];
 
-module.exports.isImmutableType = isImmutableType;
-module.exports.toImmutableType = toImmutableType;
-module.exports.getType = getType;
-
-function isImmutableType(aType)
+function getEncodableType(anObject)
 {
-    return aType >= 4;
-}
-
-function toImmutableType(aType)
-{
-    if (aType === module.exports.ObjectType || module.exports.MapType === 2)
-        return I.Map;
-    if (aType === module.exports.ArrayType)
-        return I.List;
-    if (aType === module.exports.SetType)
-        return I.Set;
-}
-
-function getType(anObject)
-{
-
-    var tests = [isArray, isMap, isSet, I.Map.isMap, I.List.isList, I.Set.isSet];
-
-    for (var i = 0; i < tests.length; i++)
+    if (isArray(anObject))
     {
-        if (tests[i](anObject))
-            return i + 1;
+        var keys = Object.keys(anObject);
+
+        if (keys.length > 0 && anObject.length === 0)
+            return JustKeyValueArray;
+
+        if (keys.length === anObject.length)
+            return GaplessArray;
+
+        return GenericArray;
     }
 
-    return 0;
+    if (anObject instanceof Set)
+    {
+        var keys = Object.keys(anObject);
+        return keys.length ? GenericSet : NoKeyValueSet;
+    }
+
+    if (anObject instanceof Map)
+    {
+        var keys = Object.keys(anObject);
+        return keys.length ? GenericMap : NoKeyValueMap;
+    }
+
+    if (I.Map.isMap(anObject))
+    {
+        return ImmutableMap;
+    }
+
+    if (I.List.isList(anObject))
+    {
+        return ImmutableList;
+    }
+
+    if (I.Set.isSet(anObject))
+    {
+        return ImmutableSet;
+    }
+
+    return GenericObject;
+}
+
+var serializers = [
+    require("./serializers/generic-object"),
+    require("./serializers/key-value-array"),
+    require("./serializers/gapless-array"),
+    require("./serializers/generic-array"),
+];
+
+function getSerializer(anObject, aContext)
+{
+    var serializedType = getEncodableType(anObject, aContext);
+
+    return function(toObjectSerialization)
+    {
+        return [serializedType].concat(serializers[serializedType](anObject, aContext, toObjectSerialization));
+    };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+function getMutator(anEncodedType, aContext)
+{
+    if (anEncodedType === GenericObject)
+        return require("./deserializers/generic-object");
+    if (anEncodedType === JustKeyValueArray)
+        return require("./deserializers/key-value-array");
+    if (anEncodedType === GaplessArray)
+        return require("./deserializers/gapless-array");
+    if (anEncodedType === GenericArray)
+        return require("./deserializers/generic-array");
+}
+
+function getBase(encodedType, aContext)
+{
+    switch(encodedType)
+    {
+        case GenericObject:
+            return {};
+        case JustKeyValueArray:
+        case GaplessArray:
+        case GenericArray:
+            return [];
+        default:
+            throw new Error("unknown type...");
+    }
+}
+
+function getDeserializer(aSerializedObject, aContext)
+{
+    var encodedType = aSerializedObject[0];
+    var base = getBase(encodedType, aContext);
+    var mutator = getMutator(encodedType, aContext);
+
+    return function(fromObjectSerialization)
+    {
+        return withMutations(function(aDeserializedObject)
+        {
+            return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
+        }, base);
+    };
+};
+
+function withMutations(aMutator, anObject)
+{
+    aMutator(anObject);
+    return anObject;
 }
