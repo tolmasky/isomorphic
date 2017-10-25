@@ -1,0 +1,15 @@
+{
+  "name": "isomorphic-less",
+  "version": "1.0.0",
+  "description": "",
+  "main": "isomorphic-less.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Francisco Ryan Tolmasky I",
+  "license": "MIT",
+  "dependencies": {
+    "less": "^2.7.3"
+  }
+}

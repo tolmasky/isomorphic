@@ -30,7 +30,7 @@
       },
       "/(*_/):name.less": {
         "output": "/assets/styles/:name.css",
-        "transform": "isomorphic-compile/less"
+        "transform": "isomorphic-less"
       }
     }
   },
