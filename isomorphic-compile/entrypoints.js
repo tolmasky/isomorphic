@@ -7,7 +7,7 @@ const resolvedPathsInKey = require("./resolved-paths-in-key");
 module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
 {
     const [_, subentrypoints, updated] =
-        resolvedPathsInKey(visited, "entrypoint", children);
+        resolvedPathsInKey(visited, "entrypoints", children);
 
     if (subentrypoints.size <= 0)
         return "DONE";

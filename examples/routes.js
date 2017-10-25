@@ -5,7 +5,7 @@ const React = require("react");
 
 app.use("/assets/", express.static(__dirname + '/assets'));
 
-app.get("/", () => 
+app.get("/", () =>
     <html entrypoint = "./counter" />);
 
 app.listen(3000, () =>

@@ -15,15 +15,17 @@ module.exports = function resolvedPathsInKey(visited = new Set(), key, children)
 
         const mapping = { };
 
-        for (const entrypoint of child.entrypoints || [])
+        for (const path of child[key] || [])
         {
-            const resolved = requireResolve(entrypoint, child.path);
+            const resolved = requireResolve(path, child.path);
             
             if (!visited.has(resolved))
             {
                 extracted.add(resolved);
                 updated.add(resolved);
             }
+
+            mapping[path] = resolved;
         }
         
         return { ...child, [key]: mapping };

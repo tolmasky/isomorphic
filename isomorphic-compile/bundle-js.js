@@ -34,7 +34,7 @@ function dependencies({ children, visited, cache, options })
                 resolved,
                 <dependencies { ...{ visited: updated, cache, options } }>
                     { Array.from(subdependencies, path =>
-                        <file { ...{ path, cache, options } } /> )
+                        <dependency { ...{ path, cache, options } } /> )
                     }
                 </dependencies>
             ];
@@ -48,5 +48,5 @@ function dependency({ cache, path, options })
     if (extname(path) === ".json")
         return { include: path };
 
-    return <transform { ...{ cache, options, path } } />
+    return <transform { ...{ cache, options, path } } />;
 }

@@ -46,10 +46,6 @@ module.exports = function concatenate({ destination, entrypoint, children })
         const { path, dependencies } = metadata;
 
         modules[path] = [reference, dependencies];
-
-        if (metadata.entrypoints)
-            for (const entrypoint of metadata.entrypoints)
-                entrypoints.add(entrypoint);
     }
 
     append("],");
@@ -58,7 +54,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
     append(JSON.stringify(entrypoint));
     append(")");
 
-    return { entrypoints };
+    return children;
 }
 
 function getChecksum(contents)
