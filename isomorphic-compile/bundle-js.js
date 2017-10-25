@@ -7,13 +7,7 @@ const resolvedPathsInKey = require("./resolved-paths-in-key");
 
 const transform = require("isomorphic-compile/babel-transform");
 
-const DEFAULT_OPTIONS = {
-    presets: [
-        ["isomorphic-preset", { node:"4.x.x", "react": true }]
-    ]
-}
-
-module.exports = function bundle({ entrypoint, cache, options = DEFAULT_OPTIONS, destination })
+module.exports = function bundle({ entrypoint, cache, options, destination })
 {
     return  <concatenate { ...{ entrypoint, destination } } >
                 <dependencies { ...{ cache, options } } >
@@ -48,5 +42,5 @@ function dependency({ cache, path, options })
     if (extname(path) === ".json")
         return { include: path };
 
-    return <transform { ...{ cache, options, path } } />;
+    return <transform { ...{ cache, options: options.babel, path } } />;
 }

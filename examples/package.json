@@ -19,7 +19,14 @@
     "entrypoints": {
       "/(*_/):name.js": {
         "output": "/assets/:name.bundle.js",
-        "transform": "isomorphic-compile/bundle-js"
+        "transform": "isomorphic-compile/bundle-js",
+        "options": {
+          "babel": {
+            "presets": [
+                ["isomorphic-preset", { "node":"4.x.x", "react": true }]
+            ]
+         }
+        }
       },
       "/(*_/):name.less": {
         "output": "/assets/styles/:name.css",

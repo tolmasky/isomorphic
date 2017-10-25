@@ -45,13 +45,12 @@ function toRouter(routes, source, destination)
                 continue;
 
             const output = resolve(join(destination, route.output.reverse(captures)));
-            const [location, props] = Array.isArray(route.definition.transform) ?
-                route.definition.transform : [route.definition.transform, { }];
-            const entrypoint = require(location);
-            const computed = { cache, entrypoint: path, destination: output };
+            const { transform, options = { } } = route.definition;
+            const entrypoint = require(transform);
+            const computed = { cache, options, entrypoint: path, destination: output };
 
             return  <report destination = { output } started = { Date.now() } >
-                        <entrypoint { ...props } { ...computed } />
+                        <entrypoint { ...computed } />
                     </report>
         }
 
