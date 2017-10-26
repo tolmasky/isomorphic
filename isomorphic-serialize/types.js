@@ -77,7 +77,7 @@ var serializers = [
     require("./serializers/generic-map"),
     require("./serializers/pure-map"), // Immutable map can use pure-map.
     require("./serializers/pure-set"), // Immutable set can use pure-set.
-    // FIXME: Lists...
+    require("./serializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
 ];
 
 
@@ -128,6 +128,8 @@ function getMutator(anEncodedType, aContext)
         return require("./deserializers/pure-map");
     if (anEncodedType === ImmutableSet)
         return require("./deserializers/pure-set");
+    if (anEncodedType === ImmutableList)
+        return require("./deserializers/gapless-array");
 }
 
 function getBase(encodedType, aContext)
@@ -170,6 +172,8 @@ function getBase(encodedType, aContext)
             return [I.Map(), true];
         case ImmutableSet:
             return [I.Set(), true];
+        case ImmutableList:
+            return [I.List(), true];
         default:
             throw new Error("unknown type...");
     }
