@@ -34,7 +34,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-plugin-transform-regenerator": "^6.26.0",
-    "generic-jsx": "^17.0.0",
+    "generic-jsx": "^18.0.0-beta.1",
     "semver": "^5.4.1"
   }
 }

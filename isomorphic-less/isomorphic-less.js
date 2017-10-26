@@ -7,7 +7,7 @@ const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`);
 const less = require("less");
 
 
-module.exports = function ({ entrypoint, destination, options })
+module.exports = function isomorphicLess({ entrypoint, destination, options })
 {
     const output = lessSynchronous(readFileSync(entrypoint, "utf-8"));
 

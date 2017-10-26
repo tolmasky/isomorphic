@@ -1,11 +1,13 @@
 
 const { extname } = require("path");
 
-const builtIn = require("./bundle-js/built-in");
-const concatenate = require("./bundle-js/concatenate");
-const resolvedPathsInKey = require("./resolved-paths-in-key");
-
+const resolvedPathsInKey = require("isomorphic-compile/resolved-paths-in-key");
 const transform = require("isomorphic-compile/babel-transform");
+
+const builtIn = require("./built-in");
+const concatenate = require("./concatenate");
+const { getArguments } = require("generic-jsx");
+
 
 module.exports = function bundle({ entrypoint, cache, options, destination })
 {

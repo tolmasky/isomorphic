@@ -9,7 +9,6 @@ const NativeRegExp = /^function [$A-Z_a-z][0-9A-Z_a-z$]*\(\) { \[native code\] }
 
 const { base, getArguments } = require("generic-jsx");
 
-
 module.exports = getMerkleChecksum;
 
 function getMerkleChecksum(value)
