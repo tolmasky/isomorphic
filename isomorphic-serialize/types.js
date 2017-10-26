@@ -75,7 +75,11 @@ var serializers = [
     require("./serializers/generic-set"),
     require("./serializers/pure-map"),
     require("./serializers/generic-map"),
+    require("./serializers/pure-map"), // Immutable map can use pure-map.
+    require("./serializers/pure-set"), // Immutable set can use pure-set.
+    // FIXME: Lists...
 ];
+
 
 
 function getSerializer(anObject, aContext)
@@ -118,6 +122,12 @@ function getMutator(anEncodedType, aContext)
         return require("./deserializers/pure-map");
     if (anEncodedType === GenericMap)
         return require("./deserializers/generic-map");
+
+    // Immutable Maps and Sets can use native deserialization.
+    if (anEncodedType === ImmutableMap)
+        return require("./deserializers/pure-map");
+    if (anEncodedType === ImmutableSet)
+        return require("./deserializers/pure-set");
 }
 
 function getBase(encodedType, aContext)
@@ -156,6 +166,10 @@ function getBase(encodedType, aContext)
         case NoKeyValueMap:
         case GenericMap:
             return [new Map(), false];
+        case ImmutableMap:
+            return [I.Map(), true];
+        case ImmutableSet:
+            return [I.Set(), true];
         default:
             throw new Error("unknown type...");
     }

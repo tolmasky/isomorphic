@@ -1,17 +1,12 @@
 
 const invoker = require("../utils").invoker;
-const SetAdd = function(aValue, anObject)
-{
-    anObject.add(aValue);
-};
 
 module.exports = deserializeGenericSet;
 
 // This will deserialize every set.
 function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObjectSerialization)
 {
-    var forceImmutable = context.options.immutable;
-    var add = forceImmutable ? invoker("add") : SetAdd;
+    var add = invoker("add");
 
     // index 0 is the type.
     var numberOfGenericObjectPairs = serializedSet[1];

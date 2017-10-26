@@ -1,12 +1,13 @@
 
 const invoker = require("../utils").invoker;
+const isImmutable = require("immutable").Map.isMap;
 
 module.exports = deserializeGenericObject;
 
 function deserializeGenericObject(aDeserializedObject, serializedObject, context, fromObjectSerialization)
 {
     var forceImmutable = context.options.immutable;
-    var set = forceImmutable ? invoker("set") : setValueForKey;
+    var set = (forceImmutable || isImmutable(aDeserializedObject)) ? invoker("set") : setValueForKey;
 
     // index 0 is the type, all other values are deseriailzed and inserted into the
     // deserialized array in their current order.

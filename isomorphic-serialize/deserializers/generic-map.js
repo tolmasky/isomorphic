@@ -1,17 +1,12 @@
 
 const invoker = require("../utils").invoker;
-const MapSet = function(aKey, aValue, anObject)
-{
-    anObject.set(aKey, aValue);
-};
 
 module.exports = deserializeGenericMap;
 
 // This will deserialize every map.
 function deserializeGenericMap(aDeserializedMap, serializedMap, context, fromObjectSerialization)
 {
-    var forceImmutable = context.options.immutable;
-    var set = forceImmutable ? invoker("set") : MapSet;
+    var set = invoker("set");
 
     // index 0 is the type.
     var numberOfGenericObjectPairs = serializedMap[1];
