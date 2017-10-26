@@ -11,7 +11,8 @@ module.exports = function(anObjectSerialization, options)
     var context = {
         options: options || {},
         anObjectSerialization: anObjectSerialization,
-        deserializedObjects: deserializedObjects
+        deserializedObjects: deserializedObjects,
+        typeMap: anObjectSerialization.typeMap || { "0": 0, "1": 1 }
     };
 
     return fromObjectSerialization(anObjectSerialization.index, context);

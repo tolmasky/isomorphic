@@ -13,7 +13,7 @@ var types = require("./types");
 
 module.exports = function(anObject)
 {
-    var context = { UIDs: new Map(), objects:[], types: new Map() };
+    var context = { UIDs: new Map(), objects:[], types: Object.create(null) };
     var UID = toObjectSerialization(anObject, context);
     var list = context.tail;
 
@@ -27,6 +27,10 @@ module.exports = function(anObject)
     var UIDs = context.UIDs;
     var serializedObjects = [];
 
+    // Sort the types.
+    var typeMap = types.analyzeTypes(context);
+
+    // Sort the serialized objects.
     analyzeUIDs(UIDs).forEach(function(aUID)
     {
         var serializedLocation = aUID.serializedLocation;
@@ -34,7 +38,7 @@ module.exports = function(anObject)
         serializedObjects[aUID.__UNIQUE_ID] = serializedObject;
     });
 
-    return { index:UID, objects:serializedObjects };
+    return { index: UID, objects: serializedObjects, typeMap: typeMap };
 };
 
 function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
@@ -70,10 +74,9 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     var UID = UIDForValue(anObject, UIDs);
 
     if (UID)
-        return UID.increment(); // iF the UID already exists the object has already been encoded.
+        return UID.increment(); // If the UID already exists the object has already been encoded.
 
-    UID = new UIDWrapper(hasHint && aUIDHint);
-
+    UID = new UIDWrapper(hasHint && aUIDHint, aContext);
     Call(MapSet, UIDs, anObject, UID);
 
     if (type === "boolean" ||
@@ -106,15 +109,11 @@ function UIDForValue(aValue, UIDs)
     return Call(MapGet, UIDs, aValue);
 }
 
-
-var UIDCount = 0;
-
-function UIDWrapper(potentialKeyID)
+function UIDWrapper(potentialKeyID, aContext)
 {
-    this.serializedLocation = UIDCount;
+    this.serializedLocation = aContext.UIDs.size;
     this.references = 1;
     this.potentialKeyID = typeof potentialKeyID === "string" && potentialKeyID;
-    UIDCount++;
 }
 
 UIDWrapper.prototype.toJSON = function()

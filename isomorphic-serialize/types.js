@@ -4,24 +4,23 @@ const isArray = Array.isArray;
 const invoker = require("./utils").invoker;
 
 module.exports.getSerializer = getSerializer;
+module.exports.analyzeTypes = analyzeTypes;
+
 module.exports.getDeserializer = getDeserializer;
 
-
-var GenericObject = 0;
+var GenericObject     = 0;
 var JustKeyValueArray = 1;
-var GaplessArray = 2;
-var GenericArray = 3;
-var NoKeyValueSet = 4;
-var GenericSet = 5;
-var NoKeyValueMap = 6;
-var GenericMap = 7;
-// FIXME: Immutable key/values?
-var ImmutableMap = 8;
-var ImmutableSet = 9;
-var ImmutableList = 10;
+var GaplessArray      = 2;
+var GenericArray      = 3;
+var NoKeyValueSet     = 4;
+var GenericSet        = 5;
+var NoKeyValueMap     = 6;
+var GenericMap        = 7;
+var ImmutableMap      = 8;
+var ImmutableSet      = 9;
+var ImmutableList     = 10;
 
-
-function getEncodableType(anObject)
+function getInternalType(anObject)
 {
     if (isArray(anObject))
     {
@@ -49,19 +48,13 @@ function getEncodableType(anObject)
     }
 
     if (I.Map.isMap(anObject))
-    {
         return ImmutableMap;
-    }
 
     if (I.List.isList(anObject))
-    {
         return ImmutableList;
-    }
 
     if (I.Set.isSet(anObject))
-    {
         return ImmutableSet;
-    }
 
     return GenericObject;
 }
@@ -84,12 +77,26 @@ var serializers = [
 
 function getSerializer(anObject, aContext)
 {
-    var serializedType = getEncodableType(anObject, aContext);
+    var internalType = getInternalType(anObject);
+    var serializedType = encodableType(internalType);
 
     return function(toObjectSerialization)
     {
-        return [serializedType].concat(serializers[serializedType](anObject, aContext, toObjectSerialization));
+        serializedType.increment();
+        return [serializedType].concat(serializers[internalType](anObject, aContext, toObjectSerialization));
     };
+
+    function encodableType(anInternalType)
+    {
+        var existingType = aContext.types[anInternalType];
+
+        if (existingType)
+            return existingType;
+
+        existingType = new TypeUID(anInternalType);
+        aContext.types[anInternalType] = existingType;
+        return existingType;
+    }
 };
 
 
@@ -182,8 +189,10 @@ function getBase(encodedType, aContext)
 function getDeserializer(aSerializedObject, aContext)
 {
     var encodedType = aSerializedObject[0];
-    var base = getBase(encodedType, aContext);
-    var mutator = getMutator(encodedType, aContext);
+    var internalType = aContext.typeMap[encodedType];
+
+    var base = getBase(internalType, aContext);
+    var mutator = getMutator(internalType, aContext);
 
     var withMutationsFunction = base[1] ? invoker("withMutations") : withMutations;
 
@@ -200,4 +209,46 @@ function withMutations(aMutator, anObject)
 {
     aMutator(anObject);
     return anObject;
+}
+
+function TypeUID(aType)
+{
+    this.internalType = aType;
+    this.count = 0;
+    this.__UNIQUE_ID = undefined;
+}
+
+TypeUID.prototype.increment = function()
+{
+    this.count += 1;
+};
+
+TypeUID.prototype.toJSON = function()
+{
+    return this.__UNIQUE_ID;
+};
+
+function analyzeTypes(aContext)
+{
+    var keys = Object.keys(aContext.types);
+
+    var allTypes = keys.map(function(aKey)
+    {
+        return aContext.types[aKey];
+    });
+
+    allTypes.sort(function(a, b)
+    {
+        return b.count - a.count;
+    });
+
+    var finalMapping = {};
+
+    allTypes.forEach(function(aType, anIndex)
+    {
+        aType.__UNIQUE_ID = anIndex;
+        finalMapping[anIndex] = aType.internalType;
+    });
+
+    return finalMapping;
 }
