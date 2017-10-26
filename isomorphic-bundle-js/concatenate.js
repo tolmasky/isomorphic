@@ -1,8 +1,9 @@
 
 const { dirname } = require("path");
-const { existsSync, readFileSync, appendFileSync, unlinkSync } = require("fs");
+const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
+const { minify } = require("uglify-js");
 
 
 module.exports = function concatenate({ destination, entrypoint, children })
@@ -12,9 +13,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
 
     mkdirp(dirname(destination));
 
-    const format = { "string": "utf-8" };
-    const append = content =>
-        appendFileSync(destination, content, format[typeof content]);
+    const output = { buffers:[], length:0 };
 
     append(readFileSync(require.resolve("./bootstrap")));
     append("([");
@@ -54,7 +53,21 @@ module.exports = function concatenate({ destination, entrypoint, children })
     append(JSON.stringify(entrypoint));
     append(")");
 
+    const original = Buffer.concat(output.buffers, output.length);
+    const { code: minified } = minify(original.toString("utf-8"));
+
+    writeFileSync(destination, minified, "utf-8");
+
     return children;
+
+    function append(content)
+    {
+        if (typeof content === "string")
+            return append(Buffer.from(content, "utf-8"));
+
+        output.buffers.push(content);
+        output.length += content.length;
+    }
 }
 
 function getChecksum(contents)
