@@ -71,7 +71,12 @@ var serializers = [
     require("./serializers/key-value-array"),
     require("./serializers/gapless-array"),
     require("./serializers/generic-array"),
+    require("./serializers/pure-set"),
+    require("./serializers/generic-set"),
+    require("./serializers/pure-map"),
+    require("./serializers/generic-map"),
 ];
+
 
 function getSerializer(anObject, aContext)
 {
@@ -105,6 +110,14 @@ function getMutator(anEncodedType, aContext)
         return require("./deserializers/gapless-array");
     if (anEncodedType === GenericArray)
         return require("./deserializers/generic-array");
+    if (anEncodedType === NoKeyValueSet)
+        return require("./deserializers/pure-set");
+    if (anEncodedType === GenericSet)
+        return require("./deserializers/generic-set");
+    if (anEncodedType === NoKeyValueMap)
+        return require("./deserializers/pure-map");
+    if (anEncodedType === GenericMap)
+        return require("./deserializers/generic-map");
 }
 
 function getBase(encodedType, aContext)
@@ -114,11 +127,16 @@ function getBase(encodedType, aContext)
         switch(encodedType)
         {
             case GenericObject:
+            case NoKeyValueMap:
+            case GenericMap:
                 return [I.Map(), true];
             case JustKeyValueArray:
             case GaplessArray:
             case GenericArray:
                 return [I.List(), true];
+            case NoKeyValueSet:
+            case GenericSet:
+                return [I.Set(), true];
             default:
                 throw new Error("unknown type...");
         }
@@ -132,6 +150,12 @@ function getBase(encodedType, aContext)
         case GaplessArray:
         case GenericArray:
             return [[], false];
+        case NoKeyValueSet:
+        case GenericSet:
+            return [new Set(), false];
+        case NoKeyValueMap:
+        case GenericMap:
+            return [new Map(), false];
         default:
             throw new Error("unknown type...");
     }
