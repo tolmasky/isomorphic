@@ -109,35 +109,20 @@ function getSerializer(anObject, aContext)
 
 
 
+var deserializers = [
+    require("./deserializers/generic-object"),
+    require("./deserializers/key-value-array"),
+    require("./deserializers/gapless-array"),
+    require("./deserializers/generic-array"),
+    require("./deserializers/pure-set"),
+    require("./deserializers/generic-set"),
+    require("./deserializers/pure-map"),
+    require("./deserializers/generic-map"),
+    require("./deserializers/pure-map"), // Immutable map can use pure-map.
+    require("./deserializers/pure-set"), // Immutable set can use pure-set.
+    require("./deserializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+];
 
-
-function getMutator(anEncodedType, aContext)
-{
-    if (anEncodedType === GenericObject)
-        return require("./deserializers/generic-object");
-    if (anEncodedType === JustKeyValueArray)
-        return require("./deserializers/key-value-array");
-    if (anEncodedType === GaplessArray)
-        return require("./deserializers/gapless-array");
-    if (anEncodedType === GenericArray)
-        return require("./deserializers/generic-array");
-    if (anEncodedType === NoKeyValueSet)
-        return require("./deserializers/pure-set");
-    if (anEncodedType === GenericSet)
-        return require("./deserializers/generic-set");
-    if (anEncodedType === NoKeyValueMap)
-        return require("./deserializers/pure-map");
-    if (anEncodedType === GenericMap)
-        return require("./deserializers/generic-map");
-
-    // Immutable Maps and Sets can use native deserialization.
-    if (anEncodedType === ImmutableMap)
-        return require("./deserializers/pure-map");
-    if (anEncodedType === ImmutableSet)
-        return require("./deserializers/pure-set");
-    if (anEncodedType === ImmutableList)
-        return require("./deserializers/gapless-array");
-}
 
 function getBase(encodedType, aContext)
 {
@@ -192,9 +177,9 @@ function prepareForDeserialization(aSerializedObject, aContext, fromObjectSerial
     var internalType = aContext.typeMap[encodedType];
 
     var base = getBase(internalType, aContext);
-    var mutator = getMutator(internalType, aContext);
+    var mutator = deserializers[internalType];
 
-    var withMutationsFunction = base[1] ? invoker("withMutations") : withMutations;
+    var withMutationsFunction = base[1] ? immutableWithMutations : withMutations;
 
     return [base[0], function(aBaseObject)
     {
@@ -204,6 +189,8 @@ function prepareForDeserialization(aSerializedObject, aContext, fromObjectSerial
         }, aBaseObject);
     }];
 };
+
+var immutableWithMutations = invoker("withMutations");
 
 function withMutations(aMutator, anObject)
 {
