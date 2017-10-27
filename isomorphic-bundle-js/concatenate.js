@@ -7,6 +7,7 @@ const transform = require("isomorphic-compile/babel-transform");
 const uglify = require("uglify-js");
 const modulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
 const modulePostamble = "\n}";
+const MUIDStore = require("./muid-store");
 
 
 
@@ -24,9 +25,9 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
     append("(window, [");
 
     const count = children.length;
-    const modules = { };
     const content = { references: { }, count: 0 };
     const entrypoints = new Set();
+    const modules = new MUIDStore(([path]) => path);
 
     for (var index = 1; index < count; ++index)
     {
@@ -53,13 +54,14 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
                 append(modulePostamble);
         }
 
-        const reference = content.references[checksum];
+        const contentReference = content.references[checksum];
+        const dependenciesMUIDs = ObjectMap(dependencies, modules.future);
 
-        modules[path] = [reference, dependencies];
+        modules.for([path, contentReference, dependenciesMUIDs]);
     }
 
     append("],");
-    append(JSON.stringify(modules));
+    append(JSON.stringify(modules.finalize()));
     append(",");
     append(JSON.stringify(entrypoint));
     append(")");
@@ -79,6 +81,16 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
         output.buffers.push(content);
         output.length += content.length;
     }
+}
+
+function ObjectMap(anObject, aFunction)
+{
+    const mapped = { };
+
+    for (const key of Object.keys(anObject))
+        mapped[key] = aFunction(anObject[key], key);
+
+    return mapped;
 }
 
 function minify(proceed, input)
@@ -101,3 +113,6 @@ function getChecksum(contents)
         .update(contents)
         .digest("hex");
 }
+
+
+
