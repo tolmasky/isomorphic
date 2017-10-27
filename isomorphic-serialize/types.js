@@ -6,7 +6,7 @@ const invoker = require("./utils").invoker;
 module.exports.getSerializer = getSerializer;
 module.exports.analyzeTypes = analyzeTypes;
 
-module.exports.getDeserializer = getDeserializer;
+module.exports.prepareForDeserialization = prepareForDeserialization;
 
 var GenericObject     = 0;
 var JustKeyValueArray = 1;
@@ -186,7 +186,7 @@ function getBase(encodedType, aContext)
     }
 }
 
-function getDeserializer(aSerializedObject, aContext)
+function prepareForDeserialization(aSerializedObject, aContext, fromObjectSerialization)
 {
     var encodedType = aSerializedObject[0];
     var internalType = aContext.typeMap[encodedType];
@@ -196,13 +196,13 @@ function getDeserializer(aSerializedObject, aContext)
 
     var withMutationsFunction = base[1] ? invoker("withMutations") : withMutations;
 
-    return function(fromObjectSerialization)
+    return [base[0], function(aBaseObject)
     {
         return withMutationsFunction(function(aDeserializedObject)
         {
             return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
-        }, base[0]);
-    };
+        }, aBaseObject);
+    }];
 };
 
 function withMutations(aMutator, anObject)

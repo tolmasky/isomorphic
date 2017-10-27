@@ -21,6 +21,8 @@ function deserializeGenericObject(aDeserializedObject, serializedObject, context
 
         set(key, value, aDeserializedObject);
     }
+
+    return aDeserializedObject;
 }
 
 function setValueForKey(aKey, aValue, anObject)

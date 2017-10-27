@@ -46,9 +46,10 @@ function fromObjectSerialization(index, context)
         return serializedObject;
     }
 
+    var preperationWrapper = Types.prepareForDeserialization(serializedObject, context, fromObjectSerialization);
+    var base = preperationWrapper[0];
+    var deserializer = preperationWrapper[1];
     // Everything that remains is a collection.
-    var value = Types.getDeserializer(serializedObject, context)(fromObjectSerialization);
-    context.deserializedObjects[index] = value;
-
-    return value;
+    context.deserializedObjects[index] = base;
+    return deserializer(base);
 }
