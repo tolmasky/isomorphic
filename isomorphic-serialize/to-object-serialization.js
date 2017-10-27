@@ -13,7 +13,7 @@ var types = require("./types");
 
 module.exports = function(anObject)
 {
-    var context = { UIDs: new Map(), objects:[], types: Object.create(null) };
+    var context = { UIDs: new Map(), UIDList: [], objects:[], types: Object.create(null) };
     var UID = toObjectSerialization(anObject, context);
     var list = context.tail;
 
@@ -24,14 +24,12 @@ module.exports = function(anObject)
         list = list.next;
     }
 
-    var UIDs = context.UIDs;
     var serializedObjects = [];
 
     // Sort the types.
     var typeMap = types.analyzeTypes(context);
-
     // Sort the serialized objects.
-    analyzeUIDs(UIDs).forEach(function(aUID)
+    analyzeUIDs(context.UIDList, function(aUID)
     {
         var serializedLocation = aUID.serializedLocation;
         var serializedObject = context.objects[serializedLocation];
@@ -78,6 +76,7 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
 
     UID = new UIDWrapper(hasHint && aUIDHint, aContext);
     Call(MapSet, UIDs, anObject, UID);
+    aContext.UIDList.push(UID);
 
     if (type === "boolean" ||
         type === "number" ||
@@ -127,10 +126,8 @@ UIDWrapper.prototype.increment = function()
     return this;
 };
 
-function analyzeUIDs(UIDsMap)
+function analyzeUIDs(UIDs, aFunction)
 {
-    var UIDs = Array.from(UIDsMap.values());
-
     UIDs.sort(function(a, b)
     {
         return b.references - a.references;
@@ -153,6 +150,8 @@ function analyzeUIDs(UIDsMap)
         }
         else
             aUID.__UNIQUE_ID = potentialID;
+
+        aFunction(aUID);
     });
 
     return UIDs;
