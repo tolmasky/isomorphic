@@ -12,8 +12,22 @@ const getMerkleChecksum = require("./get-merkle-checksum");
 module.exports = function transform({ cache, path, options })
 {
     const contents = readFileSync(path, "utf-8");
+    const checksum = getMerkleChecksum({ contents, path, options })
+        .replace(/\//g, "_");
+    const contentsCachePath = getContentsCachePath(cache, checksum, path);
+    const metadataCachePath = getMetadataCachePath(cache, checksum, path);
 
-    return  <transformAST { ...{ cache, contents, filename: path, options } }>
+    if (existsSync(contentsCachePath))
+    {
+        const include = contentsCachePath;
+        const metadata = getCachedMetadata(metadataCachePath);
+
+        return { include, path, ...metadata };
+    }
+
+    const caches = { contentsCachePath, metadataCachePath };
+
+    return  <transformAST { ...{ ...caches, contents, path, options } }>
                 <parse contents = { contents } >
                     <parserOptions options = { options } />
                 </parse>
@@ -37,23 +51,10 @@ function parserOptions({ options })
     return Object.assign(parserOpts, opts.parserOpts);
 }
 
-function transformAST({ children:[AST], cache, contents, filename, options })
+function transformAST({ children:[AST], contentsCachePath, metadataCachePath,
+    contents, path, options })
 {
-    const checksum = getMerkleChecksum({ contents, filename, options })
-        .replace(/\//g, "_");
-    const mutatedOptions = getMutatedOptions(options, checksum, filename);
-    const contentsCachePath = getContentsCachePath(cache, checksum, filename);
-    const metadataCachePath = getMetadataCachePath(cache, checksum, filename);
-
-    if (existsSync(contentsCachePath))
-    {
-        const include = contentsCachePath;
-        const metadata = getCachedMetadata(metadataCachePath);
-
-        return { include, path:filename, ...metadata };
-    }
-
-    const transformed = transformFromAst(AST, contents, mutatedOptions);
+    const transformed = transformFromAst(AST, contents, options);
     const transformedContents = transformed.code;
 
     writeFileSync(contentsCachePath, transformedContents, "utf-8");
@@ -63,15 +64,7 @@ function transformAST({ children:[AST], cache, contents, filename, options })
 
     cacheMetadata(metadataCachePath, metadata);
 
-    return { include: contentsCachePath, path:filename, checksum, ...metadata };
-}
-
-function getMutatedOptions(options, checksum, filename)
-{return options;
-    const plugins = [metadataPlugin, requiresPlugin, entrypointsPlugin]
-        .concat(options.plugins || []);
-
-    return { ...options, plugins, filename };
+    return { include: contentsCachePath, path, ...metadata };
 }
 
 function cacheMetadata(aPath, metadata)
