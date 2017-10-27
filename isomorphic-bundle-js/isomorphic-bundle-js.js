@@ -42,7 +42,7 @@ function dependency({ cache, path, options })
         return <builtIn name = { path } />;
 
     if (extname(path) === ".json")
-        return { include: path };
+        return { include: path, path };
 
     return <transform { ...{ cache, options: options.babel, path } } />;
 }

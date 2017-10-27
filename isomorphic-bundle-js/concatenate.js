@@ -1,5 +1,5 @@
 
-const { dirname } = require("path");
+const { dirname, extname } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
@@ -28,6 +28,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
         const metadata = children[index];
         const contents = readFileSync(metadata.include);
         const checksum = getChecksum(contents);
+        const { path, dependencies } = metadata;
 
         if (!hasOwnProperty.call(content.references, checksum))
         {
@@ -37,12 +38,17 @@ module.exports = function concatenate({ destination, entrypoint, children })
                 append(",");
 
             append("function (exports, require, module, __filename, __dirname) {");
+
+            if (extname(path) ===".json")
+                append("module.exports = ");
+
             append(contents);
-            append("}");
+    
+            // newline necessary in case the file ends with a line-comment.
+            append("\n}");
         }
 
         const reference = content.references[checksum];
-        const { path, dependencies } = metadata;
 
         modules[path] = [reference, dependencies];
     }
@@ -54,7 +60,12 @@ module.exports = function concatenate({ destination, entrypoint, children })
     append(")");
 
     const original = Buffer.concat(output.buffers, output.length);
-    const { code: minified } = minify(original.toString("utf-8"));
+    const { code: minified, error } = minify(original.toString("utf-8"));
+    /*
+    if (error){
+        console.log(error);
+        console.log(original.toString("utf-8").substr(error.pos - 100, 200));
+    }*/
 
     writeFileSync(destination, minified, "utf-8");
 

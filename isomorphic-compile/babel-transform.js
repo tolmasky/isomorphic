@@ -31,7 +31,10 @@ function parse({ children:[options], contents })
 
 function parserOptions({ options })
 {
-    return new File(options).parserOpts;
+    const { parserOpts, opts } = new File(options);
+
+    // Oh boy...
+    return Object.assign(parserOpts, opts.parserOpts);
 }
 
 function transformAST({ children:[AST], cache, contents, filename, options })

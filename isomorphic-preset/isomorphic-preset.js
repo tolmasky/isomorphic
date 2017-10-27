@@ -31,7 +31,6 @@ module.exports = function (_, { node, browser, flags = [], JSXPragma, ...options
 
 var plugins =
 [
-
     [OR(browser, range("< 0.12")), require("babel-plugin-transform-es2015-for-of")],
     [OR(browser, range("< 0.12")), require("babel-plugin-check-es2015-constants")],
     [OR(browser, range("< 0.12")), require("babel-plugin-transform-es2015-typeof-symbol")],

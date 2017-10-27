@@ -9,14 +9,14 @@ module.exports = function builtIn({ name })
         throw new Error(`${name} is not a recognized core node module.`);
 
     if (!polyfills[name])
-        return <empty/>;
+        return <empty name = { name }/>;
 
-    return { include: polyfills[name] };
+    return { include: polyfills[name], path: name };
 }
 
-function empty()
+function empty({ name })
 {
-    return { include: require.resolve("node-libs-browser/mock/empty") };
+    return { include: require.resolve("node-libs-browser/mock/empty"), path: name };
 }
 
 module.exports.is = function (name)
