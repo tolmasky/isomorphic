@@ -3,10 +3,11 @@ const { dirname, extname } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
-const { minify } = require("uglify-js");
+const transform = require("isomorphic-compile/babel-transform");
+const uglify = require("uglify-js");
 
 
-module.exports = function concatenate({ destination, entrypoint, children })
+module.exports = function concatenate({ destination, entrypoint, children, options })
 {
     if (existsSync(destination))
         unlinkSync(destination);
@@ -15,7 +16,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
 
     const output = { buffers:[], length:0 };
 
-    append(readFileSync(require.resolve("./bootstrap")));
+    append(readFileSync(children[0].include));
     append("([");
 
     const count = children.length;
@@ -23,7 +24,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
     const content = { references: { }, count: 0 };
     const entrypoints = new Set();
 
-    for (var index = 0; index < count; ++index)
+    for (var index = 1; index < count; ++index)
     {
         const metadata = children[index];
         const contents = readFileSync(metadata.include);
@@ -37,15 +38,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
             if (content.count > 1)
                 append(",");
 
-            append("function (exports, require, module, __filename, __dirname) {");
-
-            if (extname(path) ===".json")
-                append("module.exports = ");
-
             append(contents);
-    
-            // newline necessary in case the file ends with a line-comment.
-            append("\n}");
         }
 
         const reference = content.references[checksum];
@@ -59,15 +52,7 @@ module.exports = function concatenate({ destination, entrypoint, children })
     append(JSON.stringify(entrypoint));
     append(")");
 
-    const original = Buffer.concat(output.buffers, output.length);
-    const { code: minified, error } = minify(original.toString("utf-8"));
-    /*
-    if (error){
-        console.log(error);
-        console.log(original.toString("utf-8").substr(error.pos - 100, 200));
-    }*/
-
-    writeFileSync(destination, minified, "utf-8");
+    writeFileSync(destination, Buffer.concat(output.buffers, output.length));
 
     return children;
 

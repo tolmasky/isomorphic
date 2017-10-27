@@ -5,11 +5,12 @@ const { existsSync, readFileSync, writeFileSync } = require("fs");
 const babylon = require("babylon");
 const { transformFromAst } = require("babel-core");
 const File = require("babel-core/lib/transformation/file").default;
+const uglify = require("uglify-js");
 
 const getMerkleChecksum = require("./get-merkle-checksum");
 
 
-module.exports = function transform({ cache, path, options })
+module.exports = function transform({ cache, path, options, wrap })
 {
     const contents = readFileSync(path, "utf-8");
     const checksum = getMerkleChecksum({ contents, path, options })
@@ -27,9 +28,9 @@ module.exports = function transform({ cache, path, options })
 
     const caches = { contentsCachePath, metadataCachePath };
 
-    return  <transformAST { ...{ ...caches, contents, path, options } }>
+    return  <transformAST { ...{ ...caches, contents, path, options, wrap } }>
                 <parse contents = { contents } >
-                    <parserOptions options = { options } />
+                    <parserOptions options = { options.babel } />
                 </parse>
             </transformAST>
 }
@@ -52,12 +53,20 @@ function parserOptions({ options })
 }
 
 function transformAST({ children:[AST], contentsCachePath, metadataCachePath,
-    contents, path, options })
+    contents, path, options, wrap })
 {
-    const transformed = transformFromAst(AST, contents, options);
+    const transformed = transformFromAst(AST, contents, options.babel);
     const transformedContents = transformed.code;
+    // newline necessary in case the file ends with a line-comment.
+    const wrappedContents = wrap ?
+        "(function (exports, require, module, __filename, __dirname) {" +
+        transformedContents + "\n})" :
+        transformedContents;
+    const minifiedContents = options.minify ?
+        minify(wrappedContents, { compress: { side_effects: false } }) :
+        wrappedContents;
 
-    writeFileSync(contentsCachePath, transformedContents, "utf-8");
+    writeFileSync(contentsCachePath, minifiedContents, "utf-8");
 
     const metadata = transformed.metadata.isomorphic ||
         { dependencies: new Set(), entrypoints: new Set(), assets: new Set() };
@@ -65,6 +74,16 @@ function transformAST({ children:[AST], contentsCachePath, metadataCachePath,
     cacheMetadata(metadataCachePath, metadata);
 
     return { include: contentsCachePath, path, ...metadata };
+}
+
+function minify(input, options)
+{
+    const { code, error } = uglify.minify(input, options);
+
+    if (error)
+        throw error;
+
+    return code;
 }
 
 function cacheMetadata(aPath, metadata)

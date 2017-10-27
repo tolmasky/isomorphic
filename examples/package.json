@@ -21,6 +21,7 @@
         "output": "/assets/:name.bundle.js",
         "transform": "isomorphic-bundle-js",
         "options": {
+          "minify": true,
           "babel": {
             "presets": [
                 ["isomorphic-preset", { "browser": true, "react": true }]
