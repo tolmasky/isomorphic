@@ -4,7 +4,7 @@
   "description": "",
   "main": "./isomorphic-serialization",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava tests/"
   },
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
@@ -14,5 +14,8 @@
   "dependencies": {
     "immutable": "^3.6.2",
     "ramda": "^0.22.1"
+  },
+  "devDependencies": {
+    "ava": "^0.23.0"
   }
 }
