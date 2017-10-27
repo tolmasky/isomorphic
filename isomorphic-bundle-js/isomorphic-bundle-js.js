@@ -4,7 +4,6 @@ const { existsSync, readFileSync, writeFileSync } = require("fs");
 
 const resolvedPathsInKey = require("isomorphic-compile/resolved-paths-in-key");
 const transform = require("isomorphic-compile/babel-transform");
-const getMerkleChecksum = require("isomorphic-compile/get-merkle-checksum");
 
 const builtIn = require("./built-in");
 const concatenate = require("./concatenate");
@@ -13,9 +12,9 @@ const { getArguments } = require("generic-jsx");
 
 module.exports = function bundle({ entrypoint, cache, options, destination })
 {
-    return  <concatenate { ...{ entrypoint, destination, cache, options } } >
-                <bootstrap { ... { cache, options } } />
+    return  <concatenate { ...{ entrypoint, destination, cache, options } } >            
                 <dependencies { ...{ cache, options } } >
+                    <bootstrap { ... { cache, options } } />
                     <dependency { ...{ path: entrypoint, cache, options } } />
                 </dependencies>
             </concatenate>;
@@ -40,35 +39,23 @@ function dependencies({ children, visited, cache, options })
 }
 
 function bootstrap({ cache, options })
-{    
+{
     const path = require.resolve("./bootstrap");
 
-    return <transform { ...{ cache, options, path, wrap: false } } />;
+    return <dependency { ...{ cache, options, path, removeTrailingSemicolon: true } } />;
 }
 
-function dependency({ cache, path, options, wrap = true })
+function dependency({ cache, path, options, removeTrailingSemicolon })
 {
-    if (builtIn.is(path))
-        return <builtIn name = { path } />;
-
+    // Instead of forcing the json file into a module format, inline the object
+    // directly.
     if (extname(path) === ".json")
-        return <json { ...{ cache, path } } />;
+        return { include: path, path };
 
-    return <transform { ...{ cache, options, path, wrap: true } } />;
-}
+    return <transform
+            path = { builtIn.is(path) ? builtIn(path) : path }
+            cache = { cache }
+            options = { options }
+            removeTrailingSemicolon = { removeTrailingSemicolon } />;
 
-function json({ cache, path })
-{
-    const contents = readFileSync(path, "utf-8");
-    const checksum = getMerkleChecksum({ contents, path })
-        .replace(/\//g, "_");
-    const contentsCachePath =
-        join(cache, `${basename(path)}-contents-${checksum}.json`);
-
-    if (!existsSync(contentsCachePath))
-        writeFileSync(contentsCachePath,
-            "function (exports, require, module, __filename, __dirname) {" +
-            contents + "\n}", "utf-8");
-
-    return { include: contentsCachePath, path };
 }

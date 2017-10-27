@@ -1,4 +1,4 @@
-(function (content, modules, entrypoint)
+(function (global, content, modules, entrypoint)
 {
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var requireDepth = 0;
@@ -27,7 +27,10 @@ Module.prototype.load = function(filename)
     var require = makeRequireFunction(this, dependencies);
     var precompiled = content[modules[filename][0]];
 
-    precompiled(this.exports, require, this, filename, dirname);
+    if (typeof precompiled === "function")
+        precompiled(this.exports, require, this, filename, dirname);
+    else
+        this.exports = precompiled;
 
     this.loaded = true;
 };

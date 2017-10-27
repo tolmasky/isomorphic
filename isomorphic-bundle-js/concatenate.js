@@ -5,6 +5,9 @@ const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 const transform = require("isomorphic-compile/babel-transform");
 const uglify = require("uglify-js");
+const modulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
+const modulePostamble = "\n}";
+
 
 
 module.exports = function concatenate({ destination, entrypoint, children, options })
@@ -16,8 +19,9 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
 
     const output = { buffers:[], length:0 };
 
+    // The first item is always the bootstrap file, it doesn't get wrapped.
     append(readFileSync(children[0].include));
-    append("([");
+    append("(window, [");
 
     const count = children.length;
     const modules = { };
@@ -38,7 +42,15 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
             if (content.count > 1)
                 append(",");
 
+            const isJSON = extname(path) ===".json";
+            
+            if (!isJSON)
+                append(modulePreamble);
+ 
             append(contents);
+ 
+            if (!isJSON)
+                append(modulePostamble);
         }
 
         const reference = content.references[checksum];
@@ -52,7 +64,10 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
     append(JSON.stringify(entrypoint));
     append(")");
 
-    writeFileSync(destination, Buffer.concat(output.buffers, output.length));
+    const concated = Buffer.concat(output.buffers, output.length);
+    const minified = minify(options.minify, concated.toString("utf-8"));
+
+    writeFileSync(destination, minified, "utf-8");
 
     return children;
 
@@ -64,6 +79,19 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
         output.buffers.push(content);
         output.length += content.length;
     }
+}
+
+function minify(proceed, input)
+{
+    if (!proceed)
+        return input;
+
+    const { code, error } = uglify.minify(input);
+
+    if (error)
+        throw error;
+
+    return code;
 }
 
 function getChecksum(contents)

@@ -3,20 +3,15 @@ const polyfills = require("node-libs-browser");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
-module.exports = function builtIn({ name })
+module.exports = function(name)
 {
     if (!hasOwnProperty.call(polyfills, name))
         throw new Error(`${name} is not a recognized core node module.`);
 
     if (!polyfills[name])
-        return <empty name = { name }/>;
+        return require.resolve("node-libs-browser/mock/empty");
 
-    return { include: polyfills[name], path: name };
-}
-
-function empty({ name })
-{
-    return { include: require.resolve("node-libs-browser/mock/empty"), path: name };
+    return polyfills[name];
 }
 
 module.exports.is = function (name)
