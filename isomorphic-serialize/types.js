@@ -80,27 +80,24 @@ var serializers = [
 function getSerializer(anObject, aContext)
 {
     var internalType = getInternalType(anObject);
-    var serializedType = encodableType(internalType);
+    var serializedType = encodableType(internalType, aContext);
 
     return function(toObjectSerialization)
     {
         serializedType.increment();
         return [serializedType].concat(serializers[internalType](anObject, aContext, toObjectSerialization));
     };
+}
 
-    function encodableType(anInternalType)
-    {
-        var existingType = aContext.types[anInternalType];
+function encodableType(anInternalType, aContext)
+{
+    var existingType = aContext.types[anInternalType];
 
-        if (existingType)
-            return existingType;
-
-        existingType = new TypeUID(anInternalType);
-        aContext.types[anInternalType] = existingType;
+    if (existingType)
         return existingType;
-    }
-};
 
+    return aContext.types[anInternalType] = new TypeUID(anInternalType);
+}
 
 
 
