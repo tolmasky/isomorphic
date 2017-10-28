@@ -1,5 +1,5 @@
 
-const { dirname, extname } = require("path");
+const { dirname, extname, relative } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
@@ -10,8 +10,7 @@ const modulePostamble = "\n}";
 const MUIDStore = require("./muid-store");
 
 
-
-module.exports = function concatenate({ destination, entrypoint, children, options })
+module.exports = function concatenate({ root, destination, entrypoint, children, options })
 {
     if (existsSync(destination))
         unlinkSync(destination);
@@ -35,6 +34,7 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
         const contents = readFileSync(metadata.include);
         const checksum = getChecksum(contents);
         const { path, dependencies } = metadata;
+        const rooted = "/" + relative(root, path);
 
         if (!hasOwnProperty.call(content.references, checksum))
         {
@@ -43,8 +43,8 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
             if (content.count > 1)
                 append(",");
 
-            const isJSON = extname(path) ===".json";
-            
+            const isJSON = extname(rooted) ===".json";
+
             if (!isJSON)
                 append(modulePreamble);
  
@@ -55,11 +55,12 @@ module.exports = function concatenate({ destination, entrypoint, children, optio
         }
 
         const contentReference = content.references[checksum];
-        const dependenciesMUIDs = ObjectMap(dependencies, modules.future);
+        const dependenciesMUIDs = ObjectMap(dependencies,
+            path => modules.future("/" + relative(root, path)));
 
-        modules.for([path, contentReference, dependenciesMUIDs]);
+        modules.for([rooted, contentReference, dependenciesMUIDs]);
     }
-
+//writeFileSync(destination+"just_module.txt", JSON.stringify(modules.finalize()), "utf-8");
     append("],");
     append(JSON.stringify(modules.finalize()));
     append(",");

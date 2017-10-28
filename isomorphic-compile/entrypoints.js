@@ -33,7 +33,7 @@ function toRouter(routes, source, destination)
             output: Route(routes[input].output)
         }));
 
-    return function (path, cache)
+    return function (path, cache, root)
     {
         const relativePath = "/" + relative(source, path);
 
@@ -47,7 +47,7 @@ function toRouter(routes, source, destination)
             const output = resolve(join(destination, route.output.reverse(captures)));
             const { transform, options = { } } = route.definition;
             const entrypoint = require(transform);
-            const computed = { cache, options, entrypoint: path, destination: output };
+            const computed = { root: source, cache, options, entrypoint: path, destination: output };
 
             return  <report destination = { output } started = { Date.now() } >
                         <entrypoint { ...computed } />

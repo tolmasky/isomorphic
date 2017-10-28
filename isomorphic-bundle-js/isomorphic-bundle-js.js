@@ -10,9 +10,9 @@ const concatenate = require("./concatenate");
 const { getArguments } = require("generic-jsx");
 
 
-module.exports = function bundle({ entrypoint, cache, options, destination })
+module.exports = function bundle({ root, entrypoint, cache, options, destination })
 {
-    return  <concatenate { ...{ entrypoint, destination, cache, options } } >            
+    return  <concatenate { ...{ root, entrypoint, destination, cache, options } } >
                 <dependencies { ...{ cache, options } } >
                     <bootstrap { ... { cache, options } } />
                     <dependency { ...{ path: entrypoint, cache, options } } />
