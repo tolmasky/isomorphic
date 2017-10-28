@@ -20,18 +20,21 @@ module.exports = function(anObjectSerialization, options)
 
 function fromObjectSerialization(index, context)
 {
-    if (index === -1)
-        return null;
-    if (index === -2)
-        return undefined;
-    if (index === -3)
-        return NaN;
-    if (index === -4)
-        return -0;
-    if (index === -5)
-        return -Infinity;
-    if (index === -6)
-        return Infinity;
+    switch(index)
+    {
+        case -1:
+            return null;
+        case -2:
+            return undefined;
+        case -3:
+            return NaN;
+        case -4:
+            return -0;
+        case -5:
+            return -Infinity;
+        case -6:
+            return Infinity;
+    }
 
     // Check to see if the object has already been deserialized.
     if (context.deserializedObjects.hasOwnProperty(index))

@@ -20,6 +20,8 @@ var ImmutableMap      = 8;
 var ImmutableSet      = 9;
 var ImmutableList     = 10;
 
+var ImmutableTypeStart = 8;
+
 function getInternalType(anObject)
 {
     if (isArray(anObject))
@@ -123,7 +125,6 @@ var deserializers = [
     require("./deserializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
 ];
 
-
 function getBase(encodedType, aContext)
 {
     if (aContext.options.immutable)
@@ -133,14 +134,14 @@ function getBase(encodedType, aContext)
             case GenericObject:
             case NoKeyValueMap:
             case GenericMap:
-                return [I.Map(), true];
+                return I.Map();
             case JustKeyValueArray:
             case GaplessArray:
             case GenericArray:
-                return [I.List(), true];
+                return I.List();
             case NoKeyValueSet:
             case GenericSet:
-                return [I.Set(), true];
+                return I.Set();
             default:
                 throw new Error("unknown type...");
         }
@@ -149,23 +150,23 @@ function getBase(encodedType, aContext)
     switch(encodedType)
     {
         case GenericObject:
-            return [{}, false];
+            return {};
         case JustKeyValueArray:
         case GaplessArray:
         case GenericArray:
-            return [[], false];
+            return [];
         case NoKeyValueSet:
         case GenericSet:
-            return [new Set(), false];
+            return new Set();
         case NoKeyValueMap:
         case GenericMap:
-            return [new Map(), false];
+            return new Map();
         case ImmutableMap:
-            return [I.Map(), true];
+            return I.Map();
         case ImmutableSet:
-            return [I.Set(), true];
+            return I.Set();
         case ImmutableList:
-            return [I.List(), true];
+            return I.List();
         default:
             throw new Error("unknown type...");
     }
@@ -179,9 +180,10 @@ function prepareForDeserialization(aSerializedObject, aContext, fromObjectSerial
     var base = getBase(internalType, aContext);
     var mutator = deserializers[internalType];
 
-    var withMutationsFunction = base[1] ? immutableWithMutations : withMutations;
+    var isImmutable = aContext.options.immutable || internalType >= ImmutableTypeStart;
+    var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
 
-    return [base[0], function(aBaseObject)
+    return [base, function(aBaseObject)
     {
         return withMutationsFunction(function(aDeserializedObject)
         {
