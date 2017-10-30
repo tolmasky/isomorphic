@@ -1,20 +1,16 @@
 
-var isImmutable = require("immutable").List.isList;
-// var mapInvoker = require("../utils").invoker("map");
+var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
 
 function serializeGaplessArray(serializedObject, anArray, aContext, toObjectSerialization)
 {
     var i = 0;
 
-    if (isImmutable(anArray))
+    if (anArray[IS_LIST_SENTINEL])
     {
         var count = anArray.size;
 
         for (; i < count; i++)
             serializedObject[i + 1] = toObjectSerialization(anArray.get(i), aContext);
-
-        return serializedObject;
-
     }
     else
     {
@@ -22,9 +18,9 @@ function serializeGaplessArray(serializedObject, anArray, aContext, toObjectSeri
 
         for (; i < count; i++)
             serializedObject[i + 1] = toObjectSerialization(anArray[i], aContext);
-
-        return serializedObject;
     }
+
+    return serializedObject;
 }
 
 module.exports = serializeGaplessArray;
