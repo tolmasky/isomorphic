@@ -133,11 +133,14 @@ function analyzeUIDs(UIDs, aFunction)
         return b.references - a.references;
     });
 
-    var offset = 0;
+    var offset = 0,
+        i = 0,
+        count = UIDs.length;
 
-    UIDs.forEach(function(aUID, anIndex)
+    for (; i < count; i++)
     {
-        var potentialID = anIndex - offset;
+        var aUID = UIDs[i];
+        var potentialID = i - offset;
         var potentialKeyID = aUID.potentialKeyID;
 
         var canStoreAsString = typeof potentialKeyID === "string";
@@ -152,7 +155,7 @@ function analyzeUIDs(UIDs, aFunction)
             aUID.__UNIQUE_ID = potentialID;
 
         aFunction(aUID);
-    });
+    }
 
     return UIDs;
 }

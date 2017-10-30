@@ -232,11 +232,12 @@ function analyzeTypes(aContext)
 
     var finalMapping = {};
 
-    allTypes.forEach(function(aType, anIndex)
+    for (var i = 0; i < allTypes.length; i++)
     {
-        aType.__UNIQUE_ID = anIndex;
-        finalMapping[anIndex] = aType.internalType;
-    });
+        var aType = allTypes[i];
+        aType.__UNIQUE_ID = i;
+        finalMapping[i] = aType.internalType;
+    }
 
     return finalMapping;
 }
