@@ -1,27 +1,32 @@
 
 var isImmutable = require("immutable").List.isList;
-var mapInvoker = require("../utils").invoker("map");
+// var mapInvoker = require("../utils").invoker("map");
 
-function serializeGaplessArray(anArray, aContext, toObjectSerialization)
+function serializeGaplessArray(serializedObject, anArray, aContext, toObjectSerialization)
 {
-    var map = isImmutable(anArray) ? immutableMap : mapInvoker;
-    return map(serialize, anArray);
+    var i = 0;
 
-    function serialize(anObject)
+    if (isImmutable(anArray))
     {
-        return toObjectSerialization(anObject, aContext);
+        var count = anArray.size;
+
+        for (; i < count; i++)
+            serializedObject[i + 1] = toObjectSerialization(anArray.get(i), aContext);
+
+        return serializedObject;
+
+    }
+    else
+    {
+        var count = anArray.length;
+
+        for (; i < count; i++)
+            serializedObject[i + 1] = toObjectSerialization(anArray[i], aContext);
+
+        return serializedObject;
     }
 }
 
 module.exports = serializeGaplessArray;
 
-function immutableMap(mapper, aList)
-{
-    var newItem = [];
-    var count = aList.size;
 
-    for (var i = 0; i < count; i++)
-        newItem[i] = mapper(aList.get(i));
-
-    return newItem;
-}
