@@ -1,5 +1,6 @@
 
 var Types = require("./types");
+var invoker = require("./utils").invoker;
 
 // Returns a deserialized object.
 // Expects a serialized object and an options object.
@@ -49,10 +50,33 @@ function fromObjectSerialization(index, context)
         return serializedObject;
     }
 
-    var preperationWrapper = Types.prepareForDeserialization(serializedObject, context, fromObjectSerialization);
-    var base = preperationWrapper[0];
-    var deserializer = preperationWrapper[1];
-    // Everything that remains is a collection.
+    var encodedType = serializedObject[0];
+    var internalType = context.typeMap[encodedType];
+    var base = Types.getBase(internalType, context);
+
     context.deserializedObjects[index] = base;
-    return deserializer(base);
+    return deserialize(base, internalType, serializedObject, context, fromObjectSerialization);
+}
+
+var ImmutableTypeStart = Types.ImmutableTypeStart;
+var deserializers = Types.deserializers;
+var immutableWithMutations = invoker("withMutations");
+
+function deserialize(aBase, anInternalType, aSerializedObject, aContext, fromObjectSerialization)
+{
+    var mutator = deserializers[anInternalType];
+
+    var isImmutable = aContext.options.immutable || anInternalType >= ImmutableTypeStart;
+    var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
+
+    return withMutationsFunction(function(aDeserializedObject)
+    {
+        return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
+    }, aBase);
+};
+
+function withMutations(aMutator, anObject)
+{
+    aMutator(anObject);
+    return anObject;
 }

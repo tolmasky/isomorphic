@@ -1,12 +1,11 @@
 
 const I = require("immutable");
 const isArray = Array.isArray;
-const invoker = require("./utils").invoker;
 
 module.exports.getSerializer = getSerializer;
 module.exports.analyzeTypes = analyzeTypes;
 
-module.exports.prepareForDeserialization = prepareForDeserialization;
+module.exports.getBase = getBase;
 
 var GenericObject     = 0;
 var JustKeyValueArray = 1;
@@ -20,7 +19,7 @@ var ImmutableMap      = 8;
 var ImmutableSet      = 9;
 var ImmutableList     = 10;
 
-var ImmutableTypeStart = 8;
+module.exports.ImmutableTypeStart = 8;
 
 function getInternalType(anObject)
 {
@@ -110,7 +109,7 @@ function encodableType(anInternalType, aContext)
 
 
 
-var deserializers = [
+module.exports.deserializers = [
     require("./deserializers/generic-object"),
     require("./deserializers/key-value-array"),
     require("./deserializers/gapless-array"),
@@ -169,34 +168,6 @@ function getBase(encodedType, aContext)
         default:
             throw new Error("unknown type...");
     }
-}
-
-function prepareForDeserialization(aSerializedObject, aContext, fromObjectSerialization)
-{
-    var encodedType = aSerializedObject[0];
-    var internalType = aContext.typeMap[encodedType];
-
-    var base = getBase(internalType, aContext);
-    var mutator = deserializers[internalType];
-
-    var isImmutable = aContext.options.immutable || internalType >= ImmutableTypeStart;
-    var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
-
-    return [base, function(aBaseObject)
-    {
-        return withMutationsFunction(function(aDeserializedObject)
-        {
-            return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
-        }, aBaseObject);
-    }];
-};
-
-var immutableWithMutations = invoker("withMutations");
-
-function withMutations(aMutator, anObject)
-{
-    aMutator(anObject);
-    return anObject;
 }
 
 function TypeUID(aType)
