@@ -5,19 +5,25 @@ const resolvedPathsInKey = require("./resolved-paths-in-key");
 const { execSync } = require("child_process");
 
 
-module.exports = function entrypoints({ children, visited, cache, destination, ...rest })
+module.exports = function entrypoints({ children, visited, cache, destination, root, routes })
 {
-    const [_, subentrypoints, updated] =
-        resolvedPathsInKey(visited, "entrypoints", children);
+    const [subentrypoints, updated] =
+        resolvedPathsInKey(root, visited, "entrypoints", children);
+
+    const [assets] =
+        resolvedPathsInKey(root, new Set(), "assets", children);
 
     if (subentrypoints.size <= 0)
-        return "DONE";
+        return { assets };
 
-    const route = toRouter(rest.routes, rest.root, destination);
+    const route = toRouter(routes, root, destination);
 
-    return  <entrypoints { ...{ visited: updated, cache, destination, routes: route } }>
-                { Array.from(subentrypoints, path => route(path, cache)) }
-            </entrypoints>
+    return  [
+                { assets },
+                <entrypoints { ...{ root, visited: updated, cache, destination, routes: route } }>
+                    { Array.from(subentrypoints, path => route(path, cache)) }
+                </entrypoints>
+            ];
 }
 
 function toRouter(routes, source, destination)

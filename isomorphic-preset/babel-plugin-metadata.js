@@ -7,7 +7,8 @@ module.exports = function (_, options)
     {
         const dependencies = new Set();
         const entrypoints = new Set();
-        const metadata = { ...state.opts, dependencies, entrypoints };
+        const assets = new Set();
+        const metadata = { ...state.opts, dependencies, entrypoints, assets };
 
         state.file.metadata["isomorphic"] = metadata;
     };

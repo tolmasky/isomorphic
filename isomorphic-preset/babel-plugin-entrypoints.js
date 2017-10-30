@@ -60,6 +60,7 @@ function subresource(t, tag, defaults, wrap)
     return function (path, metadata)
     {
         const { node } = path;
+
         // An element may have multiple copies of the same attribute,
         // as well as spread elements. This returns the last (and thus
         // "effective", copy of each.
@@ -75,13 +76,17 @@ function subresource(t, tag, defaults, wrap)
         if (!assetAttribute && !entrypointAttribute)
             return node;
 
+        const isAsset = !!assetAttribute;
         const attribute = (assetAttribute || entrypointAttribute);
         const entrypoint = attribute.value.value;
 
-        metadata.entrypoints.add(entrypoint);
+        if (isAsset)
+            metadata.assets.add(entrypoint);
+        else
+            metadata.entrypoints.add(entrypoint);
 
         const modifiedAttributes = defaultAttributes
-            .concat(attributes, tInlineAssetAttributes(t, tag, entrypoint));
+            .concat(attributes, tInlineAssetAttributes(t, tag, entrypoint, isAsset));
         const modifiedOpeningElement = tAssign(t, openingElement,
             { attributes: modifiedAttributes });
         const modifiedNode = tAssign(t, node,

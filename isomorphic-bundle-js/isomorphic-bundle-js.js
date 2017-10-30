@@ -13,26 +13,26 @@ const { getArguments } = require("generic-jsx");
 module.exports = function bundle({ root, entrypoint, cache, options, destination })
 {
     return  <concatenate { ...{ root, entrypoint, destination, cache, options } } >
-                <dependencies { ...{ cache, options } } >
+                <dependencies { ...{ root, cache, options } } >
                     <bootstrap { ... { cache, options } } />
-                    <dependency { ...{ path: entrypoint, cache, options } } />
+                    <dependency { ...{ root, path: entrypoint, cache, options } } />
                 </dependencies>
             </concatenate>;
 }
 
-function dependencies({ children, visited, cache, options })
+function dependencies({ root, children, visited, cache, options })
 {
-    const [resolved, subdependencies, updated] =
-        resolvedPathsInKey(visited, "dependencies", children);
+    const [subdependencies, updated, resolved] =
+        resolvedPathsInKey(root, visited, "dependencies", children);
 
     if (subdependencies.size <= 0)
         return resolved;
 
     return  [
                 resolved,
-                <dependencies { ...{ visited: updated, cache, options } }>
+                <dependencies { ...{ root, visited: updated, cache, options } }>
                     { Array.from(subdependencies, path =>
-                        <dependency { ...{ path, cache, options } } /> )
+                        <dependency { ...{ root, path, cache, options } } /> )
                     }
                 </dependencies>
             ];

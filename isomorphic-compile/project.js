@@ -21,13 +21,20 @@ module.exports = function project({ root, destination, cache, exclude, ...rest }
         ({ match: toMatcher(match), ...rest }));
     const routes = rest.entrypoints;
 
-    return  <entrypoints { ...{ root, destination, cache, routes } }>
-                <item   path = { root }
-                        cache = { mkdirp(cache) }
-                        exclude = { toMatcher(exclude) }
-                        transforms = { transforms }
-                        destination = { destination } />
-            </entrypoints>
+    return  <checksums>
+                <entrypoints { ...{ root, destination, cache, routes } }>
+                    <item   path = { root }
+                            cache = { mkdirp(cache) }
+                            exclude = { toMatcher(exclude) }
+                            transforms = { transforms }
+                            destination = { destination } />
+                </entrypoints>
+            </checksums>
+}
+
+function checksums({ children })
+{
+    console.log(children);
 }
 
 function item({ path, exclude, ...rest })

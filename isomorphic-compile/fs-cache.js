@@ -49,8 +49,9 @@ function cacheMetadata(aPath, metadata)
 
     const dependencies = Array.from(metadata.dependencies);
     const entrypoints = Array.from(metadata.entrypoints);
+    const assets = Array.from(metadata.assets);
 
-    const asArrays = { dependencies, entrypoints };
+    const asArrays = { dependencies, entrypoints, assets };
 
     writeFileSync(aPath, JSON.stringify(asArrays, null, 2), "utf-8");
 }
@@ -63,8 +64,9 @@ function getCachedMetadata(aPath)
     const metadata = JSON.parse(readFileSync(aPath, "utf-8"));
     const dependencies = new Set(metadata.dependencies);
     const entrypoints = new Set(metadata.entrypoints);
+    const assets = new Set(metadata.assets);
 
-    return { dependencies, entrypoints };
+    return { dependencies, entrypoints, assets };
 }
 
 function getContentsCachePath(cache, checksum, filename)
