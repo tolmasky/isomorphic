@@ -21,6 +21,10 @@ var ImmutableList     = 10;
 
 module.exports.ImmutableTypeStart = 8;
 
+var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
+var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
+var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
+
 function getInternalType(anObject)
 {
     if (isArray(anObject))
@@ -48,13 +52,21 @@ function getInternalType(anObject)
         return keys.length ? GenericMap : NoKeyValueMap;
     }
 
-    if (I.Map.isMap(anObject))
+    // if (I.Map.isMap(anObject))
+    //     return ImmutableMap;
+
+    // if (I.List.isList(anObject))
+    //     return ImmutableList;
+
+    // if (I.Set.isSet(anObject))
+    //     return ImmutableSet;
+    if (anObject[IS_MAP_SENTINEL])
         return ImmutableMap;
 
-    if (I.List.isList(anObject))
+    if (anObject[IS_LIST_SENTINEL])
         return ImmutableList;
 
-    if (I.Set.isSet(anObject))
+    if (anObject[IS_SET_SENTINEL])
         return ImmutableSet;
 
     return GenericObject;
