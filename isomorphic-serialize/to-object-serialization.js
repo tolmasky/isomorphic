@@ -69,7 +69,7 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     }
 
     var UIDs = aContext.UIDs;
-    var UID = UIDForValue(anObject, UIDs);
+    var UID = Call(MapGet, UIDs, anObject);
 
     if (UID)
         return UID.increment(); // If the UID already exists the object has already been encoded.
@@ -101,11 +101,6 @@ function completeObjectSerialization(anObject, aUID, aContext)
 {
     var serializer = types.getSerializer(anObject, aContext);
     aContext.objects[aUID.serializedLocation] = serializer(toObjectSerialization);
-}
-
-function UIDForValue(aValue, UIDs)
-{
-    return Call(MapGet, UIDs, aValue);
 }
 
 function UIDWrapper(potentialKeyID, aContext)
