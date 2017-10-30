@@ -1,6 +1,5 @@
 
 var Types = require("./types");
-var invoker = require("./utils").invoker;
 
 // Returns a deserialized object.
 // Expects a serialized object and an options object.
@@ -18,6 +17,9 @@ module.exports = function(anObjectSerialization, options)
 
     return fromObjectSerialization(anObjectSerialization.index, context);
 };
+
+var ImmutableTypeStart = Types.ImmutableTypeStart;
+var deserializers = Types.deserializers;
 
 function fromObjectSerialization(index, context)
 {
@@ -55,28 +57,20 @@ function fromObjectSerialization(index, context)
     var base = Types.getBase(internalType, context);
 
     context.deserializedObjects[index] = base;
-    return deserialize(base, internalType, serializedObject, context, fromObjectSerialization);
-}
+    // return deserialize(base, internalType, serializedObject, context, fromObjectSerialization);
 
-var ImmutableTypeStart = Types.ImmutableTypeStart;
-var deserializers = Types.deserializers;
-var immutableWithMutations = invoker("withMutations");
+    var mutator = deserializers[internalType];
 
-function deserialize(aBase, anInternalType, aSerializedObject, aContext, fromObjectSerialization)
-{
-    var mutator = deserializers[anInternalType];
+    var isImmutable = context.options.immutable || internalType >= ImmutableTypeStart;
+    // var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
 
-    var isImmutable = aContext.options.immutable || anInternalType >= ImmutableTypeStart;
-    var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
-
-    return withMutationsFunction(function(aDeserializedObject)
+    if (isImmutable)
     {
-        return mutator(aDeserializedObject, aSerializedObject, aContext, fromObjectSerialization);
-    }, aBase);
-};
+        return base.withMutations(function(aDeserializedObject)
+        {
+            mutator(aDeserializedObject, serializedObject, context, fromObjectSerialization);
+        });
+    }
 
-function withMutations(aMutator, anObject)
-{
-    aMutator(anObject);
-    return anObject;
+    return mutator(base, serializedObject, context, fromObjectSerialization);
 }
