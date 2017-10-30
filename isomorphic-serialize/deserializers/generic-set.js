@@ -12,12 +12,13 @@ function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObj
     var numberOfGenericObjectPairs = serializedSet[1];
 
     // First key starts at index 2.
-    var index = 2;
+    var firstIndex = 2;
+    var index = firstIndex;
     var count = serializedSet.length;
 
     for (; index < count; index++)
     {
-        if (index < numberOfGenericObjectPairs * 2)
+        if (index < numberOfGenericObjectPairs * 2 + firstIndex)
         {
             var serializedKey = serializedSet[index];
             var serializedValue = serializedSet[++index];
@@ -25,7 +26,7 @@ function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObj
             var key = fromObjectSerialization(serializedKey, context);
             var value = fromObjectSerialization(serializedValue, context);
 
-            setValueForKey(key, value, aDeserializedSet);
+            aDeserializedSet[key] = value;
             continue;
         }
         else
@@ -37,9 +38,4 @@ function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObj
     }
 
     return aDeserializedSet;
-}
-
-function setValueForKey(aKey, aValue, anObject)
-{
-    anObject[aKey] = aValue;
 }

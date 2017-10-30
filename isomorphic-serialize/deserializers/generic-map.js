@@ -12,11 +12,12 @@ function deserializeGenericMap(aDeserializedMap, serializedMap, context, fromObj
     var numberOfGenericObjectPairs = serializedMap[1];
 
     // First key starts at index 2.
-    var keyIndex = 2;
+    var firstIndex = 2;
+    var keyIndex = firstIndex;
     var count = serializedMap.length;
 
     // First deserialize all the keys directly on the object.
-    deserializePairs(serializedMap, setValueForKey, numberOfGenericObjectPairs * 2);
+    deserializePairs(serializedMap, setValueForKey, numberOfGenericObjectPairs * 2 + firstIndex);
     // Now deserialize the pure map.
     deserializePairs(serializedMap, set, count);
 

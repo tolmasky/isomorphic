@@ -10,3 +10,11 @@ test("simple", t => run(new Map([["foo", 123]]), t));
 test("simple 2", t => run(new Map([["abc", 123]]), t));
 
 test("Nested", t => run(new Map([["foo", new Map([["bar", 123]])]]), t));
+
+test("generic", t =>
+{
+    var value = new Map([["foo", 123]]);
+    value.foo = "bar";
+
+    run(value, t);
+});
