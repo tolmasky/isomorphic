@@ -5,6 +5,7 @@ function serializeObject(aSerializedObject, anObject, aContext, toObjectSerializ
     var keys = ObjectKeys(anObject);
     var count = keys.length;
     var index = 0;
+    var insetionIndex = aSerializedObject.length;
 
     for (; index < count; index++)
     {
@@ -14,8 +15,8 @@ function serializeObject(aSerializedObject, anObject, aContext, toObjectSerializ
         var serializedValue = toObjectSerialization(object, aContext);
         var serializedKey = toObjectSerialization(key, aContext, key, true);
 
-        // FIXME: this can be faster with direct assign.
-        aSerializedObject.push(serializedKey, serializedValue);
+        aSerializedObject[insetionIndex++] = serializedKey;
+        aSerializedObject[insetionIndex++] = serializedValue;
     }
 
     return aSerializedObject;
