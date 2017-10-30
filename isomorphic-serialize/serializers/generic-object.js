@@ -1,9 +1,7 @@
 var ObjectKeys = Object.keys;
 
-function serializeObject(anObject, aContext, toObjectSerialization)
+function serializeObject(aSerializedObject, anObject, aContext, toObjectSerialization)
 {
-    var serializedObject = [];
-
     var keys = ObjectKeys(anObject);
     var count = keys.length;
     var index = 0;
@@ -14,12 +12,13 @@ function serializeObject(anObject, aContext, toObjectSerialization)
         var object = anObject[key];
 
         var serializedValue = toObjectSerialization(object, aContext);
-        var serializedKey = toObjectSerialization(key, aContext);
+        var serializedKey = toObjectSerialization(key, aContext, key, true);
 
-        serializedObject.push(serializedKey, serializedValue);
+        // FIXME: this can be faster with direct assign.
+        aSerializedObject.push(serializedKey, serializedValue);
     }
 
-    return serializedObject;
+    return aSerializedObject;
 }
 
 module.exports = serializeObject;

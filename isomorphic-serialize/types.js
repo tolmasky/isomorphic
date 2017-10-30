@@ -85,7 +85,9 @@ function getSerializer(anObject, aContext)
     return function(toObjectSerialization)
     {
         serializedType.increment();
-        return [serializedType].concat(serializers[internalType](anObject, aContext, toObjectSerialization));
+
+        var serializedObject = [serializedType];
+        return serializers[internalType](serializedObject, anObject, aContext, toObjectSerialization);
     };
 }
 

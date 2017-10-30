@@ -1,13 +1,11 @@
 
 module.exports = serializeGenericArray;
 
-function serializeGenericArray(anArray, aContext, toObjectSerialization)
+function serializeGenericArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
     var keys = splitKeys(Object.keys(anArray));
     var indexRanges = keys[0];
     var nonIndexKeys = keys[1];
-
-    var serializedArray = [];
 
     indexRanges.forEach(function(aRange)
     {

@@ -1,10 +1,8 @@
 
-function serializeKeyValueArray(anArray, aContext, toObjectSerialization)
+function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSerialization)
 {
     var keys = Object.keys(anArray);
     var count = keys.length;
-
-    var serializedArray = [];
 
     for(var i = 0; i < count; i += 2)
     {
@@ -16,10 +14,11 @@ function serializeKeyValueArray(anArray, aContext, toObjectSerialization)
         var serializedKey = toObjectSerialization(key, aContext, key, canInlineKey);
         var serializedValue = toObjectSerialization(value, aContext);
 
-        serializedArray.push(serializedKey, serializedValue);
+        // FIXME: this can be faster with direct assign.
+        aSerializedArray.push(serializedKey, serializedValue);
     }
 
-    return serializedArray;
+    return aSerializedArray;
 }
 
 module.exports = serializeKeyValueArray;

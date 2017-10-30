@@ -1,10 +1,8 @@
 
 module.exports = serializedPureMap;
 
-function serializedPureMap(aMap, aContext, toObjectSerialization)
+function serializedPureMap(aSerializedMap, aMap, aContext, toObjectSerialization)
 {
-    var serializedObject = [];
-
     var keys = aMap.keys();
 
     for (var aKey of keys)
@@ -14,8 +12,8 @@ function serializedPureMap(aMap, aContext, toObjectSerialization)
         var serializedKey = toObjectSerialization(aKey, aContext);
         var serializedValue = toObjectSerialization(value, aContext);
 
-        serializedObject.push(serializedKey, serializedValue);
+        aSerializedMap.push(serializedKey, serializedValue);
     }
 
-    return serializedObject;
+    return aSerializedMap;
 }

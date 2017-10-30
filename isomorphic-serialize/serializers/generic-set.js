@@ -4,11 +4,15 @@ var serializeGenericObject = require("./generic-object");
 
 module.exports = serializedGenericSet;
 
-function serializedGenericSet(aSet, aContext, toObjectSerialization)
+function serializedGenericSet(aSerializedSet, aSet, aContext, toObjectSerialization)
 {
-    var genericObjectSerialized = serializeGenericObject(aSet, aContext, toObjectSerialization);
-    var pureSetSerialized = serializePureSet(aSet, aContext, toObjectSerialization);
+    var genericObjectSerialized = serializeGenericObject([], aSet, aContext, toObjectSerialization);
+    var pureSetSerialized = serializePureSet([], aSet, aContext, toObjectSerialization);
 
     // Prefix with the number of items in the pure-set.
-    return [genericObjectSerialized.length / 2].concat(genericObjectSerialized, pureSetSerialized);
+    aSerializedSet.push(genericObjectSerialized.length / 2);
+    aSerializedSet.push.apply(aSerializedSet, genericObjectSerialized);
+    aSerializedSet.push.apply(aSerializedSet, pureSetSerialized);
+
+    return aSerializedSet;
 }
