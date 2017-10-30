@@ -2,7 +2,8 @@
 const I = require("immutable");
 const isArray = Array.isArray;
 
-module.exports.getSerializer = getSerializer;
+module.exports.getInternalType = getInternalType;
+module.exports.encodableType = encodableType;
 module.exports.analyzeTypes = analyzeTypes;
 
 module.exports.getBase = getBase;
@@ -72,7 +73,7 @@ function getInternalType(anObject)
     return GenericObject;
 }
 
-var serializers = [
+module.exports.serializers = [
     require("./serializers/generic-object"),
     require("./serializers/key-value-array"),
     require("./serializers/gapless-array"),
@@ -85,22 +86,6 @@ var serializers = [
     require("./serializers/pure-set"), // Immutable set can use pure-set.
     require("./serializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
 ];
-
-
-
-function getSerializer(anObject, aContext)
-{
-    var internalType = getInternalType(anObject);
-    var serializedType = encodableType(internalType, aContext);
-
-    return function(toObjectSerialization)
-    {
-        serializedType.increment();
-
-        var serializedObject = [serializedType];
-        return serializers[internalType](serializedObject, anObject, aContext, toObjectSerialization);
-    };
-}
 
 function encodableType(anInternalType, aContext)
 {

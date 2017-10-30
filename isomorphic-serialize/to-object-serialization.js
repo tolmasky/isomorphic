@@ -99,10 +99,21 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     return UID;
 }
 
+var getInternalType = types.getInternalType;
+var encodableType = types.encodableType;
+var serializers = types.serializers;
+
 function completeObjectSerialization(anObject, aUID, aContext)
 {
-    var serializer = types.getSerializer(anObject, aContext);
-    aContext.objects[aUID.serializedLocation] = serializer(toObjectSerialization);
+    var internalType = getInternalType(anObject);
+    var serializedType = encodableType(internalType, aContext);
+
+    serializedType.increment();
+
+    var serializedObject = [serializedType];
+    var serializer = serializers[internalType];
+
+    aContext.objects[aUID.serializedLocation] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
 }
 
 function UIDWrapper(potentialKeyID, aContext)
