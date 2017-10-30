@@ -9,7 +9,6 @@ module.exports = deserializeGenericObject;
 function deserializeGenericObject(aDeserializedObject, serializedObject, context, fromObjectSerialization)
 {
     var forceImmutable = context.options.immutable;
-    var set = (forceImmutable || isImmutable(aDeserializedObject)) ? immutableSet : setValueForKey;
 
     // index 0 is the type, all other values are deseriailzed and inserted into the
     // deserialized array in their current order.
@@ -21,13 +20,11 @@ function deserializeGenericObject(aDeserializedObject, serializedObject, context
         var key = fromObjectSerialization(serializedObject[keyIndex], context);
         var value = fromObjectSerialization(serializedObject[keyIndex + 1], context);
 
-        set(key, value, aDeserializedObject);
+        if (forceImmutable || isImmutable(aDeserializedObject))
+            immutableSet(key, value, aDeserializedObject);
+        else
+            aDeserializedObject[key] = value;
     }
 
     return aDeserializedObject;
-}
-
-function setValueForKey(aKey, aValue, anObject)
-{
-    anObject[aKey] = aValue;
 }
