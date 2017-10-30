@@ -9,6 +9,8 @@ var MapSet = Map.prototype.set;
 var MathLog = Math.log;
 var MathLN10 = Math.LN10;
 
+var undefined = void 0;
+
 var types = require("./types");
 
 module.exports = function(anObject)
@@ -44,10 +46,10 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     if (anObject === null)
         return -1;
 
-    var type = typeof anObject;
-
-    if (type === "undefined")
+    if (anObject === undefined)
         return -2;
+
+    var type = typeof anObject;
 
     if (type === "number")
     {
