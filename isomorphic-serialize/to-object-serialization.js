@@ -80,9 +80,9 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     Call(MapSet, UIDs, anObject, UID);
     aContext.UIDList.push(UID);
 
-    if (type === "boolean" ||
+    if (type === "string" ||
         type === "number" ||
-        type === "string")
+        type === "boolean")
         aContext.objects[UID.serializedLocation] = anObject;
     else
     {
