@@ -56,6 +56,7 @@ function toRouter(routes, source, destination)
             const computed = { root: source, cache, options, entrypoint: path, destination: output };
 
             return  <report destination = { output } started = { Date.now() } >
+                        { ({ assets: [output] }) }
                         <entrypoint { ...computed } />
                     </report>
         }

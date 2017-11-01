@@ -34,8 +34,11 @@ module.exports = function resolvedPathsInKey(root, visited = new Set(), key, chi
 
 function requireResolve(root, path, from)
 {
+    if (path.charAt(0) === "~" && path.charAt(1) === "/")
+        return normalize(join(root, path.replace(/^~\//g, "")));
+
     if (path.charAt(0) === "/")
-        return normalize(join(root, path));
+        return path;
 
     const paths = Module._nodeModulePaths(dirname(from));
     const module = Object.assign(new Module(from),        

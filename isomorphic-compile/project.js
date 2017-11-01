@@ -1,12 +1,13 @@
 
-const { dirname, basename, extname, join } = require("path");
+const { dirname, basename, extname, join, relative } = require("path");
 
-const { readdirSync, copyFileSync } = require("fs");
+const { readdirSync, copyFileSync, writeFileSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 
 const { internalModuleStat } = process.binding("fs");
 const tstat = path => ["file", "directory"][internalModuleStat(path)];
+const getFileChecksum = require("./get-file-checksum");
 
 const micromatch = require("micromatch");
 
@@ -21,7 +22,7 @@ module.exports = function project({ root, destination, cache, exclude, ...rest }
         ({ match: toMatcher(match), ...rest }));
     const routes = rest.entrypoints;
 
-    return  <checksums>
+    return  <checksums  { ... { root, destination } }>
                 <entrypoints { ...{ root, destination, cache, routes } }>
                     <item   path = { root }
                             cache = { mkdirp(cache) }
@@ -32,9 +33,39 @@ module.exports = function project({ root, destination, cache, exclude, ...rest }
             </checksums>
 }
 
-function checksums({ children })
+function checksums({ root, destination, children })
 {
-    console.log(children);
+    const assets = children.reduce(function (assets, child)
+    {
+        for (const asset of child.assets)
+        {
+            if (asset.indexOf(root) === 0)
+                assets.add("~/" + relative(root, asset));
+            else if (asset.indexOf(destination) === 0)
+                assets.add("~/" + relative(destination, asset));
+            else if (asset.indexOf("~/") === 0)
+                assets.add(asset);
+            else
+                throw new Error(`Asset ${path} must be within project ${root}`);
+        }
+
+        return assets;
+    }, new Set());
+    const checksums = Array
+        .from(assets)
+        .reduce(function (checksums, asset)
+        {
+            const path = asset.replace(/~\//g, destination + "/");
+            const checksum = getFileChecksum(path);
+
+            return Object.assign(checksums, { [asset]: checksum });
+        }, Object.create(null));
+    const pjsonPath = join(destination, "package.json");
+    const pjson = Object.assign({ },
+        require(pjsonPath),
+        { "isomorphic-checksums": checksums });
+
+    writeFileSync(pjsonPath, JSON.stringify(pjson, null, 2), "utf-8");
 }
 
 function item({ path, exclude, ...rest })

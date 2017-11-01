@@ -41,8 +41,9 @@ function dependencies({ root, children, visited, cache, options })
 function bootstrap({ cache, options })
 {
     const path = require.resolve("./bootstrap");
+    const removeTrailingSemicolon = true;
 
-    return <dependency { ...{ cache, options, path, removeTrailingSemicolon: true } } />;
+    return <dependency { ...{ cache, options, path, removeTrailingSemicolon } } />;
 }
 
 function dependency({ cache, path, options, removeTrailingSemicolon })

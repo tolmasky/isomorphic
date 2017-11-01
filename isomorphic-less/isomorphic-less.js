@@ -1,5 +1,5 @@
 
-const { dirname } = require("path");
+const { dirname, basename } = require("path");
 const { readFileSync, writeFileSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`);
@@ -9,7 +9,11 @@ const less = require("less");
 
 module.exports = function isomorphicLess({ entrypoint, destination, options })
 {
-    const output = lessSynchronous(readFileSync(entrypoint, "utf-8"));
+    const output = lessSynchronous(readFileSync(entrypoint, "utf-8"),
+    {
+        paths: [dirname(entrypoint)],
+        filename: basename(entrypoint)
+    });
 
     mkdirp(dirname(destination));
     writeFileSync(destination, output, "utf-8");
