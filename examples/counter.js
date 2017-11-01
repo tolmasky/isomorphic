@@ -16,7 +16,6 @@ module.exports = class Counter extends React.Component
                     <head>
                         <title>{ this.state.count }</title>
                         <link entrypoint = "./styles.less" />
-                        <script entrypoint = "./counter2.js" />
                     </head>
                     <body>
                         <isomorphic>

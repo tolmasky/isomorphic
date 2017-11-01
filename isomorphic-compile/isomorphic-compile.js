@@ -50,9 +50,11 @@ function getDefaultTransforms(node)
             "match": "**/*.js",
             "transform": "isomorphic-compile/babel-transform",
             "options": {
-                "presets": [
-                    ["isomorphic-preset", { node, "react": true }]
-                ]
+                "babel": {
+                    "presets": [
+                        ["isomorphic-preset", { node, "react": true }]
+                    ]
+                }
             }
         }
     ];

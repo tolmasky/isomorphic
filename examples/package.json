@@ -13,6 +13,22 @@
     "node": "8.x.x"
   },
   "isomorphic": {
+    "transforms": [
+    {
+        "match": "**/*.js",
+        "transform": "isomorphic-compile/babel-transform",
+        "options": {
+          "babel": {
+            "parserOpts": {
+                "allowReturnOutsideFunction": true
+            },
+            "presets": [
+              ["isomorphic-preset", { "node": "8.x.x" }]
+            ]
+          }
+        }
+      }
+    ],
     "public": {
         "/assets/*": ":asset-domain/assets/:name.bundle.js"
     },
@@ -21,8 +37,11 @@
         "output": "/assets/:name.bundle.js",
         "transform": "isomorphic-bundle-js",
         "options": {
-          "minify": true,
+          "minify": false,
           "babel": {
+            "parserOpts": {
+              "allowReturnOutsideFunction": true
+            },
             "presets": [
                 ["isomorphic-preset", { "browser": true, "react": true }]
             ]

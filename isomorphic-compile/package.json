@@ -18,15 +18,17 @@
         "match": "**/*.js",
         "transform": "isomorphic-compile/babel-transform",
         "options": {
-          "presets": [
-            [
-              "isomorphic-preset",
-              {
-                "node": "4.x.x",
-                "generic-jsx": true
-              }
+          "babel": {
+            "presets": [
+              [
+                "isomorphic-preset",
+                {
+                  "node": "4.x.x",
+                  "generic-jsx": true
+                }
+              ]
             ]
-          ]
+          }
         }
       }
     ]

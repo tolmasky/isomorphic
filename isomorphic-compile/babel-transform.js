@@ -18,7 +18,7 @@ module.exports = function fsCachedTransfrom({ cache, ...rest })
 function transform({ path, contents, options, removeTrailingSemicolon })
 {
     return  <transformAST { ...{ contents, options, removeTrailingSemicolon } }>
-                <parse contents = { contents } path = { path }>
+                <parse { ...{ contents, path } }>
                     <parserOptions options = { options.babel } />
                 </parse>
             </transformAST>

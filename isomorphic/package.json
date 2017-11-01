@@ -16,18 +16,19 @@
     "node": "4.x.x"
   },
   "isomorphic": {
-    "assets": {
-      "/(*/):name.js": {
-        "output": "/assets/:name.bundle.js",
-        "public": "/assets/:name.bundle.js",
-        "transform": "isomorphic/compile/babel"
-       },
-       "/(*/):name.less": {
-         "output": "/assets/:name.less",
-         "public": "/assets/styles/:names.css",
-         "transform": "isomorphic/compile/less"
+    "transforms": [
+    {
+        "match": "**/*.js",
+        "transform": "isomorphic-compile/babel-transform",
+        "options": {
+          "babel": {
+            "presets": [
+              ["isomorphic-preset", { "node": "8.x.x" }]
+            ]
+          }
+        }
       }
-    }
+    ]
   },
   "dependencies": {
     "@njudah/builder": "^12.0.0-beta.3",
