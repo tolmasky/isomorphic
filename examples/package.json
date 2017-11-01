@@ -1,5 +1,5 @@
 {
-  "name": "Isomorphic Counter",
+  "name": "isomorphic-counter",
   "version": "1.0.0",
   "description": "",
   "main": "routes.js",
@@ -14,23 +14,26 @@
   },
   "isomorphic": {
     "transforms": [
-    {
+      {
         "match": "**/*.js",
         "transform": "isomorphic-compile/babel-transform",
         "options": {
           "babel": {
-            "parserOpts": {
-                "allowReturnOutsideFunction": true
-            },
             "presets": [
-              ["isomorphic-preset", { "node": "8.x.x" }]
+              [
+                "isomorphic-preset",
+                {
+                  "node": "8.x.x",
+                  "react": true
+                }
+              ]
             ]
           }
         }
       }
     ],
     "public": {
-        "/assets/*": ":asset-domain/assets/:name.bundle.js"
+      "/assets/*": ":asset-domain/assets/:name.bundle.js"
     },
     "entrypoints": {
       "/(*_/):name.js": {
@@ -43,9 +46,15 @@
               "allowReturnOutsideFunction": true
             },
             "presets": [
-                ["isomorphic-preset", { "browser": true, "react": true }]
+              [
+                "isomorphic-preset",
+                {
+                  "browser": true,
+                  "react": true
+                }
+              ]
             ]
-         }
+          }
         }
       },
       "/(*_/):name.less": {
@@ -55,6 +64,8 @@
     }
   },
   "dependencies": {
-    "react": "^16.0.0"
+    "express": "^4.16.2",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
   }
 }

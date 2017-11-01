@@ -23,7 +23,7 @@
         "options": {
           "babel": {
             "presets": [
-              ["isomorphic-preset", { "node": "8.x.x" }]
+              ["isomorphic-preset", { "node": "8.x.x", "react": true }]
             ]
           }
         }
