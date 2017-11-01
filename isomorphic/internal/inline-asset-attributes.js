@@ -1,29 +1,40 @@
 
 const { existsSync } = require("fs");
-const { dirname, join } = require("path");
+const { dirname, join, relative } = require("path");
 
-const checksums = getChecksums();
+const ProjectPath = getProjectPath();
+const checksums = getChecksums(ProjectPath);
 const URLKeys = { "script": "src", "link": "href", "img": "src" };
 
 
-module.exports = function ({ URL, tag, ...rest })
+module.exports = function (tag, path)
 {
-    const integrity = checksums[URL];
-    const bustedURL = URL + `?integrity=${integrity}`;
+    const withinProjectPath = "~/" + relative(ProjectPath, path);
+
+    if (tag === "html")
+        return { absolute: path, relative: withinProjectPath };
+
+    const integrity = checksums[path];
+    const bustedURL = path + `?integrity=${integrity}`;
     const crossOrigin = "anonymous";
 
-    return { ...rest, [URLKeys[tag] || "URL"]:  bustedURL, integrity, crossOrigin };
+    return { [URLKeys[tag] || "URL"]:  bustedURL, integrity, crossOrigin };
 }
 
-function getChecksums()
+function getProjectPath()
 {
-    const pjson = (function find(path)
+    return (function find(path)
     {
         if (existsSync(join(path, "package.json")))
-            return require(join(path, "package.json"));
+            return path;
         
         return find(dirname(path));
     })(require.main.filename);
+}
+
+function getChecksums(aProjectPath)
+{
+    const pjson = require(join(aProjectPath, "package.json"));
     
     return pjson["isomorphic-checksums"];
 }

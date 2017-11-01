@@ -2,7 +2,7 @@
 
 const { join, resolve } = require("path");
 const { existsSync } = require("fs");
-const { spawnSync } = require("child_process");
+const { spawnSync, execSync } = require("child_process");
 const randomstring = require("randomstring");
 
 const relative = path => resolve(join(__dirname, path));
@@ -23,5 +23,9 @@ const destination = relative(`build-products/${now}`);
         cache,
         destination: join(destination, name)
     }));
+
+execSync("npm install", { cwd: join(destination, "examples"), stdio:[0,1,2] });
+execSync("cp -r isomorphic examples/node_modules/", { cwd: destination, stdio:[0,1,2] });
+execSync("node routes.js", { cwd: join(destination, "examples"), stdio:[0,1,2] });
 
 console.log(`Completed at ${destination}`);

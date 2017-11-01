@@ -7,11 +7,10 @@ const toHTMLSafeText = x => encodeURIComponent(JSON.stringify(x));
 const inject = require("./inject-until-isomorphic")(serialize);
 
 
-module.exports = function _html({ entrypoint2, entrypoint, __filename, URL, ...rest })
+module.exports = function _html({ absolute, relative, ...rest })
 {
-    const module = Object.assign(new Module(__filename), { filename: __filename });
-    const Component = module.require(entrypoint2);
-    const __injected_props = { entrypoint, URL, props: rest }; 
+    const Component = module.require(absolute);
+    const __injected_props = { entrypoint: relative, props: rest };
 
     return inject(React.createElement(Component, rest), __injected_props);
 }
