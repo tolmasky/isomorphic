@@ -1,11 +1,14 @@
 
-const I = require("immutable");
-const isArray = Array.isArray;
+var I = require("immutable");
+var isArray = Array.isArray;
+var ObjectKeys = Object.keys;
+var Call = (Function.prototype.call).bind(Function.prototype.call);
+var ArrayMap = Array.prototype.map;
+var ArraySort = Array.prototype.sort;
 
 module.exports.getInternalType = getInternalType;
 module.exports.encodableType = encodableType;
 module.exports.analyzeTypes = analyzeTypes;
-
 module.exports.getBase = getBase;
 
 var GenericObject     = 0;
@@ -22,57 +25,6 @@ var ImmutableList     = 10;
 
 module.exports.ImmutableTypeStart = 8;
 
-var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
-var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
-var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
-
-function getInternalType(anObject)
-{
-    if (isArray(anObject))
-    {
-        var keys = Object.keys(anObject);
-
-        if (keys.length > 0 && anObject.length === 0)
-            return JustKeyValueArray;
-
-        if (keys.length === anObject.length)
-            return GaplessArray;
-
-        return GenericArray;
-    }
-
-    if (anObject instanceof Set)
-    {
-        var keys = Object.keys(anObject);
-        return keys.length ? GenericSet : NoKeyValueSet;
-    }
-
-    if (anObject instanceof Map)
-    {
-        var keys = Object.keys(anObject);
-        return keys.length ? GenericMap : NoKeyValueMap;
-    }
-
-    // if (I.Map.isMap(anObject))
-    //     return ImmutableMap;
-
-    // if (I.List.isList(anObject))
-    //     return ImmutableList;
-
-    // if (I.Set.isSet(anObject))
-    //     return ImmutableSet;
-    if (anObject[IS_MAP_SENTINEL])
-        return ImmutableMap;
-
-    if (anObject[IS_LIST_SENTINEL])
-        return ImmutableList;
-
-    if (anObject[IS_SET_SENTINEL])
-        return ImmutableSet;
-
-    return GenericObject;
-}
-
 module.exports.serializers = [
     require("./serializers/generic-object"),
     require("./serializers/key-value-array"),
@@ -87,25 +39,6 @@ module.exports.serializers = [
     require("./serializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
 ];
 
-function encodableType(anInternalType, aContext)
-{
-    var existingType = aContext.types[anInternalType];
-
-    if (existingType)
-        return existingType;
-
-    return aContext.types[anInternalType] = new TypeUID(anInternalType);
-}
-
-
-
-
-
-
-
-
-
-
 module.exports.deserializers = [
     require("./deserializers/generic-object"),
     require("./deserializers/key-value-array"),
@@ -119,6 +52,62 @@ module.exports.deserializers = [
     require("./deserializers/pure-set"), // Immutable set can use pure-set.
     require("./deserializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
 ];
+
+var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
+var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
+var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
+
+function getInternalType(anObject)
+{
+    if (isArray(anObject))
+    {
+        var keys = ObjectKeys(anObject);
+
+        if (keys.length > 0 && anObject.length === 0)
+            return JustKeyValueArray;
+
+        if (keys.length === anObject.length)
+            return GaplessArray;
+
+        return GenericArray;
+    }
+
+    if (anObject instanceof Set)
+    {
+        var keys = ObjectKeys(anObject);
+        return keys.length ? GenericSet : NoKeyValueSet;
+    }
+
+    if (anObject instanceof Map)
+    {
+        var keys = ObjectKeys(anObject);
+        return keys.length ? GenericMap : NoKeyValueMap;
+    }
+
+    // if (I.Map.isMap(anObject))
+    if (anObject[IS_MAP_SENTINEL])
+        return ImmutableMap;
+
+    // if (I.List.isList(anObject))
+    if (anObject[IS_LIST_SENTINEL])
+        return ImmutableList;
+
+    // if (I.Set.isSet(anObject))
+    if (anObject[IS_SET_SENTINEL])
+        return ImmutableSet;
+
+    return GenericObject;
+}
+
+function encodableType(anInternalType, aContext)
+{
+    var existingType = aContext.types[anInternalType];
+
+    if (existingType)
+        return existingType;
+
+    return aContext.types[anInternalType] = new TypeUID(anInternalType);
+}
 
 function getBase(encodedType, aContext)
 {
@@ -186,14 +175,14 @@ TypeUID.prototype.toJSON = function()
 
 function analyzeTypes(aContext)
 {
-    var keys = Object.keys(aContext.types);
+    var keys = ObjectKeys(aContext.types);
 
-    var allTypes = keys.map(function(aKey)
+    var allTypes = Call(ArrayMap, keys, function(aKey)
     {
         return aContext.types[aKey];
     });
 
-    allTypes.sort(function(a, b)
+    Call(ArraySort, allTypes, function(a, b)
     {
         return b.count - a.count;
     });

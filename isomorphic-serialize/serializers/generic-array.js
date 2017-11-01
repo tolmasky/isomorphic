@@ -1,27 +1,34 @@
 
+var Call = (Function.prototype.call).bind(Function.prototype.call);
+
+var ObjectKeys = Object.keys;
+var ArrayPush = Array.prototype.push;
+var ArrayForEach = Array.prototype.forEach;
+var ArraySort = Array.prototype.sort;
+
 module.exports = serializeGenericArray;
 
 function serializeGenericArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
-    var keys = splitKeys(Object.keys(anArray));
+    var keys = splitKeys(ObjectKeys(anArray));
     var indexRanges = keys[0];
     var nonIndexKeys = keys[1];
 
-    indexRanges.forEach(function(aRange)
+    Call(ArrayForEach, indexRanges, function(aRange)
     {
         var startIndex = aRange.start;
         var count = aRange.count;
-        serializedArray.push(startIndex, count);
+        Call(ArrayPush, serializedArray, startIndex, count);
 
         for (var i = startIndex; i < startIndex + count; i++)
         {
             var value = anArray[i];
-            serializedArray.push(toObjectSerialization(value, aContext));
+            Call(ArrayPush, serializedArray, toObjectSerialization(value, aContext));
         }
     });
 
     if (nonIndexKeys.length)
-        serializedArray.push(-1);
+        Call(ArrayPush, serializedArray, -1);
 
     for (var i = 0; i < nonIndexKeys.length; i++)
     {
@@ -31,7 +38,7 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
         var serializedKey = toObjectSerialization(key, aContext, key, true);
         var serializedValue = toObjectSerialization(value, aContext);
 
-        serializedArray.push(serializedKey, serializedValue);
+        Call(ArrayPush, serializedArray, serializedKey, serializedValue);
     }
 
     return serializedArray;
@@ -42,16 +49,16 @@ function splitKeys(keys)
     var indexKeys = [];
     var nonIndexKeys = [];
 
-    keys.forEach(function(aKey)
+    Call(ArrayForEach, keys, function(aKey)
     {
         var cooerced = +aKey;
-        if (isNaN(cooerced))
-            nonIndexKeys.push(aKey);
+        if (cooerced !== cooerced) // NaN
+            Call(ArrayPush, nonIndexKeys, aKey);
         else
-            indexKeys.push(cooerced);
+            Call(ArrayPush, indexKeys, cooerced);
     });
 
-    return [generateRanges(indexKeys.sort()), nonIndexKeys];
+    return [generateRanges(Call(ArraySort, indexKeys)), nonIndexKeys];
 }
 
 function generateRanges(indexes)
@@ -75,12 +82,12 @@ function generateRanges(indexes)
             newRange.count++;
         else
         {
-            ranges.push(newRange);
+            Call(ArrayPush, ranges, newRange);
             newRange = { start: nextIndex, count: 1 };
         }
     }
 
-    ranges.push(newRange);
+    Call(ArrayPush, ranges, newRange);
 
     return ranges;
 }

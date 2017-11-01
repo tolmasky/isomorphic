@@ -1,3 +1,5 @@
+var Call = (Function.prototype.call).bind(Function.prototype.call);
+var ArrayPush = Array.prototype.push;
 
 function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSerialization)
 {
@@ -15,7 +17,7 @@ function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSer
         var serializedValue = toObjectSerialization(value, aContext);
 
         // FIXME: this can be faster with direct assign.
-        aSerializedArray.push(serializedKey, serializedValue);
+        Call(ArrayPush, aSerializedArray, serializedKey, serializedValue);
     }
 
     return aSerializedArray;

@@ -3,6 +3,7 @@ var Call = (Function.prototype.call).bind(Function.prototype.call);
 
 var Map = global.Map || require("native-map");
 
+var ArraySort = Array.prototype.sort;
 var MapGet = Map.prototype.get;
 var MapSet = Map.prototype.set;
 
@@ -78,7 +79,6 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
 
     UID = new UIDWrapper(hasHint && aUIDHint, aContext);
     Call(MapSet, UIDs, anObject, UID);
-    aContext.UIDList.push(UID);
 
     if (type === "string" ||
         type === "number" ||
@@ -118,9 +118,11 @@ function completeObjectSerialization(anObject, aUID, aContext)
 
 function UIDWrapper(potentialKeyID, aContext)
 {
-    this.serializedLocation = aContext.UIDs.size;
+    var size = aContext.UIDs.size;
+    this.serializedLocation = size;
     this.references = 1;
     this.potentialKeyID = typeof potentialKeyID === "string" && potentialKeyID;
+    aContext.UIDList[size] = this;
 }
 
 UIDWrapper.prototype.toJSON = function()
@@ -136,7 +138,7 @@ UIDWrapper.prototype.increment = function()
 
 function analyzeUIDs(UIDs, aFunction)
 {
-    UIDs.sort(function(a, b)
+    Call(ArraySort, UIDs, function(a, b)
     {
         return b.references - a.references;
     });
