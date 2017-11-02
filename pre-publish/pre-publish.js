@@ -25,6 +25,7 @@ const destination = relative(`build-products/${now}`);
     }));
 
 execSync("npm install", { cwd: join(destination, "examples"), stdio:[0,1,2] });
+execSync("npm install", { cwd: join(destination, "isomorphic"), stdio:[0,1,2] });
 execSync("cp -r isomorphic examples/node_modules/", { cwd: destination, stdio:[0,1,2] });
 execSync("node routes.js", { cwd: join(destination, "examples"), stdio:[0,1,2] });
 

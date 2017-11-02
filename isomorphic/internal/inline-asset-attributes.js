@@ -2,23 +2,30 @@
 const { existsSync } = require("fs");
 const { dirname, join, relative } = require("path");
 
+const Route = require("route-parser");
 const ProjectPath = getProjectPath();
+
+const route = getRoutes(ProjectPath);
 const checksums = getChecksums(ProjectPath);
-const URLKeys = { "script": "src", "link": "href", "img": "src" };
+const URLKeys = { "script": "src", "link": "href", "img": "src", "html": "src" };
 
 
-module.exports = function (tag, path)
+module.exports = function (tag, absolutePath)
 {
-    const withinProjectPath = "~/" + relative(ProjectPath, path);
-
-    if (tag === "html")
-        return { absolute: path, relative: withinProjectPath };
-
-    const integrity = checksums[path];
-    const bustedURL = path + `?integrity=${integrity}`;
+    const entrypoint = "~/" + relative(ProjectPath, absolutePath);
+    const output = "~" + route(entrypoint);
+    const publicURL = output.substr(1);
+    const integrity = checksums[output];
+    const bustedURL = publicURL + `?integrity=${integrity}`;
     const crossOrigin = "anonymous";
+    const props = { [URLKeys[tag]]:  bustedURL, integrity, crossOrigin };
 
-    return { [URLKeys[tag] || "URL"]:  bustedURL, integrity, crossOrigin };
+    if (tag !== "html")
+        return props;
+
+    const Component = require(absolutePath);
+
+    return { __internal_props: { Component, entrypoint, script: props } };
 }
 
 function getProjectPath()
@@ -30,6 +37,37 @@ function getProjectPath()
         
         return find(dirname(path));
     })(require.main.filename);
+}
+
+function getRoutes(aProjectPath)
+{
+    const pjson = require(join(aProjectPath, "package.json"));
+    const routes = pjson.isomorphic.entrypoints;
+
+    const compiled = Object.keys(routes)
+        .map(input =>
+        ({
+            definition: routes[input],
+            input: Route(input),
+            output: Route(routes[input].output)
+        }));
+
+    return function (path)
+    {
+        const relativePath = path.substr(1);
+
+        for (const route of compiled)
+        {
+            const captures = route.input.match(relativePath);
+
+            if (captures === false)
+                continue;
+
+            return route.output.reverse(captures);
+        }
+
+        throw new Error(`Could not find matching entrypoint for ${path}`);
+    }
 }
 
 function getChecksums(aProjectPath)
