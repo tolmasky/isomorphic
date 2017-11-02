@@ -4,7 +4,13 @@ const { Map } = require("immutable");
 const { parse, stringify } = require("../");
 
 const convert = aValue => parse(stringify(aValue));
-const run = (aValue, t) => t.true(aValue.equals(convert(aValue)));
+const fastConvert = aValue => parse(stringify(aValue, { fastMode: true }));
+
+const run = (aValue, t) =>
+{
+    t.true(aValue.equals(convert(aValue)));
+    t.true(aValue.equals(fastConvert(aValue)));
+};
 
 test("empty", t => run(Map(), t));
 

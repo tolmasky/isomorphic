@@ -2,7 +2,12 @@ const test = require("ava");
 const { parse, stringify } = require("../");
 
 const convert = aValue => parse(stringify(aValue));
-const run = (aValue, t) => t.deepEqual(convert(aValue), aValue);
+const fastConvert = aValue => parse(stringify(aValue, { fastMode: true }));
+const run = (aValue, t) =>
+{
+    t.deepEqual(convert(aValue), aValue);
+    t.deepEqual(fastConvert(aValue), aValue);
+};
 
 test("empty", t => run([], t));
 
