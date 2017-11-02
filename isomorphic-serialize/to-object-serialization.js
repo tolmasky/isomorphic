@@ -75,10 +75,10 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     var UID = Call(MapGet, UIDs, anObject);
 
     if (UID)
-        return UID.increment(); // If the UID already exists the object has already been encoded.
+        return UID.references++, UID; // If the UID already exists the object has already been encoded.
 
-    UID = new UIDWrapper(hasHint && aUIDHint, aContext);
-    Call(MapSet, UIDs, anObject, UID);
+    UID = newUID(hasHint && aUIDHint, aContext, anObject);
+
 
     if (type === "string" ||
         type === "number" ||
@@ -116,25 +116,24 @@ function completeObjectSerialization(anObject, aUID, aContext)
     aContext.objects[aUID.serializedLocation] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
 }
 
-function UIDWrapper(potentialKeyID, aContext)
+function newUID(aPotentialKeyID, aContext, anObject)
 {
-    var size = aContext.UIDs.size;
-    this.serializedLocation = size;
-    this.references = 1;
-    this.potentialKeyID = typeof potentialKeyID === "string" && potentialKeyID;
-    aContext.UIDList[size] = this;
+    // var UID = new UIDWrapper(aPotentialKeyID, aContext);
+    var UID = {
+        serializedLocation: aContext.objects.length,
+        references: 1,
+        potentialKeyID: aPotentialKeyID,
+        toJSON: function()
+        {
+            return this.__UNIQUE_ID;
+        }
+    };
+
+    aContext.UIDList[aContext.UIDList.length] = UID;
+
+    Call(MapSet, aContext.UIDs, anObject, UID);
+    return UID;
 }
-
-UIDWrapper.prototype.toJSON = function()
-{
-    return this.__UNIQUE_ID;
-};
-
-UIDWrapper.prototype.increment = function()
-{
-    this.references += 1;
-    return this;
-};
 
 function analyzeUIDs(UIDs, aFunction)
 {
