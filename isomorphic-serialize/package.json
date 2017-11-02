@@ -19,9 +19,7 @@
        "options": {
          "babel": {
            "presets": [
-             [
-               "isomorphic-preset", { "node": "4.x.x" }
-             ]
+             [ "isomorphic-preset", { "node": "4.x.x" } ]
            ]
          }
        }
@@ -29,7 +27,7 @@
    ]
   },
   "dependencies": {
-    "immutable": "^3.6.2",
+    "immutable": "^3.6.2"
   },
   "devDependencies": {
     "ava": "^0.23.0"
