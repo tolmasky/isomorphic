@@ -11,9 +11,25 @@
   "engines": {
     "node": "4.x.x"
   },
+  "isomorphic": {
+    "transforms": [
+     {
+       "match": "**/*.js",
+       "transform": "isomorphic-compile/babel-transform",
+       "options": {
+         "babel": {
+           "presets": [
+             [
+               "isomorphic-preset", { "node": "4.x.x" }
+             ]
+           ]
+         }
+       }
+     }
+   ]
+  },
   "dependencies": {
     "immutable": "^3.6.2",
-    "ramda": "^0.22.1"
   },
   "devDependencies": {
     "ava": "^0.23.0"
