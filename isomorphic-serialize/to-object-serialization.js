@@ -14,9 +14,16 @@ var undefined = void 0;
 
 var types = require("./types");
 
-module.exports = function(anObject)
+module.exports = function(anObject, anOptions)
 {
-    var context = { UIDs: new Map(), UIDList: [], objects:[], types: Object.create(null) };
+    var context = {
+        UIDs: new Map(),
+        UIDList: [],
+        objects:[],
+        types: Object.create(null),
+        options: anOptions || { fastMode: false }
+    };
+
     var UID = toObjectSerialization(anObject, context);
     var list = context.tail;
 
@@ -27,10 +34,13 @@ module.exports = function(anObject)
         list = list.next;
     }
 
-    var serializedObjects = [];
-
     // Sort the types.
     var typeMap = types.analyzeTypes(context);
+
+    if (context.options.fastMode)
+        return { index: UID, objects: context.objects, typeMap: typeMap };
+
+    var serializedObjects = [];
     // Sort the serialized objects.
     analyzeUIDs(context.UIDList, function(aUID)
     {
@@ -71,22 +81,30 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
             return -6;
     }
 
+    var fastMode = aContext.options.fastMode;
+
     var UIDs = aContext.UIDs;
     var UID = Call(MapGet, UIDs, anObject);
 
     if (UID)
-        return UID.references++, UID; // If the UID already exists the object has already been encoded.
+    {
+        if (!fastMode)
+            UID.references++;
+
+        return UID;
+    }
 
     UID = newUID(hasHint && aUIDHint, aContext, anObject);
+    var location = fastMode ? UID : UID.serializedLocation;
 
 
     if (type === "string" ||
         type === "number" ||
         type === "boolean")
-        aContext.objects[UID.serializedLocation] = anObject;
+        aContext.objects[location] = anObject;
     else
     {
-        aContext.objects[UID.serializedLocation] = null;
+        aContext.objects[location] = null;
 
         var tail = { UID: UID, object: anObject };
 
@@ -112,17 +130,26 @@ function completeObjectSerialization(anObject, aUID, aContext)
 
     var serializedObject = [serializedType];
     var serializer = serializers[internalType];
+    var location = aContext.options.fastMode ? aUID : aUID.serializedLocation;
 
-    aContext.objects[aUID.serializedLocation] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
+    aContext.objects[location] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
 }
 
 function newUID(aPotentialKeyID, aContext, anObject)
 {
-    // var UID = new UIDWrapper(aPotentialKeyID, aContext);
+    var location = aContext.objects.length;
+
+    if (aContext.options.fastMode)
+    {
+        Call(MapSet, aContext.UIDs, anObject, location);
+        return location;
+    }
+
     var UID = {
-        serializedLocation: aContext.objects.length,
+        serializedLocation: location,
         references: 1,
         potentialKeyID: aPotentialKeyID,
+        __UNIQUE_ID: location,
         toJSON: function()
         {
             return this.__UNIQUE_ID;
@@ -130,8 +157,8 @@ function newUID(aPotentialKeyID, aContext, anObject)
     };
 
     aContext.UIDList[aContext.UIDList.length] = UID;
-
     Call(MapSet, aContext.UIDs, anObject, UID);
+
     return UID;
 }
 
