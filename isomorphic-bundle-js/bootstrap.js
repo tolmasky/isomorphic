@@ -1,5 +1,8 @@
-(function (global, content, modules, entrypoint)
+(function (global, content, indexed, entrypoint)
 {
+global.process = { env: { NODE_ENV: "production" } };
+var modules = indexed.reduce((modules, module) =>
+    Object.assign(modules, { [module[0]] : module }), Object.create(null));
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 var requireDepth = 0;
 
@@ -23,9 +26,9 @@ Module.prototype.load = function(filename)
 
     var components = filename.split("/");
     var dirname = components.slice(0, components.length - 1).join("/");
-    var dependencies = modules[filename][1];
+    var dependencies = modules[filename][2];
     var require = makeRequireFunction(this, dependencies);
-    var precompiled = content[modules[filename][0]];
+    var precompiled = content[modules[filename][1]];
 
     if (typeof precompiled === "function")
         precompiled(this.exports, require, this, filename, dirname);
@@ -43,10 +46,7 @@ function makeRequireFunction(module, dependencies)
         {
             requireDepth += 1;
 
-            if (!hasOwnProperty.call(dependencies, path))
-                throw new Error("Module not found: " + path);
-
-            return module.require(dependencies[path]);
+            return module.require(resolve(path));
         }
         finally
         {
@@ -59,7 +59,7 @@ function makeRequireFunction(module, dependencies)
         if (!hasOwnProperty.call(dependencies, request))
             throw new Error("Module not found: " + request);
 
-        return dependencies[request];
+        return indexed[dependencies[request]][0];
     }
 
     require.resolve = resolve;

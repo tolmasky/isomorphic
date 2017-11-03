@@ -34,7 +34,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         const contents = readFileSync(metadata.include);
         const checksum = getChecksum(contents);
         const { path, dependencies } = metadata;
-        const rooted = "/" + relative(root, path);
+        const rooted = "~/" + relative(root, path);
 
         if (!hasOwnProperty.call(content.references, checksum))
         {
@@ -56,7 +56,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
 
         const contentReference = content.references[checksum];
         const dependenciesMUIDs = ObjectMap(dependencies,
-            path => modules.future("/" + relative(root, path)));
+            path => modules.future("~/" + relative(root, path)));
 
         modules.for([rooted, contentReference, dependenciesMUIDs]);
     }
@@ -64,7 +64,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     append("],");
     append(JSON.stringify(modules.finalize()));
     append(",");
-    append(JSON.stringify(entrypoint));
+    append(JSON.stringify("~/" + relative(root, entrypoint)));
     append(")");
 
     const concated = Buffer.concat(output.buffers, output.length);
