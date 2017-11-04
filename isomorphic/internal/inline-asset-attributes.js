@@ -30,6 +30,9 @@ module.exports = function (tag, absolutePath)
 
 function getProjectPath()
 {
+    if (typeof window !== "undefined")
+        return "~";
+
     return (function find(path)
     {
         if (existsSync(join(path, "package.json")))
@@ -41,6 +44,9 @@ function getProjectPath()
 
 function getRoutes(aProjectPath)
 {
+    if (typeof window !== "undefined")
+        return () => { };
+
     const pjson = require(join(aProjectPath, "package.json"));
     const routes = pjson.isomorphic.entrypoints;
 
@@ -72,6 +78,9 @@ function getRoutes(aProjectPath)
 
 function getChecksums(aProjectPath)
 {
+    if (typeof window !== "undefined")
+        return { };
+
     const pjson = require(join(aProjectPath, "package.json"));
     
     return pjson["isomorphic-checksums"];
