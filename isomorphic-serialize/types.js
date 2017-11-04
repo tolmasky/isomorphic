@@ -160,7 +160,7 @@ function TypeUID(aType)
 {
     this.internalType = aType;
     this.count = 0;
-    this.__UNIQUE_ID = undefined;
+    this.__UNIQUE_ID = aType;
 }
 
 TypeUID.prototype.increment = function()

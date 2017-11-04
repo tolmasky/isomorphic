@@ -13,18 +13,23 @@
   },
   "isomorphic": {
     "transforms": [
-     {
-       "match": "**/*.js",
-       "transform": "isomorphic-compile/babel-transform",
-       "options": {
-         "babel": {
-           "presets": [
-             [ "isomorphic-preset", { "node": "4.x.x" } ]
-           ]
-         }
-       }
-     }
-   ]
+      {
+        "match": "**/*.js",
+        "transform": "isomorphic-compile/babel-transform",
+        "options": {
+          "babel": {
+            "presets": [
+              [
+                "isomorphic-preset",
+                {
+                  "node": "4.x.x"
+                }
+              ]
+            ]
+          }
+        }
+      }
+    ]
   },
   "dependencies": {
     "immutable": "^3.6.2"

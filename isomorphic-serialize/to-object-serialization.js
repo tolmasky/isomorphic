@@ -34,11 +34,11 @@ module.exports = function(anObject, anOptions)
         list = list.next;
     }
 
+    if (context.options.fastMode)
+        return { index: UID, objects: context.objects };
+
     // Sort the types.
     var typeMap = types.analyzeTypes(context);
-
-    if (context.options.fastMode)
-        return { index: UID, objects: context.objects, typeMap: typeMap };
 
     var serializedObjects = [];
     // Sort the serialized objects.
