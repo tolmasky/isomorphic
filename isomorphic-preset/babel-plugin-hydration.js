@@ -10,8 +10,11 @@ module.exports = function ({ types: t })
         const { node } = path;
         const tag = node.openingElement.name.name;
 
-        if (tag === "isomorphic")
-            state.file.metadata["isomorphic"].dependencies.add("isomorphic/internal/hydrate");
+        if (tag !== "isomorphic")
+            return;
+
+        state.file.metadata["isomorphic"].dependencies.add("isomorphic/internal/hydrate");
+        state.file.metadata["isomorphic"].hydrate = true;
     }
 }
 

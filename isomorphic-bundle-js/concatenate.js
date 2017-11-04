@@ -18,6 +18,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     mkdirp(dirname(destination));
 
     const output = { buffers:[], length:0 };
+    const hydrate = children[1].hydrate; // FIXME!!!
 
     // The first item is always the bootstrap file, it doesn't get wrapped.
     append(readFileSync(children[0].include));
@@ -64,7 +65,12 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     append("],");
     append(JSON.stringify(modules.finalize()));
     append(",");
-    append(JSON.stringify("~/" + relative(root, entrypoint)));
+
+    if (hydrate)
+        append(JSON.stringify("~/node_modules/isomorphic/internal/hydrate.js"));
+    else
+        append(JSON.stringify("~/" + relative(root, entrypoint)));
+
     append(")");
 
     const concated = Buffer.concat(output.buffers, output.length);

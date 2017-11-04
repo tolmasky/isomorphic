@@ -35,7 +35,7 @@ function fsWrite({ children:[output], ...rest })
     writeFileSync(contentsCachePath, output.contents, "utf-8");
     cacheMetadata(metadataCachePath, output.metadata);
 
-    return { include: contentsCachePath, path, ...output.metadata };  
+    return { include: contentsCachePath, path, ...output.metadata };
 }
 
 function cacheMetadata(aPath, metadata)
@@ -44,29 +44,25 @@ function cacheMetadata(aPath, metadata)
         return;
 
     if (metadata.dependencies.size <= 0 &&
-        metadata.entrypoints.size <= 0)
+        metadata.entrypoints.size <= 0 &&
+        metadata.assets.size <= 0)
         return;
 
-    const dependencies = Array.from(metadata.dependencies);
-    const entrypoints = Array.from(metadata.entrypoints);
-    const assets = Array.from(metadata.assets);
+    writeFileSync(aPath, JSON.stringify(metadata, function (key, value)
+    {
+        if (value instanceof Set)
+            return Array.from(value);
 
-    const asArrays = { dependencies, entrypoints, assets };
-
-    writeFileSync(aPath, JSON.stringify(asArrays, null, 2), "utf-8");
+        return value;
+    }, 2), "utf-8");
 }
 
 function getCachedMetadata(aPath)
 {
     if (!existsSync(aPath))
-        return { dependencies: new Set() };
+        return { };
 
-    const metadata = JSON.parse(readFileSync(aPath, "utf-8"));
-    const dependencies = new Set(metadata.dependencies);
-    const entrypoints = new Set(metadata.entrypoints);
-    const assets = new Set(metadata.assets);
-
-    return { dependencies, entrypoints, assets };
+    return JSON.parse(readFileSync(aPath, "utf-8"));
 }
 
 function getContentsCachePath(cache, checksum, filename)
