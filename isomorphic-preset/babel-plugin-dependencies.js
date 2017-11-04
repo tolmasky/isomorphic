@@ -22,8 +22,8 @@ module.exports = function ({ types: t })
 
         const unresolved = node.arguments[0].value;
 
-        if (unresolved.indexOf("isomorphic/internal/") === 0)
-            return;
+//        if (unresolved.indexOf("isomorphic/internal/") === 0)
+//            return;
 
         const { dependencies } = state.file.metadata["isomorphic"];
 

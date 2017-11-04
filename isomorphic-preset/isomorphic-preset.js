@@ -71,7 +71,8 @@ var plugins =
 
     [ALWAYS, require("./babel-plugin-metadata")],
     [ALWAYS, require("./babel-plugin-entrypoints")],
-    [ALWAYS, require("./babel-plugin-dependencies")]
+    [ALWAYS, require("./babel-plugin-dependencies")],
+    [ALWAYS, require("./babel-plugin-hydration")]
 
 //    [always, require("babel-plugin-transform-es2015-block-scoped-functions")],
 //    [always, require("babel-plugin-transform-es2015-modules-commonjs")]
