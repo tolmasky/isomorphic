@@ -56,6 +56,9 @@ function makeRequireFunction(module, dependencies)
 
     function resolve(request)
     {
+        if (request.charAt(0) === "~" && request.charAt(1) === "/")
+            return request;
+
         if (!hasOwnProperty.call(dependencies, request))
             throw new Error("Module not found: " + request);
 

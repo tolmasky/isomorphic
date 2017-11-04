@@ -53,10 +53,14 @@ function dependency({ cache, path, options, removeTrailingSemicolon })
     if (extname(path) === ".json")
         return { include: path, path };
 
-    return <transform
-            path = { builtIn.is(path) ? builtIn(path) : path }
-            cache = { cache }
-            options = { options }
-            removeTrailingSemicolon = { removeTrailingSemicolon } />;
+    // FIXME: We should still transform this.
+    if (builtIn.is(path))
+        return { include: builtIn(path), path };
+
+    return  <transform
+                path = { path }
+                cache = { cache }
+                options = { options }
+                removeTrailingSemicolon = { removeTrailingSemicolon } />;
 
 }
