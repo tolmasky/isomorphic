@@ -28,6 +28,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     const content = { references: { }, count: 0 };
     const entrypoints = new Set();
     const modules = new MUIDStore(([path]) => path);
+    const fs = { };
 
     for (var index = 1; index < count; ++index)
     {
@@ -54,6 +55,8 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
             if (!isJSON)
                 append(modulePostamble);
         }
+        
+        record(fs, ("~/" + relative(root, path)).split("/"), contentReference);
 
         const contentReference = content.references[checksum];
         const dependenciesMUIDs = ObjectMap(dependencies,
@@ -61,6 +64,9 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
 
         modules.for([rooted, contentReference, dependenciesMUIDs]);
     }
+    
+    console.log(JSON.stringify(fs, null, 2));
+    
 //writeFileSync(destination+"just_module.txt", JSON.stringify(modules.finalize()), "utf-8");
     append("],");
     append(JSON.stringify(modules.finalize()));
@@ -87,6 +93,21 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
 
         output.buffers.push(content);
         output.length += content.length;
+    }
+}
+
+function record(fs, path, muid)
+{
+    const count = path.length;
+
+    for (var index = 0; index < count; ++index)
+    {
+        const component = path[index];
+
+        if (index < count - 1)
+            fs = fs[component] || (fs[component] = { });
+        else
+            fs[component] = muid;
     }
 }
 
