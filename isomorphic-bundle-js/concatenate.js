@@ -25,51 +25,39 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     append("(window, [");
 
     const count = children.length;
-    const content = { references: { }, count: 0 };
-    const entrypoints = new Set();
-    const modules = new MUIDStore(([path]) => path);
     const fs = { };
+    const modules = new MUIDStore(({ checksum }) => checksum);
 
     for (var index = 1; index < count; ++index)
     {
-        const metadata = children[index];
-        const contents = readFileSync(metadata.include);
-        const checksum = getChecksum(contents);
-        const { path, dependencies } = metadata;
-        const rooted = "~/" + relative(root, path);
+        const module = new Module(root, children[index]);
+        const muid = modules.for(module);
 
-        if (!hasOwnProperty.call(content.references, checksum))
+        (function record(fs, path, index)
         {
-            content.references[checksum] = content.count++;
+            const component = path[index];
 
-            if (content.count > 1)
-                append(",");
+            if (index < path.length - 1)
+                return record(fs[component] || (fs[component] = { }), path, index + 1);
 
-            const isJSON = extname(rooted) ===".json";
-
-            if (!isJSON)
-                append(modulePreamble);
- 
-            append(contents);
- 
-            if (!isJSON)
-                append(modulePostamble);
-        }
-        
-        record(fs, ("~/" + relative(root, path)).split("/"), contentReference);
-
-        const contentReference = content.references[checksum];
-        const dependenciesMUIDs = ObjectMap(dependencies,
-            path => modules.future("~/" + relative(root, path)));
-
-        modules.for([rooted, contentReference, dependenciesMUIDs]);
+            fs[component] = muid;
+        })(fs, module.path.split("/"), 0);
     }
     
+    for (const module of modules.finalize())
+    {
+        append(modulePreamble);
+
+        if (module.json)
+            append("return ");
+
+        append(module.contents);
+        append(modulePostamble);
+        append(",");
+    }
     console.log(JSON.stringify(fs, null, 2));
-    
-//writeFileSync(destination+"just_module.txt", JSON.stringify(modules.finalize()), "utf-8");
     append("],");
-    append(JSON.stringify(modules.finalize()));
+    append(JSON.stringify(fs, null, 2));
     append(",");
 
     if (hydrate)
@@ -96,19 +84,12 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     }
 }
 
-function record(fs, path, muid)
+function Module(root, { path, include })
 {
-    const count = path.length;
-
-    for (var index = 0; index < count; ++index)
-    {
-        const component = path[index];
-
-        if (index < count - 1)
-            fs = fs[component] || (fs[component] = { });
-        else
-            fs[component] = muid;
-    }
+    this.contents = readFileSync(include);
+    this.checksum = getChecksum(this.contents);
+    this.path = "~/" + relative(root, path);
+    this.json = extname(path) === ".json";
 }
 
 function ObjectMap(anObject, aFunction)
