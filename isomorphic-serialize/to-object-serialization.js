@@ -2,17 +2,21 @@
 var Call = (Function.prototype.call).bind(Function.prototype.call);
 
 var Map = global.Map || require("native-map");
+var Set = global.Set;
+
 
 var ArraySort = Array.prototype.sort;
+var ArrayMap = Array.prototype.map;
 var MapGet = Map.prototype.get;
 var MapSet = Map.prototype.set;
 
+var isArray = Array.isArray;
+var ObjectKeys = Object.keys;
 var MathLog = Math.log;
 var MathLN10 = Math.LN10;
 
 var undefined = void 0;
-
-var types = require("./types");
+var Types = require("./types");
 
 module.exports = function(anObject, anOptions)
 {
@@ -38,7 +42,7 @@ module.exports = function(anObject, anOptions)
         return { index: UID, objects: context.objects };
 
     // Sort the types.
-    var typeMap = types.analyzeTypes(context);
+    var typeMap = analyzeTypes(context);
 
     var serializedObjects = [];
     // Sort the serialized objects.
@@ -117,9 +121,78 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     return UID;
 }
 
-var getInternalType = types.getInternalType;
-var encodableType = types.encodableType;
-var serializers = types.serializers;
+var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
+var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
+var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
+var IS_ORDERED_SENTINEL = "@@__IMMUTABLE_ORDERED__@@";
+
+function getInternalType(anObject)
+{
+    if (isArray(anObject))
+    {
+        var keys = ObjectKeys(anObject);
+
+        if (keys.length > 0 && anObject.length === 0)
+            return Types.JustKeyValueArray;
+
+        if (keys.length === anObject.length)
+            return Types.GaplessArray;
+
+        return Types.GenericArray;
+    }
+
+    if (anObject instanceof Set)
+    {
+        var keys = ObjectKeys(anObject);
+        return keys.length ? Types.GenericSet : Types.NoKeyValueSet;
+    }
+
+    if (anObject instanceof Map)
+    {
+        var keys = ObjectKeys(anObject);
+        return keys.length ? Types.GenericMap : Types.NoKeyValueMap;
+    }
+
+    // if (I.Map.isMap(anObject))
+    if (anObject[IS_MAP_SENTINEL])
+        return anObject[IS_ORDERED_SENTINEL] ? Types.ImmutableOrderedMap : Types.ImmutableMap;
+
+    // if (I.List.isList(anObject))
+    if (anObject[IS_LIST_SENTINEL])
+        return Types.ImmutableList;
+
+    // if (I.Set.isSet(anObject))
+    if (anObject[IS_SET_SENTINEL])
+        return anObject[IS_ORDERED_SENTINEL] ? Types.ImmutableOrderedSet : Types.ImmutableSet;
+
+    return Types.GenericObject;
+}
+
+function encodableType(anInternalType, aContext)
+{
+    var existingType = aContext.types[anInternalType];
+
+    if (existingType)
+        return existingType;
+
+    return aContext.types[anInternalType] = new TypeUID(anInternalType);
+}
+
+var serializers = [
+    require("./serializers/generic-object"),
+    require("./serializers/key-value-array"),
+    require("./serializers/gapless-array"),
+    require("./serializers/generic-array"),
+    require("./serializers/pure-set"),
+    require("./serializers/generic-set"),
+    require("./serializers/pure-map"),
+    require("./serializers/generic-map"),
+    require("./serializers/pure-map"), // Immutable map can use pure-map.
+    require("./serializers/pure-set"), // Immutable set can use pure-set.
+    require("./serializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./serializers/pure-map"), // Immutable ordered map can use pure-map.
+    require("./serializers/pure-set"), // Immutable ordered set can use pure-set.
+];
 
 function completeObjectSerialization(anObject, aUID, aContext)
 {
@@ -194,4 +267,47 @@ function analyzeUIDs(UIDs, aFunction)
     }
 
     return UIDs;
+}
+
+function TypeUID(aType)
+{
+    this.internalType = aType;
+    this.count = 0;
+    this.__UNIQUE_ID = aType;
+}
+
+TypeUID.prototype.increment = function()
+{
+    this.count += 1;
+};
+
+TypeUID.prototype.toJSON = function()
+{
+    return this.__UNIQUE_ID;
+};
+
+function analyzeTypes(aContext)
+{
+    var keys = ObjectKeys(aContext.types);
+
+    var allTypes = Call(ArrayMap, keys, function(aKey)
+    {
+        return aContext.types[aKey];
+    });
+
+    Call(ArraySort, allTypes, function(a, b)
+    {
+        return b.count - a.count;
+    });
+
+    var finalMapping = {};
+
+    for (var i = 0; i < allTypes.length; i++)
+    {
+        var aType = allTypes[i];
+        aType.__UNIQUE_ID = i;
+        finalMapping[i] = aType.internalType;
+    }
+
+    return finalMapping;
 }

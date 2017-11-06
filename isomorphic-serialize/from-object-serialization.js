@@ -1,5 +1,9 @@
 
+var I = require("immutable");
 var Types = require("./types");
+var ImmutableTypeStart = Types.ImmutableTypeStart;
+var Set = global.Set;
+var Map = global.Map;
 
 // Returns a deserialized object.
 // Expects a serialized object and an options object.
@@ -18,8 +22,22 @@ module.exports = function(anObjectSerialization, options)
     return fromObjectSerialization(anObjectSerialization.index, context);
 };
 
-var ImmutableTypeStart = Types.ImmutableTypeStart;
-var deserializers = Types.deserializers;
+var deserializers = [
+    require("./deserializers/generic-object"),
+    require("./deserializers/key-value-array"),
+    require("./deserializers/gapless-array"),
+    require("./deserializers/generic-array"),
+    require("./deserializers/pure-set"),
+    require("./deserializers/generic-set"),
+    require("./deserializers/pure-map"),
+    require("./deserializers/generic-map"),
+    require("./deserializers/pure-map"), // Immutable map can use pure-map.
+    require("./deserializers/pure-set"), // Immutable set can use pure-set.
+    require("./deserializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./deserializers/pure-map"), // Immutable ordered map can use pure-map.
+    require("./deserializers/pure-set"), // Immutable ordered set can use pure-set.
+];
+
 
 function fromObjectSerialization(index, context)
 {
@@ -54,15 +72,13 @@ function fromObjectSerialization(index, context)
 
     var encodedType = serializedObject[0];
     var internalType = context.typeMap[encodedType];
-    var base = Types.getBase(internalType, context);
+    var base = getBase(internalType, context);
 
     context.deserializedObjects[index] = base;
-    // return deserialize(base, internalType, serializedObject, context, fromObjectSerialization);
 
     var mutator = deserializers[internalType];
 
     var isImmutable = context.options.immutable || internalType >= ImmutableTypeStart;
-    // var withMutationsFunction = isImmutable ? immutableWithMutations : withMutations;
 
     if (isImmutable)
     {
@@ -73,4 +89,62 @@ function fromObjectSerialization(index, context)
     }
 
     return mutator(base, serializedObject, context, fromObjectSerialization);
+}
+
+function getBase(encodedType, aContext)
+{
+    if (aContext.options.immutable)
+    {
+        switch(encodedType)
+        {
+            case Types.GenericObject:
+            case Types.NoKeyValueMap:
+            case Types.GenericMap:
+            case Types.ImmutableMap:
+                return I.Map();
+            case Types.JustKeyValueArray:
+            case Types.GaplessArray:
+            case Types.GenericArray:
+            case Types.ImmutableList:
+                return I.List();
+            case Types.NoKeyValueSet:
+            case Types.GenericSet:
+            case Types.ImmutableSet:
+                return I.Set();
+            case Types.ImmutableOrderedMap:
+                return I.OrderedMap();
+            case Types.ImmutableOrderedSet:
+                return I.OrderedSet();
+            default:
+                throw new Error("unknown type..." + encodedType);
+        }
+    }
+
+    switch(encodedType)
+    {
+        case Types.GenericObject:
+            return {};
+        case Types.JustKeyValueArray:
+        case Types.GaplessArray:
+        case Types.GenericArray:
+            return [];
+        case Types.NoKeyValueSet:
+        case Types.GenericSet:
+            return new Set();
+        case Types.NoKeyValueMap:
+        case Types.GenericMap:
+            return new Map();
+        case Types.ImmutableMap:
+            return I.Map();
+        case Types.ImmutableSet:
+            return I.Set();
+        case Types.ImmutableList:
+            return I.List();
+        case Types.ImmutableOrderedMap:
+            return I.OrderedMap();
+        case Types.ImmutableOrderedSet:
+            return I.OrderedSet();
+        default:
+            throw new Error("unknown type..." + encodedType);
+    }
 }
