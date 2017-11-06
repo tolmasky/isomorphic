@@ -86,7 +86,7 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
     var UIDs = aContext.UIDs;
     var UID = Call(MapGet, UIDs, anObject);
 
-    if (UID)
+    if (UID !== undefined)
     {
         if (!fastMode)
             UID.references++;
@@ -180,7 +180,7 @@ function analyzeUIDs(UIDs, aFunction)
         var potentialKeyID = aUID.potentialKeyID;
 
         var canStoreAsString = typeof potentialKeyID === "string";
-        var isShorterAsString = canStoreAsString && MathLog(potentialID) / MathLN10 > potentialKeyID.length + 2;
+        var isShorterAsString = canStoreAsString && MathLog(potentialID) / MathLN10 >= potentialKeyID.length + 2;
 
         if (isShorterAsString)
         {
