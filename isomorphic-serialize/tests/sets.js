@@ -13,6 +13,7 @@ test("empty", t => run(new Set(), t));
 
 test("simple", t => run(new Set(["foo", 123]), t));
 test("simple 2", t => run(new Set(["abc", 123]), t));
+test("Duplicates", t => run(new Set(["abc", 123, 123, "abc"]), t));
 
 test("Nested", t => run(new Set(["foo", new Set(["bar", 123])]), t));
 

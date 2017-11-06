@@ -12,7 +12,7 @@ module.exports = function(anObjectSerialization, options)
         options: options || {},
         anObjectSerialization: anObjectSerialization,
         deserializedObjects: deserializedObjects,
-        typeMap: anObjectSerialization.typeMap || { "0": 0, "1": 1 }
+        typeMap: anObjectSerialization.typeMap || Types.defaultTypes
     };
 
     return fromObjectSerialization(anObjectSerialization.index, context);

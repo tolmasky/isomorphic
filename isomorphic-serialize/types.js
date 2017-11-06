@@ -22,6 +22,24 @@ var GenericMap        = 7;
 var ImmutableMap      = 8;
 var ImmutableSet      = 9;
 var ImmutableList     = 10;
+var ImmutableOrderedMap = 11;
+var ImmutableOrderedSet = 12;
+
+module.exports.defaultTypes = [
+    GenericObject,
+    JustKeyValueArray,
+    GaplessArray,
+    GenericArray,
+    NoKeyValueSet,
+    GenericSet,
+    NoKeyValueMap,
+    GenericMap,
+    ImmutableMap,
+    ImmutableSet,
+    ImmutableList,
+    ImmutableOrderedMap,
+    ImmutableOrderedSet,
+];
 
 module.exports.ImmutableTypeStart = 8;
 
@@ -36,7 +54,9 @@ module.exports.serializers = [
     require("./serializers/generic-map"),
     require("./serializers/pure-map"), // Immutable map can use pure-map.
     require("./serializers/pure-set"), // Immutable set can use pure-set.
-    require("./serializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./serializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./serializers/pure-map"), // Immutable ordered map can use pure-map.
+    require("./serializers/pure-set"), // Immutable ordered set can use pure-set.
 ];
 
 module.exports.deserializers = [
@@ -50,12 +70,15 @@ module.exports.deserializers = [
     require("./deserializers/generic-map"),
     require("./deserializers/pure-map"), // Immutable map can use pure-map.
     require("./deserializers/pure-set"), // Immutable set can use pure-set.
-    require("./deserializers/gapless-array") // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./deserializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./deserializers/pure-map"), // Immutable ordered map can use pure-map.
+    require("./deserializers/pure-set"), // Immutable ordered set can use pure-set.
 ];
 
 var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
 var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
 var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
+var IS_ORDERED_SENTINEL = "@@__IMMUTABLE_ORDERED__@@";
 
 function getInternalType(anObject)
 {
@@ -86,7 +109,7 @@ function getInternalType(anObject)
 
     // if (I.Map.isMap(anObject))
     if (anObject[IS_MAP_SENTINEL])
-        return ImmutableMap;
+        return anObject[IS_ORDERED_SENTINEL] ? ImmutableOrderedMap : ImmutableMap;
 
     // if (I.List.isList(anObject))
     if (anObject[IS_LIST_SENTINEL])
@@ -94,7 +117,7 @@ function getInternalType(anObject)
 
     // if (I.Set.isSet(anObject))
     if (anObject[IS_SET_SENTINEL])
-        return ImmutableSet;
+        return anObject[IS_ORDERED_SENTINEL] ? ImmutableOrderedSet : ImmutableSet;
 
     return GenericObject;
 }
@@ -118,16 +141,23 @@ function getBase(encodedType, aContext)
             case GenericObject:
             case NoKeyValueMap:
             case GenericMap:
+            case ImmutableMap:
                 return I.Map();
             case JustKeyValueArray:
             case GaplessArray:
             case GenericArray:
+            case ImmutableList:
                 return I.List();
             case NoKeyValueSet:
             case GenericSet:
+            case ImmutableSet:
                 return I.Set();
+            case ImmutableOrderedMap:
+                return I.OrderedMap();
+            case ImmutableOrderedSet:
+                return I.OrderedSet();
             default:
-                throw new Error("unknown type...");
+                throw new Error("unknown type..." + encodedType);
         }
     }
 
@@ -151,8 +181,12 @@ function getBase(encodedType, aContext)
             return I.Set();
         case ImmutableList:
             return I.List();
+        case ImmutableOrderedMap:
+            return I.OrderedMap();
+        case ImmutableOrderedSet:
+            return I.OrderedSet();
         default:
-            throw new Error("unknown type...");
+            throw new Error("unknown type..." + encodedType);
     }
 }
 
