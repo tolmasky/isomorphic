@@ -5,6 +5,9 @@ const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 module.exports = function(name)
 {
+    if (name === "module")
+        return require.resolve("./module.js");
+
     if (!hasOwnProperty.call(polyfills, name))
         throw new Error(`${name} is not a recognized core node module.`);
 

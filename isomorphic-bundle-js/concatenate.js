@@ -1,5 +1,5 @@
 
-const { dirname, extname, relative } = require("path");
+const { dirname, extname, relative, isAbsolute } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
@@ -19,10 +19,6 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
 
     const output = { buffers:[], length:0 };
     const hydrate = children[1].hydrate; // FIXME!!!
-
-    // The first item is always the bootstrap file, it doesn't get wrapped.
-    append(readFileSync(children[0].include));
-    append("(window, [");
 
     const count = children.length;
     const fs = { };
@@ -44,6 +40,11 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         })(fs, module.path.split("/"), 0);
     }
     
+    // The first item is always the bootstrap file, it doesn't get wrapped.
+    append("(function (global) { (function (compiled, fs, entrypoint) {");
+    append(readFileSync(children[0].include));
+    append("} )([");
+
     for (const module of modules.finalize())
     {
         append(modulePreamble);
@@ -55,17 +56,17 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         append(modulePostamble);
         append(",");
     }
-    console.log(JSON.stringify(fs, null, 2));
+
     append("],");
     append(JSON.stringify(fs, null, 2));
     append(",");
 
     if (hydrate)
-        append(JSON.stringify("~/node_modules/isomorphic/internal/hydrate.js"));
+        append(JSON.stringify("/node_modules/isomorphic/internal/hydrate.js"));
     else
-        append(JSON.stringify("~/" + relative(root, entrypoint)));
+        append(JSON.stringify("/" + relative(root, entrypoint)));
 
-    append(")");
+    append(") } )(window)");
 
     const concated = Buffer.concat(output.buffers, output.length);
     const minified = minify(options.minify, concated.toString("utf-8"));
@@ -88,18 +89,8 @@ function Module(root, { path, include })
 {
     this.contents = readFileSync(include);
     this.checksum = getChecksum(this.contents);
-    this.path = "~/" + relative(root, path);
+    this.path = isAbsolute(path) ? "/" + relative(root, path) : path;
     this.json = extname(path) === ".json";
-}
-
-function ObjectMap(anObject, aFunction)
-{
-    const mapped = { };
-
-    for (const key of Object.keys(anObject))
-        mapped[key] = aFunction(anObject[key], key);
-
-    return mapped;
 }
 
 function minify(proceed, input)

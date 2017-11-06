@@ -1,130 +1,105 @@
-(function (global, content, indexed, entrypoint)
-{
-global.process = { env: { NODE_ENV: "production" } };
-var modules = indexed.reduce((modules, module) =>
-    Object.assign(modules, { [module[0]] : module }), Object.create(null));
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-var requireDepth = 0;
 
-function Module(id, parent)
+
+const read = path => path.split("/").reduce((fs, name) => fs[name], fs);
+const onFail = (value, f) =>
+    (...args) => { try { return f(...args) } catch (e) { return value } }
+const natives = { "module": 1, "path": 1, "vm": 1 };
+const nativeCache = { };
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+const shims =
 {
-    this.id = id;
-    this.exports = {};
-    this.parent = parent;
-    updateChildren(parent, this, false);
-    this.filename = null;
-    this.loaded = false;
-    this.children = [];
+    "native_module": { nonInternalExists: request => hasOwnProperty.call(natives, request), require },
+    "assert": { "ok": (value, message) => { if (!value) throw new Error(message); } },
+    "util": { deprecate(){}, debuglog: () => () => {} },
+    "internal/url": {},
+    "internal/loader/ModuleWrap": {},
+    "internal/fs": {},
+    "internal/module": { makeRequireFunction },
+    "internal/errors": { },
+    "internal/loader/Loader": { },
+    "internal/loader/ModuleJob": { },
+    "fs": { realpathSync: x => x },
+    "vm": { }
+};
+const bindings =
+{
+    "config": { },
+    "fs":
+    {
+        // FIXME: IE support slice with negative values?
+        internalModuleReadFile: path =>
+            path.split("/").slice(0, -1)
+                .reduce((fs, name) => fs[name], fs)["/main-json"],
+        internalModuleStat: onFail(-2, path =>
+            ({ number: 1, object: 2 }[typeof read(path)] || -1) - 1)
+    }
 }
 
-Module.prototype.load = function(filename)
+global.process =
 {
-    this.filename = filename;
-
-    if (!hasOwnProperty.call(modules, filename))
-        throw new Error("Module not found: " + filename);
-
-    var components = filename.split("/");
-    var dirname = components.slice(0, components.length - 1).join("/");
-    var dependencies = modules[filename][2];
-    var require = makeRequireFunction(this, dependencies);
-    var precompiled = content[modules[filename][1]];
-
-    if (typeof precompiled === "function")
-        precompiled(this.exports, require, this, filename, dirname);
-    else
-        this.exports = precompiled;
-
-    this.loaded = true;
+    binding: name => bindings[name],
+    env: { NODE_ENV: "production" },
+    argv: ["node", entrypoint],
+    execPath: "/",
+    cwd: () => "/",
+    _tickCallback: () => {}
 };
 
-function makeRequireFunction(module, dependencies)
+const { dirname } = Object.assign(require("path"), { _makeLong: path => path });
+const Module = require("module");
+
+
+Module._extensions[".js"] =
+Module._extensions[".json"] = function(module, filename)
 {
-    function require(path)
+    const index = read(filename);
+    const precompiled = compiled[index];
+    const require = makeRequireFunction(module);
+
+    return precompiled.call(module.exports,
+        module.exports, require, module, filename, dirname(filename));
+};
+
+// Invoke with makeRequireFunction(module) where |module| is the Module object
+// to use as the context for the require() function.
+function makeRequireFunction(module)
+{
+    const { Module } = module.constructor;
+    const { _extensions: extensions, _cache: cache } = Module;
+
+    return Object.assign(function require(path)
     {
         try
         {
-            requireDepth += 1;
-
-            return module.require(resolve(path));
+          return module.require(path);
         }
-        finally
-        {
-            requireDepth -= 1;
-        }
-    }
+        finally { }
+    }, { resolve, paths:[], main: process.mainModule, extensions, cache });
 
-    function resolve(request)
+    function resolve(request, options)
     {
-        if (request.charAt(0) === "~" && request.charAt(1) === "/")
-            return request;
-
-        if (!hasOwnProperty.call(dependencies, request))
-            throw new Error("Module not found: " + request);
-
-        return indexed[dependencies[request]][0];
+        return Module._resolveFilename(request, module, false, options);
     }
-
-    require.resolve = resolve;
-
-    return require;
 }
 
-Module._cache = Object.create(null);
-
-function updateChildren(parent, child, scan)
+function require(request)
 {
-    var children = parent && parent.children;
-    if (children && !(scan && children.indexOf(child) >= 0))
-        children.push(child);
-}
+    if (hasOwnProperty.call(shims, request))
+        return shims[request];
 
-Module.prototype.require = function(path)
-{
-    return Module._load(path, this, /* isMain */ false);
-};
+    if (hasOwnProperty.call(nativeCache, request))
+        return nativeCache[request].exports;
 
-Module._load = function(path, parent, isMain)
-{
-    var filename = path;
-    var cachedModule = Module._cache[filename];
+    const index = fs[request];
+    const precompiled = compiled[index];
+    const module = { exports: { } };
 
-    if (cachedModule)
-    {
-        updateChildren(parent, cachedModule, true);
-        return cachedModule.exports;
-    }
+    precompiled.call(module.exports, module.exports, require, module);
 
-    // Don't call updateChildren(), Module constructor already does.
-    var module = new Module(filename, parent);
-
-/*    if (isMain)
-    {
-        process.mainModule = module;
-        module.id = '.';
-    }*/
-
-    Module._cache[filename] = module;
-
-    tryModuleLoad(module, filename);
+    nativeCache[request] = module;
 
     return module.exports;
-};
+}
 
-function tryModuleLoad(module, filename)
-{
-    var threw = true;
-    try
-    {
-        module.load(filename);
-        threw = false;
-    }
-    finally
-    {
-        if (threw)
-          delete Module._cache[filename];
-    }
-};
-
-Module._load(entrypoint, null, false);
-})
+Module.runMain();

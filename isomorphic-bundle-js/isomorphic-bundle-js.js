@@ -41,12 +41,11 @@ function dependencies({ root, children, visited, cache, options })
 function bootstrap({ cache, options })
 {
     const path = require.resolve("./bootstrap");
-    const removeTrailingSemicolon = true;
 
-    return <dependency { ...{ cache, options, path, removeTrailingSemicolon } } />;
+    return <dependency { ...{ cache, options, path } } />;
 }
 
-function dependency({ cache, path, options, removeTrailingSemicolon })
+function dependency({ cache, path, options })
 {
     // Instead of forcing the json file into a module format, inline the object
     // directly.
@@ -60,7 +59,6 @@ function dependency({ cache, path, options, removeTrailingSemicolon })
     return  <transform
                 path = { path }
                 cache = { cache }
-                options = { options }
-                removeTrailingSemicolon = { removeTrailingSemicolon } />;
+                options = { options } />;
 
 }

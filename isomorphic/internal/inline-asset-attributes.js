@@ -25,7 +25,7 @@ module.exports = function (tag, absolutePath)
 
     const Component = require(absolutePath);
 
-    return { __internal_props: { Component, entrypoint, script: props } };
+    return { __internal_props: { Component, entrypoint: entrypoint.replace(/^~\//g, "/"), script: props } };
 }
 
 function getProjectPath()
