@@ -1,10 +1,6 @@
 
-var invoker = require("../utils").invoker;
-
 // FIXME: this could easily change, then we should just go back to I.Map.isMap()
 var IS_MAP_SENTINEL = "@@__IMMUTABLE_MAP__@@";
-
-var immutableSet = invoker("set");
 
 module.exports = deserializeGenericObject;
 
@@ -23,7 +19,7 @@ function deserializeGenericObject(aDeserializedObject, serializedObject, context
         var value = fromObjectSerialization(serializedObject[keyIndex + 1], context);
 
         if (forceImmutable || !!aDeserializedObject[IS_MAP_SENTINEL])
-            immutableSet(key, value, aDeserializedObject);
+            aDeserializedObject.set(key, value);
         else
             aDeserializedObject[key] = value;
     }

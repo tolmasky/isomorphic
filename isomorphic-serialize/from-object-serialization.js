@@ -82,7 +82,7 @@ function fromObjectSerialization(index, context)
 
     if (isImmutable)
     {
-        return base.withMutations(function(aDeserializedObject)
+        return context.deserializedObjects[index] = base.withMutations(function(aDeserializedObject)
         {
             mutator(aDeserializedObject, serializedObject, context, fromObjectSerialization);
         });
