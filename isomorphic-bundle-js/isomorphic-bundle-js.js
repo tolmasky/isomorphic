@@ -1,13 +1,16 @@
 
+const Module = require("module");
 const { basename, extname, join } = require("path");
 const { existsSync, readFileSync, writeFileSync } = require("fs");
 
-const resolvedPathsInKey = require("isomorphic-compile/resolved-paths-in-key");
+const dedupe = require("isomorphic-compile/dedupe");
+const resolvePathsInKeys = require("isomorphic-compile/resolve-paths-in-keys");
 const transform = require("isomorphic-compile/babel-transform");
 
 const builtIn = require("./built-in");
 const concatenate = require("./concatenate");
 const { getArguments } = require("generic-jsx");
+const UnresolvedPathsKeys = ["assets", "entrypoints", "dependencies"];
 
 
 module.exports = function bundle({ root, entrypoint, cache, options, destination })
@@ -22,8 +25,9 @@ module.exports = function bundle({ root, entrypoint, cache, options, destination
 
 function dependencies({ root, children, visited, cache, options })
 {
-    const [subdependencies, updated, resolved] =
-        resolvedPathsInKey(root, visited, "dependencies", children);
+    const resolved = resolvePathsInKeys(root, UnresolvedPathsKeys, children);
+    const { extracted: subdependencies, visited: updated } =
+        dedupe("dependencies", resolved, visited);
 
     if (subdependencies.size <= 0)
         return resolved;

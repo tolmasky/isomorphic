@@ -8,6 +8,7 @@ const uglify = require("uglify-js");
 const modulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
 const modulePostamble = "\n}";
 const MUIDStore = require("./muid-store");
+const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
 module.exports = function concatenate({ root, destination, entrypoint, children, options })
@@ -21,23 +22,18 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     const hydrate = children[1].hydrate; // FIXME!!!
 
     const count = children.length;
-    const fs = { };
-    const modules = new MUIDStore(({ checksum }) => checksum);
+    const { fs, mount } = fsAndMount();
+    const modules = new MUIDStore(module => module.checksum);
 
     for (var index = 1; index < count; ++index)
     {
-        const module = new Module(root, children[index]);
-        const muid = modules.for(module);
+        const { path, include, assets, entrypoints } = children[index];
+        const module = new Module(derooted(path), include);
 
-        (function record(fs, path, index)
-        {
-            const component = path[index];
+        mount(modules.for(module), module.path);
+        Array.from(assets || [], path => mount(-1, derooted(path)));
+        Array.from(entrypoints || [], path => mount(-1, derooted(path)));
 
-            if (index < path.length - 1)
-                return record(fs[component] || (fs[component] = { }), path, index + 1);
-
-            fs[component] = muid;
-        })(fs, module.path.split("/"), 0);
     }
     
     // The first item is always the bootstrap file, it doesn't get wrapped.
@@ -56,7 +52,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         append(modulePostamble);
         append(",");
     }
-
+console.log(JSON.stringify(fs, null, 2));
     append("],");
     append(JSON.stringify(fs, null, 2));
     append(",");
@@ -64,7 +60,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     if (hydrate)
         append(JSON.stringify("/node_modules/isomorphic/internal/hydrate.js"));
     else
-        append(JSON.stringify("/" + relative(root, entrypoint)));
+        append(JSON.stringify(derooted(entrypoint)));
 
     append(") } )(window)");
 
@@ -83,14 +79,37 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         output.buffers.push(content);
         output.length += content.length;
     }
+    
+    function derooted(path)
+    {
+        return isAbsolute(path) ? "/" + relative(root, path) : path
+    }
 }
 
-function Module(root, { path, include })
+function Module(path, include)
 {
     this.contents = readFileSync(include);
     this.checksum = getChecksum(this.contents);
-    this.path = isAbsolute(path) ? "/" + relative(root, path) : path;
+    this.path = path;
     this.json = extname(path) === ".json";
+}
+
+function fsAndMount()
+{
+    const fs = { };
+    const mount = (muid, path) =>
+        path.reduce((parent, component, index) =>
+            index === path.length - 1 ?
+                store(parent, component, muid) :
+                parent[component] || (parent[component] = { }), fs);
+
+    return { fs, mount: (muid, path) => mount(muid, path.split("/")) };
+    
+    function store(parent, component, muid)
+    {
+        if (muid !== -1 || !hasOwnProperty.call(parent, component))
+            parent[component] = muid;
+    }
 }
 
 function minify(proceed, input)

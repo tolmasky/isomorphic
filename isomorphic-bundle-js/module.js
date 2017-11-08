@@ -172,6 +172,9 @@ function tryExtensions(p, exts, isMain) {
 
 var warned = false;
 Module._findPath = function(request, paths, isMain) {
+console.log(request);
+var IS_FS = request === "./styles.less";
+if (IS_FS) console.log("LOOKING FOR " + request, paths, isMain); 
   if (path.isAbsolute(request)) {
     paths = [''];
   } else if (!paths || paths.length === 0) {
@@ -187,11 +190,12 @@ Module._findPath = function(request, paths, isMain) {
   var exts;
   var trailingSlash = request.length > 0 &&
                       request.charCodeAt(request.length - 1) === 47/*/*/;
-
+console.log(paths);
+console.log("OK");
   // For each path
   for (var i = 0; i < paths.length; i++) {
     // Don't search further if path doesn't exist
-    const curPath = paths[i];console.log("LOOKING FOR " + curPath + stat(curPath));
+    const curPath = paths[i];if (IS_FS) console.log("LOOKING FOR " + curPath + stat(curPath));
     if (curPath && stat(curPath) < 1) continue;
     var basePath = path.resolve(curPath, request);
     var filename;

@@ -1,9 +1,9 @@
 
 
-const read = path => path.split("/").reduce((fs, name) => fs[name], fs);
+const read = path => path.replace(/\/$/, "").split("/").reduce((fs, name) => fs[name], fs);
 const onFail = (value, f) =>
     (...args) => { try { return f(...args) } catch (e) { return value } }
-const natives = { "module": 1, "path": 1, "vm": 1 };
+const natives = { "module": 1, "path": 1, "vm": 1, "fs": 1 };
 const nativeCache = { };
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 

@@ -1,4 +1,5 @@
 
+
 const { existsSync } = require("fs");
 const { dirname, join, relative } = require("path");
 
@@ -31,7 +32,7 @@ module.exports = function (tag, absolutePath)
 function getProjectPath()
 {
     if (typeof window !== "undefined")
-        return "~";
+        return "/";
 
     return (function find(path)
     {
