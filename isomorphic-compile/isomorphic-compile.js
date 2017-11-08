@@ -17,6 +17,11 @@ const uuid = require("uuid").v4;
 const runtime = require("./runtime");
 const project = require("./project");
 
+const hasDependency = (pjson, name, kind = "dependencies") =>
+    !r_get(pjson, [kind, name]).error;
+const hasPeerDependency = (pjson, name) =>
+    hasDependency(pjson, name, "peerDependencies");
+
 module.exports = function compile({ root: unresolved, cache, destination })
 {
     const root = resolve(unresolved);
@@ -33,7 +38,7 @@ module.exports = function compile({ root: unresolved, cache, destination })
 
     const r_transforms = r_get(r_pjson.ok, ["isomorphic", "transforms"]);
     const transforms = error.is(r_transforms) ?
-        getDefaultTransforms(node) : r_transforms.ok;
+        getDefaultTransforms(node, r_pjson.ok) : r_transforms.ok;
 
     const r_entrypoints = r_get(r_pjson.ok, ["isomorphic", "entrypoints"]);
     const entrypoints = error.is(r_entrypoints) ? [] : r_entrypoints.ok;
@@ -43,8 +48,15 @@ module.exports = function compile({ root: unresolved, cache, destination })
     return runtime(<project { ...{ root, exclude, transforms, cache, destination, entrypoints } } />);
 }
 
-function getDefaultTransforms(node)
+function getDefaultTransforms(node, pjson)
 {
+    const options =
+    {
+        node,
+        "react": hasDependency(pjson, "react") || hasPeerDependency(pjson, "react"),
+        "generic-jsx": hasDependency(pjson, "generic-jsx") || hasPeerDependency(pjson, "generic-jsx")
+    };
+
     return [
         {
             "match": "**/*.js",
@@ -52,7 +64,7 @@ function getDefaultTransforms(node)
             "options": {
                 "babel": {
                     "presets": [
-                        ["isomorphic-preset", { node, "react": true }]
+                        ["isomorphic-preset", options]
                     ]
                 }
             }

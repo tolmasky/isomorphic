@@ -8,7 +8,7 @@ module.exports = function requireResolve({ root, keys, children })
     return children.map(metadata =>
         !metadata ? metadata :
         keys.reduce((metadata, key) =>
-            !metadata[key] ? [] :
+            !metadata[key] ? metadata :
             ({ ...metadata, [key]: Array.from(metadata[key],
                 path => resolve(root, path, metadata.path)) }), metadata));
 }

@@ -6,12 +6,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": "4.x.x"
+  },
   "keywords": [],
   "author": "Francisco Ryan Tolmsaky I",
   "license": "MIT",
   "dependencies": {
-    "generic-jsx": "^18.0.0-beta.3",
     "node-libs-browser": "^2.0.0",
     "uglify-js": "^3.1.5"
+  },
+  "peerDependencies": {
+    "generic-jsx": "^18.0.0-beta.3"
   }
 }

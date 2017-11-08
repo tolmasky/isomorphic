@@ -6,33 +6,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": "4.x.x"
+  },
   "keywords": [],
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
-  "isomorphic": {
-    "transforms": [
-      {
-        "match": "**/*.js",
-        "transform": "isomorphic-javascript",
-        "options": {
-          "babel": {
-            "presets": [
-              [
-                "isomorphic-preset",
-                {
-                  "node": "4.x.x",
-                  "generic-jsx": true
-                }
-              ]
-            ]
-          }
-        }
-      }
-    ]
-  },
   "dependencies": {
     "babel-core": "^6.26.0",
-    "babylon": "^6.18.0",
+    "babylon": "^6.18.0"
+  },
+  "peerDependencies": {
     "generic-jsx": "^18.0.0-beta.3"
   }
 }

@@ -9,40 +9,16 @@
   "keywords": [],
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
-  "peerDependencies": {
-    "react": "^16.0.0"
-  },
   "engines": {
     "node": "4.x.x"
   },
-  "isomorphic": {
-    "transforms": [
-      {
-        "match": "**/*.js",
-        "transform": "isomorphic-javascript",
-        "options": {
-          "babel": {
-            "presets": [
-              [
-                "isomorphic-preset",
-                {
-                  "node": "8.x.x",
-                  "react": true
-                }
-              ]
-            ]
-          }
-        }
-      }
-    ]
-  },
   "dependencies": {
-    "commander": "^2.11.0",
-    "express": "^4.16.1",
-    "generic-jsx": "^13.0.0",
     "immutable": "^3.8.2",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
     "route-parser": "0.0.5"
+  },
+  "peerDependencies": {
+    "express": "^4.16.1",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0"
   }
 }

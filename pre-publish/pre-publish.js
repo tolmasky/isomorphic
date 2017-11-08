@@ -1,7 +1,7 @@
 "use strict";
 
-const { join, resolve } = require("path");
-const { existsSync } = require("fs");
+const { dirname, join, resolve } = require("path");
+const { existsSync, readdirSync } = require("fs");
 const { spawnSync, execSync } = require("child_process");
 const randomstring = require("randomstring");
 
@@ -16,7 +16,9 @@ const now = require("moment")().format('MMMM Do YYYY, h.mm.ss A');
 const destination = relative(`build-products/${now}`);
 
 
-["examples", "isomorphic", "isomorphic-compile", "isomorphic-preset", "isomorphic-serialize"]
+// FIXME: Due to async () =>
+readdirSync(dirname(__dirname))
+    .filter(name => name !== "pre-publish" && name !== "isomorphic-bundle-js" && !name.startsWith("."))
     .map(name => compile(
     {
         root: relative(join("..", name)),
