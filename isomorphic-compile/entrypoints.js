@@ -2,16 +2,16 @@
 const { basename, join, relative, resolve } = require("path");
 const Route = require("route-parser");
 const dedupe = require("./dedupe");
-const resolvePathsInKeys = require("./resolve-paths-in-keys");
+const requireResolve = require("./require-resolve");
 const { execSync } = require("child_process");
 const UnresolvedPathsKeys = ["entrypoints", "assets"];
 
 
 module.exports = function entrypoints({ children, visited, cache, destination, root, routes })
 {
-    const resolved = resolvePathsInKeys(root, UnresolvedPathsKeys, children);
+    const resolved = requireResolve({ keys: UnresolvedPathsKeys, children });
     const { extracted: subentrypoints, visited: updated } =
-        dedupe("entrypoints", resolved, visited);
+        dedupe("entrypoints", resolved, visited || new Set());
     const { extracted: assets } = dedupe("assets", resolved);
 
     if (subentrypoints.size <= 0)

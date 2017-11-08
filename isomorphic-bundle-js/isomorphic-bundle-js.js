@@ -4,13 +4,13 @@ const { basename, extname, join } = require("path");
 const { existsSync, readFileSync, writeFileSync } = require("fs");
 
 const dedupe = require("isomorphic-compile/dedupe");
-const resolvePathsInKeys = require("isomorphic-compile/resolve-paths-in-keys");
-const transform = require("isomorphic-compile/babel-transform");
+const requireResolve = require("isomorphic-compile/require-resolve");
+const transform = require("isomorphic-javascript");
 
 const builtIn = require("./built-in");
 const concatenate = require("./concatenate");
 const { getArguments } = require("generic-jsx");
-const UnresolvedPathsKeys = ["assets", "entrypoints", "dependencies"];
+const UnresolvedPathsKeys = ["dependencies", "assets", "entrypoints"];
 
 
 module.exports = function bundle({ root, entrypoint, cache, options, destination })
@@ -25,15 +25,14 @@ module.exports = function bundle({ root, entrypoint, cache, options, destination
 
 function dependencies({ root, children, visited, cache, options })
 {
-    const resolved = resolvePathsInKeys(root, UnresolvedPathsKeys, children);
     const { extracted: subdependencies, visited: updated } =
-        dedupe("dependencies", resolved, visited);
+        dedupe("dependencies", children, visited);
 
     if (subdependencies.size <= 0)
-        return resolved;
+        return children;
 
     return  [
-                resolved,
+                children,
                 <dependencies { ...{ root, visited: updated, cache, options } }>
                     { Array.from(subdependencies, path =>
                         <dependency { ...{ root, path, cache, options } } /> )
@@ -49,7 +48,7 @@ function bootstrap({ cache, options })
     return <dependency { ...{ cache, options, path } } />;
 }
 
-function dependency({ cache, path, options })
+function dependency({ root, cache, path, options })
 {
     // Instead of forcing the json file into a module format, inline the object
     // directly.
@@ -60,9 +59,8 @@ function dependency({ cache, path, options })
     if (builtIn.is(path))
         return { include: builtIn(path), path };
 
-    return  <transform
-                path = { path }
-                cache = { cache }
-                options = { options } />;
+    return  <requireResolve { ... { root, keys: UnresolvedPathsKeys } } >
+                <transform { ... { path, cache, options } } />
+            </requireResolve>;
 
 }

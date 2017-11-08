@@ -6,16 +6,10 @@ const babylon = require("babylon");
 const { transformFromAst } = require("babel-core");
 const File = require("babel-core/lib/transformation/file").default;
 
-const fsCache = require("./fs-cache");
 Error.stackTraceLimit = 1000;
 
 
-module.exports = function fsCachedTransfrom({ cache, ...rest })
-{
-    return <fsCache { ... { cache, transform: <transform { ...rest } /> } } />;
-}
-
-function transform({ path, contents, options, removeTrailingSemicolon })
+module.exports = function transform({ path, contents, options, removeTrailingSemicolon })
 {
     return  <transformAST { ...{ contents, options, removeTrailingSemicolon } }>
                 <parse { ...{ contents, path } }>

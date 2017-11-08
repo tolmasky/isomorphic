@@ -3,7 +3,6 @@ const { dirname, extname, relative, isAbsolute } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
-const transform = require("isomorphic-compile/babel-transform");
 const uglify = require("uglify-js");
 const modulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
 const modulePostamble = "\n}";

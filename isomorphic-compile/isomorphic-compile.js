@@ -48,7 +48,7 @@ function getDefaultTransforms(node)
     return [
         {
             "match": "**/*.js",
-            "transform": "isomorphic-compile/babel-transform",
+            "transform": "isomorphic-javascript",
             "options": {
                 "babel": {
                     "presets": [

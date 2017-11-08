@@ -1,20 +1,14 @@
 {
-  "name": "isomorphic",
+  "name": "isomorphic-javascript",
   "version": "1.0.0",
   "description": "",
-  "main": "isomorphic.js",
+  "main": "isomorphic-javascript.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
-  "peerDependencies": {
-    "react": "^16.0.0"
-  },
-  "engines": {
-    "node": "4.x.x"
-  },
   "isomorphic": {
     "transforms": [
       {
@@ -26,8 +20,8 @@
               [
                 "isomorphic-preset",
                 {
-                  "node": "8.x.x",
-                  "react": true
+                  "node": "4.x.x",
+                  "generic-jsx": true
                 }
               ]
             ]
@@ -37,12 +31,8 @@
     ]
   },
   "dependencies": {
-    "commander": "^2.11.0",
-    "express": "^4.16.1",
-    "generic-jsx": "^13.0.0",
-    "immutable": "^3.8.2",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "route-parser": "0.0.5"
+    "babel-core": "^6.26.0",
+    "babylon": "^6.18.0",
+    "generic-jsx": "^18.0.0-beta.3"
   }
 }
