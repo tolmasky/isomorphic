@@ -51,7 +51,7 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         append(modulePostamble);
         append(",");
     }
-console.log(JSON.stringify(fs, null, 2));
+//console.log(JSON.stringify(fs, null, 2));
     append("],");
     append(JSON.stringify(fs, null, 2));
     append(",");

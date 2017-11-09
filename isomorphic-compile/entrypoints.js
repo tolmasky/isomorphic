@@ -9,10 +9,9 @@ const UnresolvedPathsKeys = ["entrypoints", "assets"];
 
 module.exports = function entrypoints({ children, visited, cache, destination, root, routes })
 {
-    const resolved = requireResolve({ keys: UnresolvedPathsKeys, children });
-    const { extracted: subentrypoints, visited: updated } =
-        dedupe("entrypoints", resolved, visited || new Set());
-    const { extracted: assets } = dedupe("assets", resolved);
+    const resolved = requireResolve({ root, keys: UnresolvedPathsKeys, children });
+    const [subentrypoints, updated] = dedupe("entrypoints", resolved, visited);
+    const [assets] = dedupe("assets", resolved);
 
     if (subentrypoints.size <= 0)
         return { assets };

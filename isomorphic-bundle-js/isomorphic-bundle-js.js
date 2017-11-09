@@ -4,7 +4,7 @@ const { basename, extname, join } = require("path");
 const { existsSync, readFileSync, writeFileSync } = require("fs");
 
 const dedupe = require("isomorphic-compile/dedupe");
-const requireResolve = require("isomorphic-compile/require-resolve");
+const resolve = require("isomorphic-compile/require-resolve");
 const transform = require("isomorphic-javascript");
 
 const builtIn = require("./built-in");
@@ -25,14 +25,15 @@ module.exports = function bundle({ root, entrypoint, cache, options, destination
 
 function dependencies({ root, children, visited, cache, options })
 {
-    const { extracted: subdependencies, visited: updated } =
-        dedupe("dependencies", children, visited);
+    const resolved = resolve({ root, children, keys: UnresolvedPathsKeys });
+    const [subdependencies, updated ] =
+        dedupe("dependencies", resolved, visited);
 
     if (subdependencies.size <= 0)
-        return children;
+        return resolved;
 
     return  [
-                children,
+                resolved,
                 <dependencies { ...{ root, visited: updated, cache, options } }>
                     { Array.from(subdependencies, path =>
                         <dependency { ...{ root, path, cache, options } } /> )
@@ -59,8 +60,5 @@ function dependency({ root, cache, path, options })
     if (builtIn.is(path))
         return { include: builtIn(path), path };
 
-    return  <requireResolve { ... { root, keys: UnresolvedPathsKeys } } >
-                <transform { ... { path, cache, options } } />
-            </requireResolve>;
-
+    return  <transform { ... { path, cache, options } } />;
 }
