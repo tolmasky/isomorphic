@@ -1,46 +1,18 @@
 
-var GenericObject     = 0;
-var JustKeyValueArray = 1;
-var GaplessArray      = 2;
-var GenericArray      = 3;
-var NoKeyValueSet     = 4;
-var GenericSet        = 5;
-var NoKeyValueMap     = 6;
-var GenericMap        = 7;
-var ImmutableMap      = 8;
-var ImmutableSet      = 9;
-var ImmutableList     = 10;
-var ImmutableOrderedMap = 11;
-var ImmutableOrderedSet = 12;
-
 module.exports.defaultTypes = [
-    GenericObject,
-    JustKeyValueArray,
-    GaplessArray,
-    GenericArray,
-    NoKeyValueSet,
-    GenericSet,
-    NoKeyValueMap,
-    GenericMap,
-    ImmutableMap,
-    ImmutableSet,
-    ImmutableList,
-    ImmutableOrderedMap,
-    ImmutableOrderedSet,
+    module.exports.GenericObject     = 0,
+    module.exports.JustKeyValueArray = 1,
+    module.exports.GaplessArray      = 2,
+    module.exports.GenericArray      = 3,
+    module.exports.NoKeyValueSet     = 4,
+    module.exports.GenericSet        = 5,
+    module.exports.NoKeyValueMap     = 6,
+    module.exports.GenericMap        = 7,
+    module.exports.ImmutableMap      = 8,
+    module.exports.ImmutableSet      = 9,
+    module.exports.ImmutableList     = 10,
+    module.exports.ImmutableOrderedMap = 11,
+    module.exports.ImmutableOrderedSet = 12
 ];
-
-module.exports.GenericObject = GenericObject;
-module.exports.JustKeyValueArray = JustKeyValueArray;
-module.exports.GaplessArray = GaplessArray;
-module.exports.GenericArray = GenericArray;
-module.exports.NoKeyValueSet = NoKeyValueSet;
-module.exports.GenericSet  = GenericSet;
-module.exports.NoKeyValueMap = NoKeyValueMap;
-module.exports.GenericMap = GenericMap;
-module.exports.ImmutableMap = ImmutableMap;
-module.exports.ImmutableSet = ImmutableSet;
-module.exports.ImmutableList = ImmutableList;
-module.exports.ImmutableOrderedMap = ImmutableOrderedMap;
-module.exports.ImmutableOrderedSet = ImmutableOrderedSet;
 
 module.exports.ImmutableTypeStart = 8;

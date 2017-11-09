@@ -11,9 +11,7 @@ function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSer
         var key = keys[i];
         var value = anArray[key];
 
-        var canInlineKey = typeof key === "string";
-
-        var serializedKey = toObjectSerialization(key, aContext, key, canInlineKey);
+        var serializedKey = toObjectSerialization(key, aContext, key, true);
         var serializedValue = toObjectSerialization(value, aContext);
 
         // FIXME: this can be faster with direct assign.

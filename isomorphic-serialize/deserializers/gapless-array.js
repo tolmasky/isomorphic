@@ -1,7 +1,4 @@
 
-const invoker = require("../utils").invoker;
-const  add = invoker("push");
-
 module.exports = deserializeGaplessArray;
 
 function deserializeGaplessArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
@@ -16,7 +13,7 @@ function deserializeGaplessArray(aDeserializedArray, serializedArray, context, f
         var serializedValue = serializedArray[valueIndex];
         var value = fromObjectSerialization(serializedValue, context);
 
-        add(value, aDeserializedArray);
+        aDeserializedArray.push(value);
     }
 
     return aDeserializedArray;
