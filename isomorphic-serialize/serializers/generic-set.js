@@ -2,21 +2,17 @@
 var serializePureSet = require("./pure-set");
 var serializeGenericObject = require("./generic-object");
 
-var Call = (Function.prototype.call).bind(Function.prototype.call);
-var Apply = (Function.prototype.call).bind(Function.prototype.apply);
-var ArrayPush = Array.prototype.push;
-
 module.exports = serializedGenericSet;
 
 function serializedGenericSet(aSerializedSet, aSet, aContext, toObjectSerialization)
 {
-    var genericObjectSerialized = serializeGenericObject([], aSet, aContext, toObjectSerialization);
-    var pureSetSerialized = serializePureSet([], aSet, aContext, toObjectSerialization);
+    var pairLengthIndex = aSerializedSet.length;
+    aSerializedSet[pairLengthIndex] = -1;
 
-    // Prefix with the number of items in the pure-set.
-    Call(ArrayPush, aSerializedSet, genericObjectSerialized.length / 2);
-    Apply(ArrayPush, aSerializedSet, genericObjectSerialized);
-    Apply(ArrayPush, aSerializedSet, pureSetSerialized);
+    serializeGenericObject(aSerializedSet, aSet, aContext, toObjectSerialization);
 
-    return aSerializedSet;
+    var length = aSerializedSet.length - pairLengthIndex - 1;
+    aSerializedSet[pairLengthIndex] = length / 2;
+
+    return serializePureSet(aSerializedSet, aSet, aContext, toObjectSerialization);
 }

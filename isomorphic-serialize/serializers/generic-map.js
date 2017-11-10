@@ -2,21 +2,17 @@
 var serializePureMap = require("./pure-map");
 var serializeGenericObject = require("./generic-object");
 
-var Call = (Function.prototype.call).bind(Function.prototype.call);
-var Apply = (Function.prototype.call).bind(Function.prototype.apply);
-var ArrayPush = Array.prototype.push;
-
 module.exports = serializedGenericMap;
 
 function serializedGenericMap(serializedMap, aMap, aContext, toObjectSerialization)
 {
-    var genericObjectSerialized = serializeGenericObject([], aMap, aContext, toObjectSerialization);
-    var pureMapSerialized = serializePureMap([], aMap, aContext, toObjectSerialization);
+    var pairLengthIndex = serializedMap.length;
+    serializedMap[pairLengthIndex] = -1;
 
-    // Prefix with the number of pairs in the pure-map.
-    Call(ArrayPush, serializedMap, genericObjectSerialized.length / 2);
-    Apply(ArrayPush, serializedMap, genericObjectSerialized);
-    Apply(ArrayPush, serializedMap, pureMapSerialized);
+    serializeGenericObject(serializedMap, aMap, aContext, toObjectSerialization);
 
-    return serializedMap;
+    var length = serializedMap.length - pairLengthIndex - 1;
+    serializedMap[pairLengthIndex] = length / 2;
+
+    return serializePureMap(serializedMap, aMap, aContext, toObjectSerialization);
 }
