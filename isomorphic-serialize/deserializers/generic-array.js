@@ -1,61 +1,61 @@
 
 const invoker = require("../utils").invoker;
 
-module.exports = deserializeGenericArray;
+module.exports = deserializeArray;
 
-function deserializeGenericArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
+var GaplessMode  = 1;
+var GapMode      = 2;
+var KeyValueMode = 3;
+
+function deserializeArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
 {
     var forceImmutable = context.options.immutable;
     var set = forceImmutable ? invoker("set") : setValueForKey;
 
-    // index 0 is the type, all other values are deseriailzed and inserted into the
-    // deserialized array in their current order.
-    var currentIndex = 1;
-    var count = serializedArray.length;
+    var mode = GaplessMode;
 
-    var inNonIndexKeyMode = serializedArray[currentIndex] === -1;
+    var currentReadIndex = 1;
+    var currentInsertionIndex = 0;
+    var length = serializedArray.length;
 
-    if (inNonIndexKeyMode)
-        currentIndex++;
+    var gapStart = -1;
+    var gapLength = -1;
+    var currentGapIndexCount = 0;
 
-    var rangeStart = -1;
-    var rangeEnd = -1;
-    var positionInRange = 0;
-
-    for (; currentIndex < count; currentIndex++)
+    for (; currentReadIndex < length; currentReadIndex++)
     {
-        if (inNonIndexKeyMode)
-        {
-            var serializedKey = serializedArray[currentIndex];
-            var serializedValue = serializedArray[++currentIndex];
+        var value = serializedArray[currentReadIndex];
+        var isTerminal = Array.isArray(value);
 
-            var key = fromObjectSerialization(serializedKey, context);
-            var value = fromObjectSerialization(serializedValue, context);
-            set(key, value, aDeserializedArray);
-        }
-        else if (rangeStart + positionInRange === rangeEnd)
+        if (isTerminal)
         {
-            if (serializedArray[currentIndex] === -1)
-                inNonIndexKeyMode = true;
+            mode++;
+            continue;
+        }
+
+        if (mode === GaplessMode)
+            set(currentInsertionIndex++, fromObjectSerialization(value, context), aDeserializedArray);
+        else if (mode === GapMode)
+        {
+            if (currentGapIndexCount > gapLength)
+            {
+                gapStart = value;
+                gapLength = serializedArray[++currentReadIndex];
+                currentGapIndexCount = 0;
+            }
             else
             {
-                rangeStart = serializedArray[currentIndex];
-                rangeEnd = rangeStart + serializedArray[++currentIndex];
-                // Reset the position in range
-                positionInRange = 0;
+                set(gapStart + currentGapIndexCount, fromObjectSerialization(value, context), aDeserializedArray);
+                currentGapIndexCount++;
             }
         }
-        else
+        else if (mode === KeyValueMode)
         {
-            var key = rangeStart + positionInRange;
-            var serializedValue = serializedArray[currentIndex];
-            var value = fromObjectSerialization(serializedValue, context);
-
-            set(key, value, aDeserializedArray);
-            positionInRange++;
+            var deserializedKey = fromObjectSerialization(value, context);
+            var deserializedValue = fromObjectSerialization(serializedArray[++currentReadIndex], context);
+            set(deserializedKey, deserializedValue, aDeserializedArray);
         }
     }
-
 
     return aDeserializedArray;
 }
@@ -64,4 +64,3 @@ function setValueForKey(aKey, anItem, anObject)
 {
     anObject[aKey] = anItem;
 }
-

@@ -130,15 +130,16 @@ function getInternalType(anObject)
 {
     if (isArray(anObject))
     {
-        var keys = ObjectKeys(anObject);
+        return Types.Array;
+        // var keys = ObjectKeys(anObject);
 
-        if (keys.length > 0 && anObject.length === 0)
-            return Types.JustKeyValueArray;
+        // if (keys.length > 0 && anObject.length === 0)
+        //     return Types.JustKeyValueArray;
 
-        if (keys.length === anObject.length)
-            return Types.GaplessArray;
+        // if (keys.length === anObject.length)
+        //     return Types.GaplessArray;
 
-        return Types.GenericArray;
+        // return Types.GenericArray;
     }
 
     if (Set && anObject instanceof Set)
@@ -180,8 +181,7 @@ function encodableType(anInternalType, aContext)
 
 var serializers = [
     require("./serializers/generic-object"),
-    require("./serializers/key-value-array"),
-    require("./serializers/gapless-array"),
+    require("./serializers/legacy-array"),
     require("./serializers/generic-array"),
     require("./serializers/pure-set"),
     require("./serializers/generic-set"),
@@ -189,7 +189,7 @@ var serializers = [
     require("./serializers/generic-map"),
     require("./serializers/pure-map"), // Immutable map can use pure-map.
     require("./serializers/pure-set"), // Immutable set can use pure-set.
-    require("./serializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./serializers/immutable-list"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
     require("./serializers/pure-map"), // Immutable ordered map can use pure-map.
     require("./serializers/pure-set"), // Immutable ordered set can use pure-set.
 ];

@@ -1,93 +1,116 @@
 
-var Call = (Function.prototype.call).bind(Function.prototype.call);
+// var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
+var isArray = Array.isArray;
 
-var ObjectKeys = Object.keys;
-var ArrayPush = Array.prototype.push;
-var ArrayForEach = Array.prototype.forEach;
-var ArraySort = Array.prototype.sort;
-
-module.exports = serializeGenericArray;
-
-function serializeGenericArray(serializedArray, anArray, aContext, toObjectSerialization)
+function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
-    var keys = splitKeys(ObjectKeys(anArray));
-    var indexRanges = keys[0];
-    var nonIndexKeys = keys[1];
+    var i = 0;
 
-    Call(ArrayForEach, indexRanges, function(aRange)
+    if (!isArray(anArray))
     {
-        var startIndex = aRange.start;
-        var count = aRange.count;
-        Call(ArrayPush, serializedArray, startIndex, count);
+        // Immutable List.
+        var count = anArray.size;
 
-        for (var i = startIndex; i < startIndex + count; i++)
+        for (; i < count; i++)
+            serializedArray[i + 1] = toObjectSerialization(anArray.get(i), aContext);
+
+        return serializedArray;
+    }
+
+    var indexCount = 0;
+    var lastIndex = -1;
+    var hasGaps = false;
+    var insertionIndex = serializedArray.length;
+
+    var gapLengthIndex = -1;
+    var currentGapLength = 0;
+
+    // var startIndex = serializedArray.length;
+    // var countPosition = -1;
+
+    anArray.forEach(function(aValue, aCurrentIndex)
+    {
+        ++indexCount;
+        var isSuccessiveIndex = aCurrentIndex === lastIndex + 1;
+
+        if (!hasGaps && isSuccessiveIndex)
+            serializedArray[insertionIndex++] = toObjectSerialization(aValue, aContext);
+        else if (!isSuccessiveIndex)
         {
-            var value = anArray[i];
-            Call(ArrayPush, serializedArray, toObjectSerialization(value, aContext));
+            if (!hasGaps)
+            {
+                // Use an empty array to signify we've moved to gapped serialization.
+                serializedArray[insertionIndex++] = [];
+                hasGaps = true;
+            }
+            else
+            {
+                // The previous gap just ended, fill in the size.
+                serializedArray[gapLengthIndex] = currentGapLength;
+            }
+
+            // Fill in the index on which the gap starts.
+            serializedArray[insertionIndex++] = aCurrentIndex;
+            // When we're done with this gap, fill this number in.
+            gapLengthIndex = insertionIndex++;
+            currentGapLength = 1;
+
+            serializedArray[insertionIndex++] = toObjectSerialization(aValue, aContext);
         }
+        else if (hasGaps && isSuccessiveIndex)
+        {
+            serializedArray[insertionIndex++] = toObjectSerialization(aValue, aContext);
+            currentGapLength++;
+        }
+
+        lastIndex = aCurrentIndex;
     });
 
-    if (nonIndexKeys.length)
-        Call(ArrayPush, serializedArray, -1);
 
-    for (var i = 0; i < nonIndexKeys.length; i++)
+    if (hasGaps)
+        serializedArray[gapLengthIndex] = currentGapLength;
+
+    var keys = Object.keys(anArray);
+
+    if (keys.length === indexCount)
+        return serializedArray;
+
+    if (!hasGaps)
+        serializedArray[insertionIndex++] = [];
+
+    serializedArray[insertionIndex++] = [];
+
+    for (var i = 0; i < keys.length; i++)
     {
-        var key = nonIndexKeys[i];
+        var key = keys[i];
+
+        if (isArrayIndex(key))
+            continue;
+
         var value = anArray[key];
 
-        var serializedKey = toObjectSerialization(key, aContext, true);
-        var serializedValue = toObjectSerialization(value, aContext);
-
-        Call(ArrayPush, serializedArray, serializedKey, serializedValue);
+        serializedArray[insertionIndex++] = toObjectSerialization(key, aContext, true);
+        serializedArray[insertionIndex++] = toObjectSerialization(value, aContext);
     }
 
     return serializedArray;
+
 }
 
-function splitKeys(keys)
+module.exports = serializeGaplessArray;
+
+var MAX_UINT32 = -1 >>> 0;
+
+// ECMAScript 9.4.2 NOTE: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-array-exotic-objects
+function isArrayIndex(aString)
 {
-    var indexKeys = [];
-    var nonIndexKeys = [];
+    var UInt32Value = ToUInt32(aString);
 
-    Call(ArrayForEach, keys, function(aKey)
-    {
-        var cooerced = +aKey;
-        if (cooerced !== cooerced) // NaN
-            Call(ArrayPush, nonIndexKeys, aKey);
-        else
-            Call(ArrayPush, indexKeys, cooerced);
-    });
-
-    return [generateRanges(Call(ArraySort, indexKeys)), nonIndexKeys];
+    return UInt32Value + "" === aString && UInt32Value !== MAX_UINT32;
 }
 
-function generateRanges(indexes)
+// ECMAScript 7.1.6: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-touint32
+function ToUInt32(aString)
 {
-    // FIXME: handle empty indexes case.
-
-    var ranges = [];
-
-    if (!indexes.length)
-        return;
-
-    var startIndex = indexes[0];
-
-    var newRange = { start: startIndex, count: 1 };
-
-    for (var i = 1; i < indexes.length; i++)
-    {
-        var nextIndex = indexes[i];
-
-        if (newRange.start + 1 === nextIndex)
-            newRange.count++;
-        else
-        {
-            Call(ArrayPush, ranges, newRange);
-            newRange = { start: nextIndex, count: 1 };
-        }
-    }
-
-    Call(ArrayPush, ranges, newRange);
-
-    return ranges;
+    return aString >>> 0;
 }

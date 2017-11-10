@@ -24,8 +24,7 @@ module.exports = function(anObjectSerialization, options)
 
 var deserializers = [
     require("./deserializers/generic-object"),
-    require("./deserializers/key-value-array"),
-    require("./deserializers/gapless-array"),
+    require("./deserializers/legacy-array"),
     require("./deserializers/generic-array"),
     require("./deserializers/pure-set"),
     require("./deserializers/generic-set"),
@@ -33,7 +32,7 @@ var deserializers = [
     require("./deserializers/generic-map"),
     require("./deserializers/pure-map"), // Immutable map can use pure-map.
     require("./deserializers/pure-set"), // Immutable set can use pure-set.
-    require("./deserializers/gapless-array"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./deserializers/immutable-list"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
     require("./deserializers/pure-map"), // Immutable ordered map can use pure-map.
     require("./deserializers/pure-set"), // Immutable ordered set can use pure-set.
 ];
@@ -102,9 +101,8 @@ function getBase(encodedType, aContext)
             case Types.GenericMap:
             case Types.ImmutableMap:
                 return I.Map();
-            case Types.JustKeyValueArray:
-            case Types.GaplessArray:
-            case Types.GenericArray:
+            case Types.LegacyArray:
+            case Types.Array:
             case Types.ImmutableList:
                 return I.List();
             case Types.NoKeyValueSet:
@@ -124,9 +122,8 @@ function getBase(encodedType, aContext)
     {
         case Types.GenericObject:
             return {};
-        case Types.JustKeyValueArray:
-        case Types.GaplessArray:
-        case Types.GenericArray:
+        case Types.LegacyArray:
+        case Types.Array:
             return [];
         case Types.NoKeyValueSet:
         case Types.GenericSet:

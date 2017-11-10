@@ -1,18 +1,17 @@
 
 module.exports.defaultTypes = [
-    module.exports.GenericObject     = 0,
-    module.exports.JustKeyValueArray = 1,
-    module.exports.GaplessArray      = 2,
-    module.exports.GenericArray      = 3,
-    module.exports.NoKeyValueSet     = 4,
-    module.exports.GenericSet        = 5,
-    module.exports.NoKeyValueMap     = 6,
-    module.exports.GenericMap        = 7,
-    module.exports.ImmutableMap      = 8,
-    module.exports.ImmutableSet      = 9,
-    module.exports.ImmutableList     = 10,
-    module.exports.ImmutableOrderedMap = 11,
-    module.exports.ImmutableOrderedSet = 12
+    module.exports.GenericObject = 0,
+    module.exports.LegacyArray   = 1,
+    module.exports.Array         = 2,
+    module.exports.NoKeyValueSet = 3, // Sets that don't have properties hanging off them.
+    module.exports.GenericSet    = 4,
+    module.exports.NoKeyValueMap = 5, // Maps that don't have properties hanging off them.
+    module.exports.GenericMap    = 6,
+    module.exports.ImmutableMap  = 7,
+    module.exports.ImmutableSet  = 8,
+    module.exports.ImmutableList = 9,
+    module.exports.ImmutableOrderedMap = 10,
+    module.exports.ImmutableOrderedSet = 11
 ];
 
-module.exports.ImmutableTypeStart = 8;
+module.exports.ImmutableTypeStart = 7;
