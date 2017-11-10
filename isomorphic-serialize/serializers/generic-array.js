@@ -35,7 +35,7 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
         var key = nonIndexKeys[i];
         var value = anArray[key];
 
-        var serializedKey = toObjectSerialization(key, aContext, key, true);
+        var serializedKey = toObjectSerialization(key, aContext, true);
         var serializedValue = toObjectSerialization(value, aContext);
 
         Call(ArrayPush, serializedArray, serializedKey, serializedValue);

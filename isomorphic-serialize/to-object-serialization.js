@@ -56,7 +56,7 @@ module.exports = function(anObject, anOptions)
     return { index: UID, objects: serializedObjects, typeMap: typeMap };
 };
 
-function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
+function toObjectSerialization(anObject, aContext, isKey)
 {
     if (anObject === null)
         return -1;
@@ -98,7 +98,7 @@ function toObjectSerialization(anObject, aContext, aUIDHint, hasHint)
         return UID;
     }
 
-    UID = newUID(hasHint && aUIDHint, aContext, anObject);
+    UID = newUID(anObject, aContext, isKey);
     var location = fastMode ? UID : UID.serializedLocation;
 
 
@@ -208,7 +208,7 @@ function completeObjectSerialization(anObject, aUID, aContext)
     aContext.objects[location] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
 }
 
-function newUID(aPotentialKeyID, aContext, anObject)
+function newUID(anObject, aContext, isKey)
 {
     var location = aContext.objects.length;
 
@@ -221,7 +221,7 @@ function newUID(aPotentialKeyID, aContext, anObject)
     var UID = {
         serializedLocation: location,
         references: 1,
-        potentialKeyID: aPotentialKeyID,
+        potentialKeyID: isKey && anObject,
         __UNIQUE_ID: location,
         toJSON: function()
         {

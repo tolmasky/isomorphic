@@ -13,7 +13,7 @@ function serializeObject(aSerializedObject, anObject, aContext, toObjectSerializ
         var object = anObject[key];
 
         var serializedValue = toObjectSerialization(object, aContext);
-        var serializedKey = toObjectSerialization(key, aContext, key, true);
+        var serializedKey = toObjectSerialization(key, aContext, true);
 
         aSerializedObject[insetionIndex++] = serializedKey;
         aSerializedObject[insetionIndex++] = serializedValue;
