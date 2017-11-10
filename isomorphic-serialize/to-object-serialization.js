@@ -141,13 +141,13 @@ function getInternalType(anObject)
         return Types.GenericArray;
     }
 
-    if (anObject instanceof Set)
+    if (Set && anObject instanceof Set)
     {
         var keys = ObjectKeys(anObject);
         return keys.length ? Types.GenericSet : Types.NoKeyValueSet;
     }
 
-    if (anObject instanceof Map)
+    if (Map && anObject instanceof Map)
     {
         var keys = ObjectKeys(anObject);
         return keys.length ? Types.GenericMap : Types.NoKeyValueMap;
