@@ -49,16 +49,16 @@ function bootstrap({ cache, options })
     return <dependency { ...{ cache, options, path } } />;
 }
 
-function dependency({ root, cache, path, options })
+function dependency({ cache, path, options })
 {
-    // Instead of forcing the json file into a module format, inline the object
-    // directly.
+    // `concatenate` will wrap this correctly, so nothing to be done here.
     if (extname(path) === ".json")
         return { include: path, path };
 
-    // FIXME: We should still transform this.
     if (builtIn.is(path))
-        return { include: builtIn(path), path };
+        return <builtIn { ...{ path, cache, options } } />
 
-    return  <transform { ... { path, cache, options } } />;
+    return  <transform { ...{ path, cache, options } } />;
 }
+
+
