@@ -36,3 +36,29 @@ test("generic gapped", t =>
     run(value, t);
 });
 
+test("empty with gaps", t =>
+{
+    var value = [,,,,,,,,,];
+    run(value, t);
+});
+
+test("trailing gaps", t =>
+{
+    var value = [1,2,3,,,,,,,];
+    run(value, t);
+});
+
+test("empty with gaps and props", t =>
+{
+    var value = [,,,,,,,,,];
+    value.foo = "Bar";
+    run(value, t);
+});
+
+test("trailing gaps with properties", t =>
+{
+    var value = [1,2,3,,,,,,,];
+    value.foo = "Bar";
+    run(value, t);
+});
+

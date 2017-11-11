@@ -22,13 +22,18 @@ function deserializeArray(aDeserializedArray, serializedArray, context, fromObje
     var gapLength = -1;
     var currentGapIndexCount = 0;
 
-    for (; currentReadIndex < length; currentReadIndex++)
+    for (; currentReadIndex < length;)
     {
-        var value = serializedArray[currentReadIndex];
+        var value = serializedArray[currentReadIndex++];
+
         var isTerminal = Array.isArray(value);
 
         if (isTerminal)
         {
+            // Transitioning to key/value.
+            if (mode === GapMode && gapStart + gapLength !== aDeserializedArray.length)
+                fillInRemainingEmptySpaces(aDeserializedArray, gapStart + gapLength);
+
             mode++;
             continue;
         }
@@ -37,10 +42,10 @@ function deserializeArray(aDeserializedArray, serializedArray, context, fromObje
             set(currentInsertionIndex++, fromObjectSerialization(value, context), aDeserializedArray);
         else if (mode === GapMode)
         {
-            if (currentGapIndexCount > gapLength)
+            if (currentGapIndexCount >= gapLength)
             {
                 gapStart = value;
-                gapLength = serializedArray[++currentReadIndex];
+                gapLength = serializedArray[currentReadIndex++];
                 currentGapIndexCount = 0;
             }
             else
@@ -52,12 +57,21 @@ function deserializeArray(aDeserializedArray, serializedArray, context, fromObje
         else if (mode === KeyValueMode)
         {
             var deserializedKey = fromObjectSerialization(value, context);
-            var deserializedValue = fromObjectSerialization(serializedArray[++currentReadIndex], context);
+            var deserializedValue = fromObjectSerialization(serializedArray[currentReadIndex++], context);
             set(deserializedKey, deserializedValue, aDeserializedArray);
         }
     }
 
+    if (mode === GapMode && gapStart + gapLength > aDeserializedArray.length)
+        fillInRemainingEmptySpaces(aDeserializedArray, gapStart + gapLength);
+
     return aDeserializedArray;
+}
+
+function fillInRemainingEmptySpaces(aDeserializedArray, lastIndex)
+{
+    aDeserializedArray[lastIndex] = true;
+    aDeserializedArray.pop();
 }
 
 function setValueForKey(aKey, anItem, anObject)
