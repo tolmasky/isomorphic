@@ -25,7 +25,7 @@ module.exports = function(anObject, anOptions)
         UIDList: [],
         objects:[],
         types: Object.create(null),
-        options: anOptions || { fastMode: false }
+        options: { fastMode: false, useLegacyArrays: false, ...anOptions }
     };
 
     var UID = toObjectSerialization(anObject, context);
@@ -126,21 +126,10 @@ var IS_SET_SENTINEL = "@@__IMMUTABLE_SET__@@";
 var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
 var IS_ORDERED_SENTINEL = "@@__IMMUTABLE_ORDERED__@@";
 
-function getInternalType(anObject)
+function getInternalType(anObject, aContext)
 {
     if (isArray(anObject))
-    {
-        return Types.Array;
-        // var keys = ObjectKeys(anObject);
-
-        // if (keys.length > 0 && anObject.length === 0)
-        //     return Types.JustKeyValueArray;
-
-        // if (keys.length === anObject.length)
-        //     return Types.GaplessArray;
-
-        // return Types.GenericArray;
-    }
+        return aContext.options.useLegacyArrays ? Types.LegacyArray : Types.Array;
 
     if (Set && anObject instanceof Set)
     {
@@ -196,7 +185,7 @@ var serializers = [
 
 function completeObjectSerialization(anObject, aUID, aContext)
 {
-    var internalType = getInternalType(anObject);
+    var internalType = getInternalType(anObject, aContext);
     var serializedType = encodableType(internalType, aContext);
 
     serializedType.increment();
