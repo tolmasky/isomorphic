@@ -6,12 +6,27 @@ const babylon = require("babylon");
 const { transformFromAst } = require("babel-core");
 const File = require("babel-core/lib/transformation/file").default;
 
+const minify = require("./uglify-minify");
+
+const GlobalPreamble = "(function (global, process){return ";
+const GlobalPostamble = "\n})";
+const ModulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
+const ModulePostamble = "\n}";
+
+const DefaultMetadata =
+{
+    dependencies: EmptySet,
+    entrypoints: EmptySet,
+    assets: EmptySet,
+    globals: []
+};
+
 Error.stackTraceLimit = 1000;
 
 
-module.exports = function transform({ path, contents, options, removeTrailingSemicolon })
+module.exports = function transform({ path, contents, options, wrap })
 {
-    return  <transformAST { ...{ contents, options, removeTrailingSemicolon } }>
+    return  <transformAST { ...{ contents, options, wrap } }>
                 <parse { ...{ contents, path } }>
                     <parserOptions options = { options.babel } />
                 </parse>
@@ -35,16 +50,32 @@ function parserOptions({ options })
     return Object.assign(parserOpts, opts.parserOpts);
 }
 
-function transformAST({ children:[AST], contents, options, removeTrailingSemicolon })
+function transformAST({ children:[AST], contents, options, wrap })
 {
     const transformed = transformFromAst(AST, contents, options.babel);
-    const transformedContents = transformed.code;
-    const modifiedContents = removeTrailingSemicolon ?
-        transformedContents.substr(0, transformedContents.length - 1) :
-        transformedContents;
-        
-    const metadata = transformed.metadata.isomorphic ||
-        { dependencies: new Set(), entrypoints: new Set(), assets: new Set() };
+    const metadata = transformed.metadata.isomorphic || DefaultMetadata;
+    const output = pipe([wrap && moduleWrap, options.minify && minify],
+        transformed.code);
 
-    return { contents: modifiedContents, metadata };
+    return { contents: output, metadata };
+}
+
+function pipe(items, input)
+{
+    return items.reduce((input, item) =>
+        item ? item(input) : input, input);
+}
+
+function moduleWrap(contents)
+{
+    return GlobalPreamble + ModulePreamble +
+        contents +
+        ModulePostamble + GlobalPostamble;
+}
+
+const EmptySet =
+{
+    size: 0,
+    [Symbol.iterator]: function *() { },
+    add: function() { throw new TypeError("Cannot add to an EmptySet") }
 }

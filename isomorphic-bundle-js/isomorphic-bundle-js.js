@@ -46,10 +46,10 @@ function bootstrap({ cache, options })
 {
     const path = require.resolve("./bootstrap");
 
-    return <dependency { ...{ cache, options, path } } />;
+    return <dependency { ...{ cache, options, path, wrap: false } } />;
 }
 
-function dependency({ cache, path, options })
+function dependency({ cache, path, options, wrap = true })
 {
     // `concatenate` will wrap this correctly, so nothing to be done here.
     if (extname(path) === ".json")
@@ -58,7 +58,7 @@ function dependency({ cache, path, options })
     if (builtIn.is(path))
         return <builtIn { ...{ path, cache, options } } />
 
-    return  <transform { ...{ path, cache, options } } />;
+    return  <transform { ...{ path, cache, options, wrap } } />;
 }
 
 

@@ -3,9 +3,8 @@ const { dirname, extname, relative, isAbsolute } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
-const uglify = require("uglify-js");
-const modulePreamble = "function (exports, require, module, __filename, __dirname) {\n";
-const modulePostamble = "\n}";
+const JSONPreamble = "function(){return";
+const JSONPostamble = "\n}";
 const MUIDStore = require("./muid-store");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -32,9 +31,8 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
         mount(modules.for(module), module.path);
         Array.from(assets || [], path => mount(-1, derooted(path)));
         Array.from(entrypoints || [], path => mount(-1, derooted(path)));
-
     }
-    
+
     // The first item is always the bootstrap file, it doesn't get wrapped.
     append("(function (global) { (function (compiled, fs, entrypoint) {");
     append(readFileSync(children[0].include));
@@ -42,13 +40,14 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
 
     for (const module of modules.finalize())
     {
-        append(modulePreamble);
-
         if (module.json)
-            append("return ");
+            append(JSONPreamble);
 
         append(module.contents);
-        append(modulePostamble);
+
+        if (module.json)
+            append(JSONPostamble);
+
         append(",");
     }
 //console.log(JSON.stringify(fs, null, 2));
@@ -64,9 +63,8 @@ module.exports = function concatenate({ root, destination, entrypoint, children,
     append(") } )(window)");
 
     const concated = Buffer.concat(output.buffers, output.length);
-    const minified = minify(options.minify, concated.toString("utf-8"));
 
-    writeFileSync(destination, minified, "utf-8");
+    writeFileSync(destination, concated);
 
     return children;
 
@@ -103,25 +101,12 @@ function fsAndMount()
                 parent[component] || (parent[component] = { }), fs);
 
     return { fs, mount: (muid, path) => mount(muid, path.split("/")) };
-    
+
     function store(parent, component, muid)
     {
         if (muid !== -1 || !hasOwnProperty.call(parent, component))
             parent[component] = muid;
     }
-}
-
-function minify(proceed, input)
-{
-    if (!proceed)
-        return input;
-
-    const { code, error } = uglify.minify(input);
-
-    if (error)
-        throw error;
-
-    return code;
 }
 
 function getChecksum(contents)

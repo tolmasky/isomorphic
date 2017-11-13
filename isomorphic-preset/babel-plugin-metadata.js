@@ -3,12 +3,13 @@ module.exports = function (_, options)
 {
     return { visitor: { Program } };
 
-    function Program(_, state)
+    function Program({ scope }, state)
     {
         const dependencies = new Set();
         const entrypoints = new Set();
         const assets = new Set();
-        const metadata = { ...state.opts, dependencies, entrypoints, assets };
+        const globals = Object.keys(scope.globals);
+        const metadata = { ...state.opts, dependencies, entrypoints, assets, globals };
 
         state.file.metadata["isomorphic"] = metadata;
     };

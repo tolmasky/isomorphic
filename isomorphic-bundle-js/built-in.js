@@ -18,7 +18,7 @@ module.exports = function builtIn({ path, cache, options })
     return  <overwrite path = { path } >
                 <resolve { ...{ root: dirname(include), keys:["dependencies"] } } >
                     <ignore dependencies = { ignoredDependencies[path] }>
-                        <transform { ...{ path: include, cache, options } } />
+                        <transform { ...{ path: include, cache, options, wrap: true } } />
                     </ignore>
                 </resolve>
             </overwrite>
