@@ -45,3 +45,23 @@ test("Circular", t =>
     t.is(converted.bar, converted.bar.foo.bar);
     t.is(converted.bar.test, 1);
 });
+
+test("disable index compression", t =>
+{
+    var aValue = { foo: 2, bar: 1, baz: 1, blah: 1};
+    var string = stringify(aValue, { protocol: 1 });
+    t.deepEqual(parse(string), aValue);
+
+    var expected = `{"index":0,"objects":[[0,2,1,4,3,5,3,6,3],2,"foo",1,"bar","baz","blah"]}`;
+    t.is(expected, string);
+});
+
+test("enable index compression", t =>
+{
+    var aValue = { foo: 2, bar: 1, baz: 1, blah: 1};
+    var string = stringify(aValue, { protocol: 2 });
+    t.deepEqual(parse(string), aValue);
+
+    var expected = `{"index":1,"objects":[1,[0,3,2,4,0,5,0,6,0],2,"foo","bar","baz","blah"],"typeMap":{"0":0}}`;
+    t.is(expected, string);
+});

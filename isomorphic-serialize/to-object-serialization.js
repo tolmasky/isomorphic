@@ -4,7 +4,6 @@ var Call = (Function.prototype.call).bind(Function.prototype.call);
 var Map = global.Map || require("native-map");
 var Set = global.Set;
 
-
 var ArraySort = Array.prototype.sort;
 var ArrayMap = Array.prototype.map;
 var MapGet = Map.prototype.get;
@@ -17,15 +16,19 @@ var MathLN10 = Math.LN10;
 
 var undefined = void 0;
 var Types = require("./types");
+var Features = require("./features");
 
-module.exports = function(anObject, anOptions)
+module.exports = function serialize(anObject, options)
 {
+    var protocol = (options && options.protocol) || Features.DEFAULT_PROTOCOL;
+    var features = (options && options.features) || Features(protocol);
+
     var context = {
         UIDs: new Map(),
         UIDList: [],
         objects:[],
         types: Object.create(null),
-        options: { fastMode: false, useLegacyArrays: false, ...anOptions }
+        features: features
     };
 
     var UID = toObjectSerialization(anObject, context);
@@ -38,7 +41,7 @@ module.exports = function(anObject, anOptions)
         list = list.next;
     }
 
-    if (context.options.fastMode)
+    if (!(context.features & Features.IndexCompression))
         return { index: UID, objects: context.objects };
 
     // Sort the types.
@@ -85,21 +88,21 @@ function toObjectSerialization(anObject, aContext, isKey)
             return -6;
     }
 
-    var fastMode = aContext.options.fastMode;
+    var skipIndexCompression = !(aContext.features & Features.IndexCompression);
 
     var UIDs = aContext.UIDs;
     var UID = Call(MapGet, UIDs, anObject);
 
     if (UID !== undefined)
     {
-        if (!fastMode)
+        if (!skipIndexCompression)
             UID.references++;
 
         return UID;
     }
 
     UID = newUID(anObject, aContext, isKey);
-    var location = fastMode ? UID : UID.serializedLocation;
+    var location = skipIndexCompression ? UID : UID.serializedLocation;
 
 
     if (type === "string" ||
@@ -129,7 +132,10 @@ var IS_ORDERED_SENTINEL = "@@__IMMUTABLE_ORDERED__@@";
 function getInternalType(anObject, aContext)
 {
     if (isArray(anObject))
-        return aContext.options.useLegacyArrays ? Types.LegacyArray : Types.Array;
+    {
+        var useLegacyArrays = aContext.features & Features.LegacyArraySerialation;
+        return useLegacyArrays ? Types.LegacyArray : Types.Array;
+    }
 
     if (Set && anObject instanceof Set)
     {
@@ -192,7 +198,7 @@ function completeObjectSerialization(anObject, aUID, aContext)
 
     var serializedObject = [serializedType];
     var serializer = serializers[internalType];
-    var location = aContext.options.fastMode ? aUID : aUID.serializedLocation;
+    var location = (aContext.features & Features.IndexCompression) ? aUID.serializedLocation : aUID;
 
     aContext.objects[location] = serializer(serializedObject, anObject, aContext, toObjectSerialization);
 }
@@ -201,7 +207,7 @@ function newUID(anObject, aContext, isKey)
 {
     var location = aContext.objects.length;
 
-    if (aContext.options.fastMode)
+    if (!(aContext.features & Features.IndexCompression))
     {
         Call(MapSet, aContext.UIDs, anObject, location);
         return location;

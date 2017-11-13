@@ -1,5 +1,6 @@
 const test = require("ava");
 const { parse, stringify } = require("../");
+const Features = require("../features");
 
 const convert = aValue => parse(stringify(aValue));
 const fastConvert = aValue => parse(stringify(aValue, { fastMode: true }));
@@ -62,3 +63,22 @@ test("trailing gaps with properties", t =>
     run(value, t);
 });
 
+test("Compressed array", t =>
+{
+    var value = [1,2,3];
+    var string = stringify(value);
+    t.deepEqual(parse(string), value);
+
+    var expected = `{"index":0,"objects":[[0,1,2,3],1,2,3],"typeMap":{"0":2}}`;
+    t.is(expected, string);
+});
+
+test("Legacy array, no compression", t =>
+{
+    var value = [1,2,3];
+    var string = stringify(value, { protocol: 1 });
+    t.deepEqual(parse(string), value);
+
+    var expected = `{"index":0,"objects":[[1,1,2,3,4,5,6],"0",1,"1",2,"2",3]}`;
+    t.is(expected, string);
+});
