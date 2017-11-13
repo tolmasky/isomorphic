@@ -55,9 +55,10 @@ function toRouter(routes, source, destination)
             const entrypoint = require(transform);
             const computed = { root: source, cache, options, entrypoint: path, destination: output };
 
-            return  <report destination = { output } started = { Date.now() } >
+            return  <report destination = { output } >
                         { ({ assets: [output] }) }
                         <entrypoint { ...computed } />
+                        <timer uuid = { require("uuid").v4() } />
                     </report>
         }
 
@@ -65,8 +66,14 @@ function toRouter(routes, source, destination)
     }
 }
 
-function report({ destination, started, children })
+function timer()
 {
+    return { started: Date.now() };
+}
+
+function report({ destination, children })
+{
+    const started = children.find(child => child && child.started).started;
     const duration = (Date.now() - started) / 1000;
     const bytes = execSync(`stat -f%z ${JSON.stringify(destination)}`)
         .toString("utf-8")

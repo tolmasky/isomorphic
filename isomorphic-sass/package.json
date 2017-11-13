@@ -1,0 +1,18 @@
+{
+  "name": "isomorphic-sass",
+  "version": "1.0.0",
+  "description": "",
+  "main": "isomorphic-sass.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": "4.x.x"
+  },
+  "keywords": [],
+  "author": "Francisco Ryan Tolmasky I",
+  "license": "MIT",
+  "dependencies": {
+    "node-sass": "^4.6.1"
+  }
+}

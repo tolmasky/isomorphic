@@ -60,6 +60,14 @@
       "/(*_/):name.less": {
         "output": "/assets/styles/:name.css",
         "transform": "isomorphic-less"
+      },
+      "/(*_/):name.sass": {
+        "output": "/assets/styles/:name.css",
+        "transform": "isomorphic-sass"
+      },
+      "/(*_/):name.scss": {
+        "output": "/assets/styles/:name.css",
+        "transform": "isomorphic-sass"
       }
     }
   },

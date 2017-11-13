@@ -15,7 +15,9 @@ module.exports = class Counter extends React.Component
         return  <html>
                     <head>
                         <title>{ this.state.count }</title>
-                        <link entrypoint = "./styles.less" />
+                        <link entrypoint = "./styles-less.less" />
+                        <link entrypoint = "./styles-sass.sass" />
+                        <link entrypoint = "./styles-scss.scss" />
                     </head>
                     <body>
                         <isomorphic>
