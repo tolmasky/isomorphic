@@ -6,7 +6,7 @@ function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSer
     var keys = Object.keys(anArray);
     var count = keys.length;
 
-    for(var i = 0; i < count; i += 2)
+    for(var i = 0; i < count; i++)
     {
         var key = keys[i];
         var value = anArray[key];

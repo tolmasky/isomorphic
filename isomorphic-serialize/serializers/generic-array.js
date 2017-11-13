@@ -1,7 +1,5 @@
 
-// var IS_LIST_SENTINEL = "@@__IMMUTABLE_LIST__@@";
 var isArray = Array.isArray;
-var undefined = void 0;
 
 function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
@@ -64,11 +62,12 @@ function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSeria
         lastIndex = aCurrentIndex;
     });
 
-    if (lastIndex !== anArray.length)
+    var numberofTrailingUndefineds = (anArray.length - 1) - lastIndex;
+    // Add gaps.
+    if (numberofTrailingUndefineds > 0)
     {
         // Pad the end of the encoding with an empty "gap".
         // from lastIndex to length - indexCount
-        var numberofUndefineds = (anArray.length - 1) - lastIndex;
 
         if (!hasGaps)
         {
@@ -77,7 +76,7 @@ function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSeria
         }
 
         serializedArray[insertionIndex++] = ++lastIndex;
-        serializedArray[insertionIndex++] = numberofUndefineds;
+        serializedArray[insertionIndex++] = numberofTrailingUndefineds;
     }
 
 
@@ -88,6 +87,9 @@ function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSeria
 
     if (keys.length === indexCount)
         return serializedArray;
+
+
+    // Add key/value pairs.
 
     if (!hasGaps)
         serializedArray[insertionIndex++] = [];

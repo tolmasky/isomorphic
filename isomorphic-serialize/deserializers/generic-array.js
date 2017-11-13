@@ -70,8 +70,8 @@ function deserializeArray(aDeserializedArray, serializedArray, context, fromObje
 
 function fillInRemainingEmptySpaces(aDeserializedArray, lastIndex)
 {
-    aDeserializedArray[lastIndex] = true;
-    aDeserializedArray.pop();
+    if (lastIndex > 0)
+        aDeserializedArray.length = lastIndex;
 }
 
 function setValueForKey(aKey, anItem, anObject)
