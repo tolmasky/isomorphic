@@ -9,9 +9,17 @@ const File = require("babel-core/lib/transformation/file").default;
 Error.stackTraceLimit = 1000;
 
 
-module.exports = function transform({ path, contents, options, removeTrailingSemicolon })
+module.exports = function transform({ path, contents, options })
 {
-    return  <transformAST { ...{ contents, options, removeTrailingSemicolon } }>
+    return transformAST({ contents, options, children:
+    [
+        parse({ contents, path, children:
+        [
+            parserOptions({ options: options.babel })
+        ]})
+    ]});
+
+    return  <transformAST { ...{ contents, options } }>
                 <parse { ...{ contents, path } }>
                     <parserOptions options = { options.babel } />
                 </parse>
@@ -35,16 +43,11 @@ function parserOptions({ options })
     return Object.assign(parserOpts, opts.parserOpts);
 }
 
-function transformAST({ children:[AST], contents, options, removeTrailingSemicolon })
+function transformAST({ children:[AST], contents, options })
 {
     const transformed = transformFromAst(AST, contents, options.babel);
-    const transformedContents = transformed.code;
-    const modifiedContents = removeTrailingSemicolon ?
-        transformedContents.substr(0, transformedContents.length - 1) :
-        transformedContents;
-        
     const metadata = transformed.metadata.isomorphic ||
         { dependencies: new Set(), entrypoints: new Set(), assets: new Set() };
 
-    return { contents: modifiedContents, metadata };
+    return { contents: transformed.code, metadata };
 }
