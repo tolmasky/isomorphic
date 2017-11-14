@@ -45,15 +45,16 @@ function cacheMetadata(aPath, metadata)
 
     if (metadata.dependencies.size <= 0 &&
         metadata.entrypoints.size <= 0 &&
-        metadata.assets.size <= 0)
+        metadata.assets.size <= 0 &&
+        Object.keys(metadata.globals).length <= 0)
         return;
 
     writeFileSync(aPath, JSON.stringify(metadata, function (key, value)
     {
-        if (Array.isArray(value))
-            return value;
+        if (value instanceof Set)
+            return Array.from(value);
 
-        return Array.from(value);
+        return value;
     }, 2), "utf-8");
 }
 
