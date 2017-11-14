@@ -50,10 +50,10 @@ function cacheMetadata(aPath, metadata)
 
     writeFileSync(aPath, JSON.stringify(metadata, function (key, value)
     {
-        if (value instanceof Set)
-            return Array.from(value);
+        if (Array.isArray(value))
+            return value;
 
-        return value;
+        return Array.from(value);
     }, 2), "utf-8");
 }
 
