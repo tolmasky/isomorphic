@@ -12,8 +12,8 @@ function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSer
         var key = keys[i];
         var value = anArray[key];
 
-        var serializedKey = toObjectSerialization(key, aContext, true);
         var serializedValue = toObjectSerialization(value, aContext);
+        var serializedKey = toObjectSerialization(key, aContext, true);
 
         // FIXME: this can be faster with direct assign.
         Call(ArrayPush, aSerializedArray, serializedKey, serializedValue);
