@@ -1,9 +1,10 @@
 var Call = (Function.prototype.call).bind(Function.prototype.call);
 var ArrayPush = Array.prototype.push;
+var ObjectKeys = Object.keys;
 
 function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSerialization)
 {
-    var keys = Object.keys(anArray);
+    var keys = ObjectKeys(anArray);
     var count = keys.length;
 
     for(var i = 0; i < count; i++)
