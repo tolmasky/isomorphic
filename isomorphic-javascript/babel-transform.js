@@ -7,6 +7,7 @@ const { transformFromAst } = require("babel-core");
 const File = require("babel-core/lib/transformation/file").default;
 
 const minify = require("./uglify-minify");
+const moduleWrap = require("./module-wrap");
 
 const GlobalPreamble = "(function (global, process){return ";
 const GlobalPostamble = "\n})";
@@ -18,7 +19,7 @@ const DefaultMetadata =
     dependencies: EmptySet,
     entrypoints: EmptySet,
     assets: EmptySet,
-    globals: []
+    globals: { }
 };
 
 Error.stackTraceLimit = 1000;
@@ -54,8 +55,9 @@ function transformAST({ children:[AST], contents, options, wrap })
 {
     const transformed = transformFromAst(AST, contents, options.babel);
     const metadata = transformed.metadata.isomorphic || DefaultMetadata;
-    const output = pipe([wrap && moduleWrap, options.minify && minify],
-        transformed.code);
+    const output = pipe([
+        wrap && moduleWrap(metadata.globals),
+        options.minify && minify], transformed.code);
 
     return { contents: output, metadata };
 }
@@ -64,13 +66,6 @@ function pipe(items, input)
 {
     return items.reduce((input, item) =>
         item ? item(input) : input, input);
-}
-
-function moduleWrap(contents)
-{
-    return GlobalPreamble + ModulePreamble +
-        contents +
-        ModulePostamble + GlobalPostamble;
 }
 
 const EmptySet =

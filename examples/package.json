@@ -40,7 +40,7 @@
         "output": "/assets/:name.bundle.js",
         "transform": "isomorphic-bundle-js",
         "options": {
-          "minify": false,
+          "minify": true,
           "babel": {
             "parserOpts": {
               "allowReturnOutsideFunction": true

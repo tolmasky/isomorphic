@@ -57,8 +57,7 @@ Module._extensions[".json"] = function(module, filename)
     const precompiled = compiled[index];
     const require = makeRequireFunction(module);
 
-    return precompiled(global, global.process)
-        .call(module.exports,
+    return precompiled.call(module.exports,
             module.exports, require, module, filename, dirname(filename));
 };
 
@@ -93,7 +92,7 @@ function require(request)
         return nativeCache[request].exports;
 
     const index = fs[request];
-    const precompiled = compiled[index](global, process);
+    const precompiled = compiled[index];
     const module = { exports: { } };
 
     precompiled.call(module.exports, module.exports, require, module);
