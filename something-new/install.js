@@ -5,16 +5,16 @@ const { execSync } = require("child_process");
 const { createHash } = require("crypto");
 
 const uuid = require("uuid");
-const spawn = require("@await/spawn").silent;
+const spawn = require("@await/spawn").verbose;
 
 const tmp = (path = join("/tmp", uuid())) =>
     !existsSync(path) ? path : tmp();
 const SHARED_DEPENDENCIES = join(__dirname, "isomorphic");
 
 
-module.exports = async function install(entry, dependency)
+module.exports = async function install(entry, name)
 {
-    const workspace = join(tmp(), `${dependency}-container`);
+    const workspace = join(tmp(), `${name}-container`);
     const lockfile = join(workspace, "package-lock.json");
 
     execSync(`mkdir -p ${workspace}`);
@@ -22,8 +22,8 @@ module.exports = async function install(entry, dependency)
     if (entry)
         writeFileSync(lockfile, JSON.stringify(entry.lock, null, 2), "utf-8");
 
-    await spawn("npm", ["init", "-y"], { cwd: workspace });
-    await spawn("npm", ["install", dependency, "--save"], { cwd: workspace });
+    await spawn("npm", ["init", "-y"], { cwd: workspace, env: process.env });
+    await spawn("npm", ["install", name, "--save"], { cwd: workspace, env: process.env });
 
     const lockfileContents = readFileSync(lockfile, "utf-8");
     const checksum = getChecksum(lockfileContents);
@@ -32,7 +32,7 @@ module.exports = async function install(entry, dependency)
         throw new Error("Lockfile unexpectedly changed.");
 
     const lock = entry && entry.lock || JSON.parse(lockfileContents);
-    const path = join(SHARED_DEPENDENCIES, checksum.replace(/\//g, "_"), dependency);
+    const path = install.path({ name, checksum });
 
     if (!existsSync(path))
     {
@@ -40,7 +40,12 @@ module.exports = async function install(entry, dependency)
         await spawn("mv", [workspace, path]);
     }
 
-    return { path, entry: { checksum, lock } };
+    return { name, checksum, lock };
+}
+
+module.exports.path = function ({ name, checksum })
+{
+    return join(SHARED_DEPENDENCIES, checksum.replace(/\//g, "_"), name);
 }
 
 function getChecksum(string)
