@@ -4,15 +4,15 @@ const invoker = require("../utils").invoker;
 module.exports = deserializeGenericSet;
 
 // This will deserialize every set.
-function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObjectSerialization)
+function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObjectSerialization, skipObjectPairs)
 {
     var add = invoker("add");
 
     // index 0 is the type.
-    var numberOfGenericObjectPairs = serializedSet[1];
+    var numberOfGenericObjectPairs = skipObjectPairs ? 0 : serializedSet[1];
 
     // First key starts at index 2.
-    var firstIndex = 2;
+    var firstIndex = skipObjectPairs ? 1 : 2;
     var index = firstIndex;
     var count = serializedSet.length;
 

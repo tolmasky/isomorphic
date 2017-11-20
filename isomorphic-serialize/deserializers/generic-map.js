@@ -4,15 +4,15 @@ const invoker = require("../utils").invoker;
 module.exports = deserializeGenericMap;
 
 // This will deserialize every map.
-function deserializeGenericMap(aDeserializedMap, serializedMap, context, fromObjectSerialization)
+function deserializeGenericMap(aDeserializedMap, serializedMap, context, fromObjectSerialization, skipObjectPairs)
 {
     var set = invoker("set");
 
     // index 0 is the type.
-    var numberOfGenericObjectPairs = serializedMap[1];
+    var numberOfGenericObjectPairs = skipObjectPairs ? 0 : serializedMap[1];
 
     // First key starts at index 2.
-    var firstIndex = 2;
+    var firstIndex = skipObjectPairs ? 1 : 2;
     var keyIndex = firstIndex;
     var count = serializedMap.length;
 
