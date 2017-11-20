@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "./isomorphic-serialization",
+  "runkitExampleFilename": "runkit-example.js",
   "scripts": {
     "test": "ava tests/"
   },
