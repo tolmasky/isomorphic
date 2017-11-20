@@ -1,7 +1,7 @@
 
 var isArray = Array.isArray;
 
-function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSerialization)
+function serializeGenericArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
     var i = 0;
 
@@ -113,7 +113,7 @@ function serializeGaplessArray(serializedArray, anArray, aContext, toObjectSeria
 
 }
 
-module.exports = serializeGaplessArray;
+module.exports = serializeGenericArray;
 
 var MAX_UINT32 = -1 >>> 0;
 

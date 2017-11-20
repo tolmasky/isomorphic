@@ -184,7 +184,7 @@ var serializers = [
     require("./serializers/generic-map"),
     require("./serializers/pure-map"), // Immutable map can use pure-map.
     require("./serializers/pure-set"), // Immutable set can use pure-set.
-    require("./serializers/immutable-list"), // Immutable lists can use the gapless-array serializer, but it unnecessarily encodes a lot of undefineds.
+    require("./serializers/immutable-list"),
     require("./serializers/pure-map"), // Immutable ordered map can use pure-map.
     require("./serializers/pure-set"), // Immutable ordered set can use pure-set.
 ];

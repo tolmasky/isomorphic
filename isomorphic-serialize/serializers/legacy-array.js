@@ -2,7 +2,7 @@ var Call = (Function.prototype.call).bind(Function.prototype.call);
 var ArrayPush = Array.prototype.push;
 var ObjectKeys = Object.keys;
 
-function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSerialization)
+function serializeLegacyArray(aSerializedArray, anArray, aContext, toObjectSerialization)
 {
     var keys = ObjectKeys(anArray);
     var count = keys.length;
@@ -22,4 +22,4 @@ function serializeKeyValueArray(aSerializedArray, anArray, aContext, toObjectSer
     return aSerializedArray;
 }
 
-module.exports = serializeKeyValueArray;
+module.exports = serializeLegacyArray;

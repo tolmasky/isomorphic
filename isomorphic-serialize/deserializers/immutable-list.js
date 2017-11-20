@@ -1,20 +1,20 @@
 
-module.exports = deserializeGaplessArray;
+module.exports = deserializeLegacyArray;
 
-function deserializeGaplessArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
+function deserializeLegacyArray(aDeserializedList, serializedList, context, fromObjectSerialization)
 {
     // index 0 is the type, all other values are deseriailzed and inserted into the
     // deserialized array in their current order.
     var valueIndex = 1;
-    var count = serializedArray.length;
+    var count = serializedList.length;
 
     for (; valueIndex < count; valueIndex++)
     {
-        var serializedValue = serializedArray[valueIndex];
+        var serializedValue = serializedList[valueIndex];
         var value = fromObjectSerialization(serializedValue, context);
 
-        aDeserializedArray.push(value);
+        aDeserializedList.push(value);
     }
 
-    return aDeserializedArray;
+    return aDeserializedList;
 }

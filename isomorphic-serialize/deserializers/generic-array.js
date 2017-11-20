@@ -1,13 +1,13 @@
 
 const invoker = require("../utils").invoker;
 
-module.exports = deserializeArray;
+module.exports = deserializeGenericArray;
 
 var GaplessMode  = 1;
 var GapMode      = 2;
 var KeyValueMode = 3;
 
-function deserializeArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
+function deserializeGenericArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
 {
     var forceImmutable = context.options.immutable;
     var set = forceImmutable ? invoker("set") : setValueForKey;
