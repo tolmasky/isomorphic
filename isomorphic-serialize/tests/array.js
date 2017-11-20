@@ -79,6 +79,6 @@ test("Legacy array, no compression", t =>
     var string = stringify(value, { protocol: 1 });
     t.deepEqual(parse(string), value);
 
-    var expected = `{"index":0,"objects":[[1,1,2,3,4,5,6],"0",1,"1",2,"2",3]}`;
+    var expected = `{"index":0,"objects":[[1,2,1,4,3,6,5],1,"0",2,"1",3,"2"]}`;
     t.is(expected, string);
 });

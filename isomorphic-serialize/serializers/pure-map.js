@@ -20,7 +20,7 @@ function serializedPureMap(aSerializedMap, aMap, aContext, toObjectSerialization
         var aKey = currentValue.value;
         var value = aMap.get(aKey);
 
-        var serializedKey = toObjectSerialization(aKey, aContext);
+        var serializedKey = toObjectSerialization(aKey, aContext, true);
         var serializedValue = toObjectSerialization(value, aContext);
 
         Call(ArrayPush, aSerializedMap, serializedKey, serializedValue);
