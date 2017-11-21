@@ -1,7 +1,7 @@
 
-module.exports = deserializeLegacyArray;
+module.exports = deserializeImmutableList;
 
-function deserializeLegacyArray(aDeserializedList, serializedList, context, fromObjectSerialization)
+function deserializeImmutableList(aDeserializedList, serializedList, context, fromObjectSerialization)
 {
     // index 0 is the type, all other values are deseriailzed and inserted into the
     // deserialized array in their current order.

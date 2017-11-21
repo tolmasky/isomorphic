@@ -1,8 +1,8 @@
 
 const invoker = require("../utils").invoker;
-module.exports = deserializeKeyValueArray;
+module.exports = deserializeLegacyArray;
 
-function deserializeKeyValueArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
+function deserializeLegacyArray(aDeserializedArray, serializedArray, context, fromObjectSerialization)
 {
     var forceImmutable = context.options.immutable;
     var set = forceImmutable ? invoker("set") : setValueForKey;
