@@ -10,10 +10,23 @@ const spawn = require("@await/spawn").verbose;
 const tmp = (path = join("/tmp", uuid())) =>
     !existsSync(path) ? path : tmp();
 const SHARED_DEPENDENCIES = join(__dirname, "isomorphic");
+const isLocal = name => name.startsWith("/") || name.startsWith("./");
+const getPackageChecksum = require("./get-package-checksum");
 
 
 module.exports = async function install(entry, name)
 {
+    if (isLocal(name))
+    {
+        const checksum = getPackageChecksum(name);
+        const lock = require(join(name, "package-lock.json"));
+
+        return { name, checksum, lock };
+    }
+
+    if (entry && existsSync(install.path(entry)))
+        return entry;
+
     const workspace = join(tmp(), `${name}-container`);
     const lockfile = join(workspace, "package-lock.json");
 
@@ -45,13 +58,8 @@ module.exports = async function install(entry, name)
 
 module.exports.path = function ({ name, checksum })
 {
+    if (isLocal(name))
+        return name;
+
     return join(SHARED_DEPENDENCIES, checksum.replace(/\//g, "_"), name);
 }
-
-function getChecksum(string)
-{
-    return "sha512-" + createHash("sha512")
-        .update(string)
-        .digest("base64");
-}
-

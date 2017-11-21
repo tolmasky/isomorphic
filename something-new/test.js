@@ -1,79 +1,96 @@
 
-const { join, resolve } = require("path");
-const { existsSync, writeFileSync } = require("fs");
+const { join, dirname, resolve } = require("path");
+const { existsSync, writeFileSync, readFileSync } = require("fs");
 
 const { r, ok, error } = require("./result");
-const mapAccum = require("./await-map-accum");
+const map = require("./await-map");
 
 const progress = require("./progress");
 const install = progress(
     (_, name) => `Installing ${name}...`,
     require("./install"));
 install.path = require("./install").path;
+const r_require = r.to(require);
+
+const peer = name => resolve(dirname(__dirname), name);
+
 
 
 module.exports = async function ({ package: unresolved })
-{
+{try {
     const project = resolve(unresolved);
-    const r_json = r.to(path => require(join(project, path)));
-    const r_package = r_json("package.json");
+    const r_package = r_require(join(project, "package.json"));
 
     if (error.is(r_package))
         throw Errors.NotPackage(project);
 
-    const r_node = r.get(r_package.ok, ["engines", "node"]);
+    const lockfile = join(project, "isomorphic-lock.json");
+    const [lock, configuration] = await installed(
+        ok.or(r_require(lockfile), { }),
+        getConfiguration(r_package.ok));
+
+    writeFileSync(lockfile, JSON.stringify(lock, null, 2), "utf-8");
+
+    require(configuration["package://*"][0])();
+    } catch(e) { console.log(e) }
+};
+
+/*
+const r_node = r.get(r_package.ok, ["engines", "node"]);
     const node = ok.or(r_node, process.version);
 
     if (error.is(r_node))
         console.warn(Messages.NoNode(project, node));
 
-    const [lock, configuration] = await installed(
-        ok.or(r_json("isomorphic-lock.json"), { }),
-        getConfiguration(r_package.ok));
-
-    console.log(configuration);
-    
-    writeFileSync(join(project, "isomorphic-lock.json"), JSON.stringify(lock, null, 2), "utf-8");
-};
+*/
 
 async function installed(lock, configuration)
 {
-    return await mapAccum(
+    return await map.accum(
         async (previous, description) => 
         {
             const [name, options] = [].concat(description);
-            const entry = await ensure(previous[name], name);
+
+            const entry = await install(previous[name], name);
             const lock = { ...previous, [name]: entry };
 
             return [lock, [install.path(entry), options]];
         }, lock, configuration);
-
-    async function ensure(entry, name)
-    {
-        if (entry && existsSync(install.path(entry)))
-            return entry;
-    
-        return await install(entry, name);
-    }
 }
 
 function getConfiguration(package)
 {
     return {
-        "node://package.json": "ramda",
-        "asset://(*_/):name.less": "lodash",
-        "asset://(*_/):name.sass": "babylon",
-        "asset://(*_/):name.js(x)": "react",
+        ...forDevelopment(getDefaultConfiguration()),
         ...ok.or(r.get(package, ["isomorphic"]), { })
     };
-/*
+    
+    function forDevelopment(configuration)
+    {
+        if (!process.env.ISOMORPHIC_DEVELOPMENT)
+            return configuration;
+
+        const { dirname } = require("path");
+        const peer = name => resolve(dirname(__dirname), name);
+
+        return Object
+            .keys(configuration)
+            .reduce((accum, key) =>
+                ({ ...accum, [key]: peer(configuration[key]) }), { });
+    }
+}
+
+function getDefaultConfiguration()
+{
     return {
-        "node://package.json": "isomorphic-node",
+        "package://*": "isomorphic-node",
+        "node://(*_/):name.js(x)": "isomorphic-javascript",
         "asset://(*_/):name.less": "isomorphic-less",
         "asset://(*_/):name.sass": "isomorphic-sass",
         "asset://(*_/):name.js(x)": "isomorphic-bundle-js"
-    };*/
+    };
 }
+
 
 function rjson(path, or)
 {
