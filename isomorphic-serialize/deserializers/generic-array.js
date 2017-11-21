@@ -1,5 +1,6 @@
 
-const invoker = require("../utils").invoker;
+var invoker = require("../utils").invoker;
+var deserializeKeyValuePairs = require("./generic-key-value-pairs");
 
 module.exports = deserializeGenericArray;
 
@@ -55,12 +56,11 @@ function deserializeGenericArray(aDeserializedArray, serializedArray, context, f
             }
         }
         else if (mode === KeyValueMode)
-        {
-            var deserializedKey = fromObjectSerialization(value, context);
-            var deserializedValue = fromObjectSerialization(serializedArray[currentReadIndex++], context);
-            set(deserializedKey, deserializedValue, aDeserializedArray);
-        }
+            break;
     }
+
+    deserializeKeyValuePairs(serializedArray, aDeserializedArray, currentReadIndex - 1, length - 1, context, false, fromObjectSerialization);
+
 
     if (mode === GapMode && gapStart + gapLength > aDeserializedArray.length)
         fillInRemainingEmptySpaces(aDeserializedArray, gapStart + gapLength);

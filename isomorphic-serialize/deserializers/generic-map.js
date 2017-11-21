@@ -1,41 +1,24 @@
 
-const invoker = require("../utils").invoker;
+var deserializeKeyValuePairs = require("./generic-key-value-pairs");
 
 module.exports = deserializeGenericMap;
 
 // This will deserialize every map.
 function deserializeGenericMap(aDeserializedMap, serializedMap, context, fromObjectSerialization, skipObjectPairs)
 {
-    var set = invoker("set");
-
     // index 0 is the type.
     var numberOfGenericObjectPairs = skipObjectPairs ? 0 : serializedMap[1];
 
     // First key starts at index 2.
     var firstIndex = skipObjectPairs ? 1 : 2;
-    var keyIndex = firstIndex;
+    var endOfKeyValuePairs = numberOfGenericObjectPairs * 2 + firstIndex;
     var count = serializedMap.length;
 
     // First deserialize all the keys directly on the object.
-    deserializePairs(serializedMap, setValueForKey, numberOfGenericObjectPairs * 2 + firstIndex);
+    deserializeKeyValuePairs(serializedMap, aDeserializedMap, firstIndex, endOfKeyValuePairs, context, false, fromObjectSerialization);
     // Now deserialize the pure map.
-    deserializePairs(serializedMap, set, count);
+    deserializeKeyValuePairs(serializedMap, aDeserializedMap, endOfKeyValuePairs, count, context, "set", fromObjectSerialization);
 
     return aDeserializedMap;
 
-    function deserializePairs(aSerializedMap, mutator, stopAfter)
-    {
-        for (; keyIndex < stopAfter; keyIndex += 2)
-        {
-            var key = fromObjectSerialization(serializedMap[keyIndex], context);
-            var value = fromObjectSerialization(serializedMap[keyIndex + 1], context);
-
-            mutator(key, value, aDeserializedMap);
-        }
-    }
-}
-
-function setValueForKey(aKey, aValue, anObject)
-{
-    anObject[aKey] = aValue;
 }

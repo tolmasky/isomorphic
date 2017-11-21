@@ -1,5 +1,6 @@
 
-const invoker = require("../utils").invoker;
+var invoker = require("../utils").invoker;
+var deserializeKeyValuePairs = require("./generic-key-value-pairs");
 
 module.exports = deserializeGenericSet;
 
@@ -13,28 +14,16 @@ function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObj
 
     // First key starts at index 2.
     var firstIndex = skipObjectPairs ? 1 : 2;
-    var index = firstIndex;
+    var endOfGenericParis = numberOfGenericObjectPairs * 2 + firstIndex;
     var count = serializedSet.length;
 
-    for (; index < count; index++)
+    deserializeKeyValuePairs(serializedSet, aDeserializedSet, firstIndex, endOfGenericParis, context, false, fromObjectSerialization);
+
+    for (var index = endOfGenericParis; index < count; index++)
     {
-        if (index < numberOfGenericObjectPairs * 2 + firstIndex)
-        {
-            var serializedKey = serializedSet[index];
-            var serializedValue = serializedSet[++index];
-
-            var key = fromObjectSerialization(serializedKey, context);
-            var value = fromObjectSerialization(serializedValue, context);
-
-            aDeserializedSet[key] = value;
-            continue;
-        }
-        else
-        {
-            var serializedValue = serializedSet[index];
-            var value = fromObjectSerialization(serializedValue, context);
-            add(value, aDeserializedSet);
-        }
+        var serializedValue = serializedSet[index];
+        var value = fromObjectSerialization(serializedValue, context);
+        add(value, aDeserializedSet);
     }
 
     return aDeserializedSet;

@@ -3,7 +3,7 @@ const { parse, stringify } = require("../");
 const Features = require("../features");
 
 const convert = aValue => parse(stringify(aValue));
-const fastConvert = aValue => parse(stringify(aValue, { fastMode: true }));
+const fastConvert = aValue => parse(stringify(aValue, { protocol: 0 }));
 const run = (aValue, t) =>
 {
     t.deepEqual(convert(aValue), aValue);
