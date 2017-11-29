@@ -14,12 +14,12 @@ function deserializeGenericSet(aDeserializedSet, serializedSet, context, fromObj
 
     // First key starts at index 2.
     var firstIndex = skipObjectPairs ? 1 : 2;
-    var endOfGenericParis = numberOfGenericObjectPairs * 2 + firstIndex;
+    var endOfGenericPairs = numberOfGenericObjectPairs * 2 + firstIndex;
     var count = serializedSet.length;
 
-    deserializeKeyValuePairs(serializedSet, aDeserializedSet, firstIndex, endOfGenericParis, context, false, fromObjectSerialization);
+    deserializeKeyValuePairs(serializedSet, aDeserializedSet, firstIndex, endOfGenericPairs, context, false, fromObjectSerialization);
 
-    for (var index = endOfGenericParis; index < count; index++)
+    for (var index = endOfGenericPairs; index < count; index++)
     {
         var serializedValue = serializedSet[index];
         var value = fromObjectSerialization(serializedValue, context);
