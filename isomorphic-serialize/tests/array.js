@@ -43,6 +43,12 @@ test("empty with gaps", t =>
     run(value, t);
 });
 
+test("trailing gaps with middle gaps", t =>
+{
+    var value = [1,2,,,,3,,,,,,,];
+    run(value, t);
+});
+
 test("trailing gaps", t =>
 {
     var value = [1,2,3,,,,,,,];

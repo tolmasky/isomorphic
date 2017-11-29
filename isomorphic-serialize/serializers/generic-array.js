@@ -65,8 +65,12 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
         lastIndex = aCurrentIndex;
     });
 
+    // Finish off the current gap, if it exists.
+    if (hasGaps)
+        serializedArray[gapLengthIndex] = currentGapLength;
+
     var numberofTrailingUndefineds = (anArray.length - 1) - lastIndex;
-    // Add gaps.
+    // Add trailing gaps.
     if (numberofTrailingUndefineds > 0)
     {
         // Pad the end of the encoding with an empty "gap".
@@ -82,9 +86,6 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
         serializedArray[insertionIndex++] = numberofTrailingUndefineds;
     }
 
-
-    if (hasGaps)
-        serializedArray[gapLengthIndex] = currentGapLength;
 
     var keys = ObjectKeys(anArray);
 
