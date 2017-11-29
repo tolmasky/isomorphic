@@ -69,6 +69,32 @@ test("trailing gaps with properties", t =>
     run(value, t);
 });
 
+test("leading gaps", t =>
+{
+    var value = [,,,,,,1,2,3];
+    run(value, t);
+});
+
+test("leading gaps with properties", t =>
+{
+    var value = [,,,,,,1,2,3];
+    value.foo = "Bar";
+    run(value, t);
+});
+
+test("trailing gaps with middle gaps and leading gaps", t =>
+{
+    var value = [,,,,1,2,,,,3,,,,,,,];
+    run(value, t);
+});
+
+test("trailing gaps with middle gaps and leading gaps with properties", t =>
+{
+    var value = [,,,,1,2,,,,3,,,,,,,];
+    value.foo = "Bar";
+    run(value, t);
+});
+
 test("Compressed array", t =>
 {
     var value = [1,2,3];
