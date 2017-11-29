@@ -1,5 +1,8 @@
 
+var Call = (Function.prototype.call).bind(Function.prototype.call);
+var ArrayForEach = Array.prototype.forEach;
 var isArray = Array.isArray;
+var ObjectKeys = Object.keys;
 
 function serializeGenericArray(serializedArray, anArray, aContext, toObjectSerialization)
 {
@@ -24,7 +27,7 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
     var gapLengthIndex = -1;
     var currentGapLength = 0;
 
-    anArray.forEach(function(aValue, aCurrentIndex)
+    Call(ArrayForEach, anArray, function(aValue, aCurrentIndex)
     {
         ++indexCount;
         var isSuccessiveIndex = aCurrentIndex === lastIndex + 1;
@@ -83,7 +86,7 @@ function serializeGenericArray(serializedArray, anArray, aContext, toObjectSeria
     if (hasGaps)
         serializedArray[gapLengthIndex] = currentGapLength;
 
-    var keys = Object.keys(anArray);
+    var keys = ObjectKeys(anArray);
 
     if (keys.length === indexCount)
         return serializedArray;
