@@ -27,6 +27,14 @@ module.exports = function plugin(lockfile, description)
     return [join(DEPENDENCIES_PATH, checksum.replace(/\//g, "_")), options || { }];
 };
 
-(async function () {
-console.log("ALL DONE! " + JSON.stringify(await install("ramda")));
-})();
+(async function (dependency) {
+    const lockfile = { };
+    const { checksum, path } = await install(dependency);
+
+    lockfile[dependency] = join(path, "package.json");
+console.log("ALL DONE! " + JSON.stringify());
+})(dependency);
+
+
+
+

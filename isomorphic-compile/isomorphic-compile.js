@@ -1,24 +1,10 @@
 
 const { join, resolve } = require("path");
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-
-const ok = value => ({ ok: value });
-const error = Object.assign(
-    message => ({ error: Error(message) }),
-    { is: r => hasOwnProperty.call(r, "error") });
-
-const r_require = toResult(require);
-const r_get = (o, [key, ...rest], r_o = ok(o)) =>
-    error.is(r_o) ? r_o :
-    (o => o === undefined || o === null ?
-        error(`object does not contain ${key}`) :
-        rest.length ? r_get(0, rest, ok(o)) : ok(o))(r_o.ok[key]);
-const uuid = require("uuid").v4;
-const runtime = require("./runtime");
-const project = require("./project");
+const r = require("./result");
+const r_require = r.to(require);
 
 const hasDependency = (pjson, name, kind = "dependencies") =>
-    !r_get(pjson, [kind, name]).error;
+    !r.get(pjson, [kind, name]).error;
 const hasPeerDependency = (pjson, name) =>
     hasDependency(pjson, name, "peerDependencies");
 

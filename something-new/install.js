@@ -63,3 +63,10 @@ module.exports.path = function ({ name, checksum })
 
     return join(SHARED_DEPENDENCIES, checksum.replace(/\//g, "_"), name);
 }
+
+function getChecksum(string)
+{
+    return "sha512-" + createHash("sha512")
+        .update(string)
+        .digest("base64");
+}
