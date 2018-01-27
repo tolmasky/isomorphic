@@ -19,7 +19,7 @@ module.exports = function (options)
     Module._extensions[".js"] = function (module, filename)
     {
         var found = normalized.find(function (pair)
-        {console.log(pair);
+        {
             return pair[0](filename)
         });
 

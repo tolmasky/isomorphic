@@ -9,6 +9,7 @@ module.exports.render = ReactRender;
 function ReactRender({ source })
 {
     const Component = require(source);
+    const output = element.render(React.createElement(Component));
 
-    return { markup: element.render(React.createElement(Component)) };
+    return { contents: output };
 }

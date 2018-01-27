@@ -1,6 +1,7 @@
 const { basename, dirname, join } = require("path");
 const fs = require("sf-fs");
 const micromatch = require("micromatch");
+const filesystemCache = require("./filesystem-cache");
 
 
 module.exports = function tree({ source, destination, cache, exclude, ...rest })
@@ -39,7 +40,9 @@ function file({ source, destination, cache, transforms })
     const transform = require(location);
 
     return  <copy { ...{ destination } }>
-                <transform { ...rest } { ...{ cache, source } } />
+                <filesystemCache
+                    cache = { cache }
+                    transform = { <transform { ...rest } { ...{ cache, source } } /> } />
             </copy>;
 }
 
