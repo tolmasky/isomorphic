@@ -1,0 +1,17 @@
+{
+  "name": "petrified",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-register": "^6.26.0",
+    "commander": "^2.13.0",
+    "generic-jsx": "^18.0.0-beta.3"
+  }
+}
