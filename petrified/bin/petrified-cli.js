@@ -3,11 +3,9 @@ const options = require("commander")
     .option("--source [source]", "root")
     .parse(process.argv);
 
-if (options.dev)
-    require("./bootstrap");
-
 const source = options.args[0] || process.cwd();
 const destination = `${source}/_site`;
 const cache = `${source}/_cache`;
 
+require("./bootstrap")({ dev: options.dev, source });
 require("../petrified")({ source: `${source}/pages`, destination, cache });

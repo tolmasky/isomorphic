@@ -8,5 +8,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "micromatch": "^3.1.5",
+    "sf-fs": "^2.0.0"
+  }
 }
