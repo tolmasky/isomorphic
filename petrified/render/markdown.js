@@ -1,32 +1,35 @@
 const React = require("react");
-const { read } = require("../fs");
+const yaml = require("js-yaml");
 
 const cm = require("./common-mark");
 const element = require("./react-element");
 
 
-module.exports = function render({ source, metadata, components })
+
+module.exports = function markdown({ contents, metadata, options })
 {
-    const text = read(source, "utf-8");
-    const { frontmatter, markdown } = split(text);
+    const { frontmatter, markdown } = split(contents);
+    const { components } = options;
 
     // React children.
-    const children = cm.render({ markdown, components.markdown });
+    const children = cm.render({ markdown, components: components.markdown });
     const { component, ...props } = { ...metadata, ...frontmatter };
 
     if (!component)
         throw new Error("Cannot render markdown file without a layout component.");
 
-    const Component = require(components[component]());
+    const Component = components[component]();
     const markup = element.render(React.createElement(Component, props, children));
-
-    return { frontmatter, markup: element.render(element) };
+console.log(markup);
+    return { frontmatter, markup };
 }
+
+module.exports.extensions = new Set(["markdown", "md"]);
 
 function split(text)
 {
     const lines = text.split("\n");
-    const fence = line === "---";
+    const fence = line => line === "---";
 
     if (!fence(lines[0]))
         return { frontmatter: { }, markdown: text };

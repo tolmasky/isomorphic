@@ -19,3 +19,6 @@ function ReactRender({ source, destination })
 
     return { contents: output, metadata: { destination: modified } };
 }
+
+
+module.exports.extensions = new Set(["js", "jsx"]);

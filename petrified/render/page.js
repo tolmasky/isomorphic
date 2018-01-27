@@ -1,28 +1,21 @@
-
-const { extname } = require("path");
-const markdown = require("./markdown");
-const react = require("./react");
-
-const extensions =
-{
-    markdown: new Set([".markdown", ".md"]),
-    react: new Set([".js", ".jsx"])
-}
+const { basename, extname } = require("path");
+const transforms = [require("./markdown"), require("./react")];
 
 
-function PageRender({ source, metadata })
+module.exports = function page({ source, ...rest })
 {
     const extension = extname(source);
+    const transform = transforms.find(
+        ({ extensions }) => extensions.has(extension.substr(1)));
 
-    if (extensions.markdown.has(extension))
-        return markdown.render({ source, metadata });
+    if (!transform)
+        throw new Error(`Can't render ${basename(source)}`);
 
-    if (extensions.react.has({ source, metadata }))
-        return react.render({ source, metadata });
-
-    return null;
+    return <transform { ...{ source, ...rest } } />;
 }
 
-module.exports = PageRender;
-module.exports.render = PageRender;
+module.exports.match = "**/*.(" + transforms
+    .map(transform => Array.from(transform.extensions))
+    .map(extensions => extensions.join("|"))
+    .join("|") + ")"
 

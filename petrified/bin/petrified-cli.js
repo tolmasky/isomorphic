@@ -8,4 +8,4 @@ const destination = `${source}/_site`;
 const cache = `${source}/_cache`;
 
 require("./bootstrap")({ dev: options.dev, source });
-require("../petrified")({ source: `${source}/pages`, destination, cache });
+require("../petrified")({ source, destination, cache });

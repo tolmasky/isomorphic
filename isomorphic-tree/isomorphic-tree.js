@@ -37,7 +37,8 @@ function file({ source, destination, cache, transforms })
         return <copy { ...{ source, destination } }/>;
 
     const { transform: location, ...rest } = match;
-    const transform = require(location);
+    const transform = typeof location === "function" ?
+        location : require(location);
 
     return  <copy { ...{ destination } }>
                 <filesystemCache

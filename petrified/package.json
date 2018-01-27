@@ -12,9 +12,12 @@
   "dependencies": {
     "babel-register": "^6.26.0",
     "commander": "^2.13.0",
+    "commonmark": "^0.28.1",
+    "commonmark-react-renderer": "^4.3.4",
     "generic-jsx": "^18.0.0-beta.3",
+    "js-yaml": "^3.10.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "styled-jsx": "^2.2.1"
+    "sf-fs": "^2.0.0"
   }
 }
