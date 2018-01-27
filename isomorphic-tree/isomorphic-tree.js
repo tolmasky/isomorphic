@@ -48,6 +48,9 @@ function file({ source, destination, cache, transforms })
 
 function copy({ children:[nested], destination, source = nested.include })
 {
+    if (nested && nested.destination)
+        fs.mkdirp(dirname(nested.destination));
+
     fs.copy(source, nested && nested.destination || destination);
 
     return nested;

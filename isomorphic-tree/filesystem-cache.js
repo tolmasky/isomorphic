@@ -46,7 +46,7 @@ function cacheMetadata(aPath, metadata)
     if ((!metadata.dependencies || metadata.dependencies.size <= 0) &&
         (!metadata.entrypoints || metadata.entrypoints.size <= 0) &&
         (!metadata.assets || metadata.assets.size <= 0) &&
-        !metadata.destinations &&
+        !metadata.destination &&
         (!metadata.globals || Object.keys(metadata.globals).length <= 0))
         return;
 
