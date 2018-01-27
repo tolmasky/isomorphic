@@ -26,7 +26,7 @@ module.exports = function components({ source })
 function markdown({ source })
 {
     const dirname = `${source}/components/markdown`;
-console.log(dirname);
+
     if (!fs.tstat(dirname))
         return Object.create(null);
 

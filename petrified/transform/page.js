@@ -17,5 +17,5 @@ module.exports = function page({ source, ...rest })
 module.exports.match = "**/*.(" + transforms
     .map(transform => Array.from(transform.extensions))
     .map(extensions => extensions.join("|"))
-    .join("|") + ")"
+    .join("|") + ")";
 
