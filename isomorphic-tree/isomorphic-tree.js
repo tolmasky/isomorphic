@@ -42,13 +42,13 @@ function file({ source, destination, cache, transforms })
     return  <copy { ...{ destination } }>
                 <filesystemCache
                     cache = { cache }
-                    transform = { <transform { ...rest } { ...{ cache, source } } /> } />
+                    transform = { <transform { ...{ ...rest, cache, source, destination } } /> } />
             </copy>;
 }
 
 function copy({ children:[nested], destination, source = nested.include })
 {
-    fs.copy(source, destination);
+    fs.copy(source, nested && nested.destination || destination);
 
     return nested;
 }
