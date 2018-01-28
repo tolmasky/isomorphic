@@ -17,7 +17,6 @@ module.exports = function post({ source, options, ...rest })
 
     const [_, year, month, day, name] = parsed;
     const destination = `${rest.destination}/${year}/${month}/${day}/${name}`;
-    const transforms = [];
 
     if (fs.tstat(source) === "directory")
     {
