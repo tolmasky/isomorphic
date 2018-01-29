@@ -2,7 +2,7 @@ const React = require("react");
 const yaml = require("js-yaml");
 
 const cm = require("./common-mark");
-const element = require("./react-element");
+const render = require("./react-element");
 
 
 
@@ -19,7 +19,7 @@ module.exports = function markdown({ contents, metadata, options })
         throw new Error("Cannot render markdown file without a layout component.");
 
     const Component = components[component]();
-    const markup = element.render(React.createElement(Component, props, children));
+    const markup = render(React.createElement(Component, props, children));
 
     return { contents: markup, metadata: { frontmatter, destination: options.destination } };
 }

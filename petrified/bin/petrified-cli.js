@@ -10,3 +10,4 @@ const cache = `${source}/_cache`;
 require("./bootstrap")({ dev: options.dev, source });
 require("../petrified")({ source, destination, cache });
 
+require("./watch")({ destination });

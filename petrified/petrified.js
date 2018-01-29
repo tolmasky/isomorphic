@@ -20,10 +20,6 @@ module.exports = function ({ source, destination, cache })
                 <posts { ...{ components, source:`${source}/posts`, destination, cache } }/>
             </metadata>
         </pages>);
-
-    express()
-        .use("/", express.static(destination))
-        .listen(4500);
 }
 
 function pages({ components, source, destination, cache, children })
