@@ -4,7 +4,7 @@ const fs = require("sf-fs");
 
 const same = { name: name => path => basename(path, extname(path)) === name };
 const FILENAME_FORMAT = /^(\d{4})-(\d{2})-(\d{2})-([^\.]*)/;
-const page = require("./page");
+const format = require("./format");
 
 
 module.exports = function post({ source, options, ...rest })
@@ -24,7 +24,7 @@ module.exports = function post({ source, options, ...rest })
         const transforms =
         [{
             match: file,
-            transform: page,
+            transform: format,
             options: { ...options, destination: `${destination}/index.html` }
         }];
 

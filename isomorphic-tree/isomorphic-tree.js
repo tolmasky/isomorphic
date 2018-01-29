@@ -65,11 +65,7 @@ function directory({ source, destination, ...rest })
         const { transform: location, options } = match;
         const transform = toTransform(location);
 
-        return <copy { ...{ destination } }>
-                <filesystemCache
-                    cache = { cache }
-                    transform = { <transform { ...{ ...rest, options, source, destination } } /> } />
-            </copy>;
+        return <transform { ...{ ...rest, options, source, destination } } />;
     }
 
     fs.mkdirp(destination);

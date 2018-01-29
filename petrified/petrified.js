@@ -15,7 +15,7 @@ module.exports = function ({ source, destination, cache })
     require("child_process").execSync(`rm -rf ${source}/_cache`);
 
     runtime([
-        /*<posts { ...{ components, source:`${source}/posts`, destination, cache } }/>,*/
+        <posts { ...{ components, source:`${source}/posts`, destination, cache } }/>,
         <pages { ...{ components, source:`${source}/pages`, destination, cache } }/>
     ]);
 
