@@ -13,11 +13,18 @@ module.exports = function page({ source, destination, ...rest })
 
     const name = basename(source, extension);
     const type = extname(name);
-    const override = type === "html" ?
-        `${dirname(source)}/${name}` :
-        `${dirname(source)}/${basename(name)}/index.html`;
+    const override = type === ".html" ?
+        `${dirname(destination)}/${name}` :
+        `${dirname(destination)}/${basename(name, type)}/index.html`;
 
-    return <transform { ...{ source, destination: override, ...rest } } />;
+    return  <redirect destination = { override }>
+                <transform { ...{ source, destination, ...rest } } />
+            </redirect>
+}
+
+function redirect({ children:[result], destination })
+{console.log(destination);
+    return { ...result, metadata: { ...result.metadata, destination } };
 }
 
 module.exports.match = "**/*.(page|html).(" + transforms

@@ -20,7 +20,7 @@ module.exports = function tree({ source, destination, cache, exclude, ...rest })
 
 
 function item({ source, exclude, ...rest })
-{
+{console.log("ON ITEM " + source);
     if (exclude(source))
         return [];
 
@@ -65,7 +65,11 @@ function directory({ source, destination, ...rest })
         const { transform: location, options } = match;
         const transform = toTransform(location);
 
-        return <transform { ...{ ...rest, options, source, destination } } />;
+        return <copy { ...{ destination } }>
+                <filesystemCache
+                    cache = { cache }
+                    transform = { <transform { ...{ ...rest, options, source, destination } } /> } />
+            </copy>;
     }
 
     fs.mkdirp(destination);
