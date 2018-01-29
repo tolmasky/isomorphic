@@ -7,17 +7,12 @@ module.exports = ReactRender;
 module.exports.render = ReactRender;
 
 
-function ReactRender({ source, destination })
+function ReactRender({ source, options })
 {
     const Component = require(source);
-    const output = element.render(React.createElement(Component));
+    const output = element.render(React.createElement(Component, options.props || { }));
 
-    const nojs = basename(source, extname(source));
-    const modified = !!extname(nojs) ?
-        `${dirname(destination)}/${nojs}` :
-        `${dirname(destination)}/${nojs}/index.html`
-
-    return { contents: output, metadata: { destination: modified } };
+    return { contents: output };
 }
 
 

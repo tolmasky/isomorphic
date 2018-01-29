@@ -14,22 +14,31 @@ module.exports = function ({ source, destination, cache })
 
     require("child_process").execSync(`rm -rf ${source}/_cache`);
 
-    runtime([
-        <posts { ...{ components, source:`${source}/posts`, destination, cache } }/>,
-        <pages { ...{ components, source:`${source}/pages`, destination, cache } }/>
-    ]);
+    runtime(
+        <pages { ...{ components, source:`${source}/pages`, destination, cache } }>
+            <metadata>
+                <posts { ...{ components, source:`${source}/posts`, destination, cache } }/>
+            </metadata>
+        </pages>);
 
     express()
         .use("/", express.static(destination))
         .listen(4500);
 }
 
-function pages({ components, source, destination, cache })
+function pages({ components, source, destination, cache, children })
 {
-    const options = { components };
+    const options = { components, props: { posts: children } };
     const transforms = [{ match: page.match, transform: page, options }];
 
     return <tree { ...{ source, transforms, destination, cache } }/>;
+}
+
+function metadata({ children })
+{
+    return children
+        .filter(child => child)
+        .map(child => child.frontmatter);
 }
 
 function posts({ components, source, destination, cache })

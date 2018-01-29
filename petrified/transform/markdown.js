@@ -20,7 +20,7 @@ module.exports = function markdown({ contents, metadata, options })
 
     const Component = components[component]();
     const markup = element.render(React.createElement(Component, props, children));
-console.log(options);
+
     return { contents: markup, metadata: { frontmatter, destination: options.destination } };
 }
 
