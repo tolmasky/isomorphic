@@ -36,14 +36,13 @@ function file({ source, destination, cache, transforms })
     if (!match)
         return <copy { ...{ source, destination } }/>;
 
-    const { transform: location, ...rest } = match;
-    const transform = typeof location === "function" ?
-        location : require(location);
+    const { transform: location, options } = match;
+    const transform = toTransform(location);
 
     return  <copy { ...{ destination } }>
                 <filesystemCache
                     cache = { cache }
-                    transform = { <transform { ...{ ...rest, cache, source, destination } } /> } />
+                    transform = { <transform { ...{ options, cache, source, destination } } /> } />
             </copy>;
 }
 
@@ -59,11 +58,26 @@ function copy({ children:[nested], destination, source = nested.include })
 
 function directory({ source, destination, ...rest })
 {
+    const match = rest.transforms.find(transform => transform.match(source));
+
+    if (match)
+    {
+        const { transform: location, options } = match;
+        const transform = toTransform(location);
+
+        return <transform { ...{ ...rest, options, source, destination } } />;
+    }
+
     fs.mkdirp(destination);
 
     return fs.readdir(source).map(source =>
         <item   { ...{ source, ...rest } }
                 destination = { join(destination, basename(source)) } />);
+}
+
+function toTransform(transform)
+{
+    return typeof transform === "function" ? transform : require(transform);
 }
 
 function toMatcher(match)

@@ -35,6 +35,7 @@ module.exports = function ({ dev, source })
     },
     {
         match: match(source),
-        presets: [ ["isomorphic-preset", { node, "react": true }] ]
+        presets: [ ["isomorphic-preset", { node, "react": true }] ],
+        plugins: ["babel-plugin-emotion"]
     }]);
 }

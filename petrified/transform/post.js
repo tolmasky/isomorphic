@@ -1,5 +1,5 @@
 const tree = require("isomorphic-tree");
-const { basename, extname } = require("path");
+const { basename, dirname, extname } = require("path");
 const fs = require("sf-fs");
 
 const same = { name: name => path => basename(path, extname(path)) === name };
@@ -16,7 +16,7 @@ module.exports = function post({ source, options, ...rest })
         throw new Error(`Post ${filename} must have the format YYYY-MM-DD-name.`);
 
     const [_, year, month, day, name] = parsed;
-    const destination = `${rest.destination}/${year}/${month}/${day}/${name}`;
+    const destination = `${dirname(rest.destination)}/${year}/${month}/${day}/${name}`;
 
     if (fs.tstat(source) === "directory")
     {

@@ -4,6 +4,8 @@ const tree = require("isomorphic-tree");
 const page = require("./transform/page");
 const post = require("./transform/post");
 const components = require("./components");
+
+const express = require("express");
     
 
 module.exports = function ({ source, destination, cache })
@@ -15,5 +17,12 @@ module.exports = function ({ source, destination, cache })
 
     console.log(transforms);
 
-    return runtime(<tree { ...{ source: `${source}/posts`, transforms, destination, cache } }/>);
+runtime([
+        <tree { ...{ source: `${source}/posts`, transforms, destination, cache } }/>,
+        <tree { ...{ source: `${source}/pages`, transforms, destination, cache } }/>,
+    ]);
+    
+        express()
+        .use("/", express.static(destination))
+        .listen(4500);
 }

@@ -20,7 +20,8 @@ module.exports = function components({ source })
         .map(path => [basename(path), path])
         .map(([name, path]) => ({ [name]: () => require(path) }))
         .reduce((components, component) =>
-            Object.assign(components, component), markdown({ source }));
+            Object.assign(components, component),
+            { markdown: markdown({ source }) });
 }
 
 function markdown({ source })
