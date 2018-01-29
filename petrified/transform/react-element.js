@@ -8,5 +8,5 @@ module.exports = function ReactElementRender(element)
     const markup = renderToStaticMarkup(element);
     const { css } = extractCritical(markup);
 
-    return markup + "<style>" + css + "</style><script src = \"/_release/reload.js\"></script>";
+    return markup.replace("</head>", `<style>${css}</style></head>`);
 }
