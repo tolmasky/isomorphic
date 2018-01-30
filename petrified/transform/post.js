@@ -16,7 +16,7 @@ module.exports = function post({ source, options, ...rest })
         throw new Error(`Post ${filename} must have the format YYYY-MM-DD-name.`);
 
     const [_, year, month, day, name] = parsed;
-    const pathname = `${year}/${month}/${day}/${name}/`;
+    const pathname = `/${year}/${month}/${day}/${name}/`;
     const destination = `${dirname(rest.destination)}/${pathname}`;
 
     if (fs.tstat(source) === "directory")

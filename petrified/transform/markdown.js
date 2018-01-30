@@ -1,3 +1,5 @@
+const { resolve } = require("path");
+
 const React = require("react");
 const yaml = require("js-yaml");
 
@@ -12,7 +14,9 @@ module.exports = function markdown({ contents, options })
     const { components, metadata } = options;
 
     // React children.
-    const children = cm.render({ markdown, components: components.markdown });
+    // FIXME: resolve() isn't right.
+    const transformImageUri = uri => resolve(metadata.pathname, uri);
+    const children = cm.render({ markdown, transformImageUri, components: components.markdown });
     const { component, ...props } = { ...metadata, ...frontmatter };
 
     if (!component)
@@ -20,8 +24,9 @@ module.exports = function markdown({ contents, options })
 
     const Component = components[component]();
     const markup = render(React.createElement(Component, props, children));
+    const preview = children.slice(0, 2);
 
-    return { contents: markup, metadata: { frontmatter: props, destination: options.destination } };
+    return { contents: markup, metadata: { frontmatter: { ...props, preview }, destination: options.destination } };
 }
 
 module.exports.extensions = new Set(["markdown", "md"]);

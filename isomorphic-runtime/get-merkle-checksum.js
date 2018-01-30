@@ -21,6 +21,9 @@ function getMerkleChecksum(value)
     if (type === "function")
         return getFunctionCallChecksum(value);
 
+    if (type === "symbol")
+        return "symbol:" + type + ":" + value.toString();
+
     if (type !== "object")
         return "value:" + type + ":" + value;
 

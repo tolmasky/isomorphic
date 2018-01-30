@@ -5,8 +5,8 @@ module.exports = CommonMarkRender;
 module.exports.render = CommonMarkRender;
 
 
-function CommonMarkRender({ markdown, components })
+function CommonMarkRender({ markdown, transformImageUri, components })
 {
-    return new ReactRenderer({ renderers: components })
+    return new ReactRenderer({ renderers: components, transformImageUri })
         .render(parser.parse(markdown));
 }
