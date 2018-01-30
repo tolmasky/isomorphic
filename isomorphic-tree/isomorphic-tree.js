@@ -14,13 +14,13 @@ module.exports = function tree({ source, destination, cache, exclude, ...rest })
     return  <item   source = { source }
                     destination = { destination }
                     cache = { fs.mkdirp(cache) }
-                    exclude = { toMatcher(exclude) }
+                    exclude = { toMatcher(exclude || "**/.*") }
                     transforms = { transforms } />;
 }
 
 
 function item({ source, exclude, ...rest })
-{console.log("ON ITEM " + source);
+{
     if (exclude(source))
         return [];
 
