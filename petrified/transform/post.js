@@ -16,16 +16,18 @@ module.exports = function post({ source, options, ...rest })
         throw new Error(`Post ${filename} must have the format YYYY-MM-DD-name.`);
 
     const [_, year, month, day, name] = parsed;
-    const destination = `${dirname(rest.destination)}/${year}/${month}/${day}/${name}`;
+    const pathname = `${year}/${month}/${day}/${name}/`;
+    const destination = `${dirname(rest.destination)}/${pathname}`;
 
     if (fs.tstat(source) === "directory")
     {
         const file = fs.readdir(source).find(same.name(filename));
+        const metadata = { pathname };
         const transforms =
         [{
             match: file,
             transform: format,
-            options: { ...options, destination: `${destination}/index.html` }
+            options: { ...options, metadata, destination: `${destination}/index.html` }
         }];
 
         return <tree { ...{ source, ...rest, transforms, destination } }/>;

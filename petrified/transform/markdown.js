@@ -6,10 +6,10 @@ const render = require("./react-element");
 
 
 
-module.exports = function markdown({ contents, metadata, options })
+module.exports = function markdown({ contents, options })
 {
     const { frontmatter, markdown } = split(contents);
-    const { components } = options;
+    const { components, metadata } = options;
 
     // React children.
     const children = cm.render({ markdown, components: components.markdown });
@@ -21,7 +21,7 @@ module.exports = function markdown({ contents, metadata, options })
     const Component = components[component]();
     const markup = render(React.createElement(Component, props, children));
 
-    return { contents: markup, metadata: { frontmatter, destination: options.destination } };
+    return { contents: markup, metadata: { frontmatter: props, destination: options.destination } };
 }
 
 module.exports.extensions = new Set(["markdown", "md"]);
