@@ -7,9 +7,9 @@ module.exports = function page({ source, destination, ...rest })
     const extension = extname(source);
     const name = basename(source, extension);
     const type = extname(name);
-    const override = type === ".html" ?
-        `${dirname(destination)}/${name}` :
-        `${dirname(destination)}/${basename(name, type)}/index.html`;
+    const override = type === ".page" ?
+        `${dirname(destination)}/${basename(name, type)}/index.html` :
+        `${dirname(destination)}/${name}`;
 
     return  <redirect destination = { override }>
                 <format { ...{ source, destination, ...rest } } />
@@ -21,5 +21,5 @@ function redirect({ children:[result], destination })
     return { ...result, metadata: { ...result.metadata, destination } };
 }
 
-module.exports.match = "**/*.(page|html).(" + Array.from(format.extensions).join("|") + ")";
+module.exports.match = "**/*.(page|html|xml).(" + Array.from(format.extensions).join("|") + ")";
 

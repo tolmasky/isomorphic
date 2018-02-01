@@ -22,7 +22,7 @@ module.exports = function post({ source, options, ...rest })
     if (fs.tstat(source) === "directory")
     {
         const file = fs.readdir(source).find(same.name(filename));
-        const metadata = { pathname };
+        const metadata = { pathname, ...options.props };
         const transforms =
         [{
             match: file,
