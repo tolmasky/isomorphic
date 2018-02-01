@@ -18,11 +18,12 @@ module.exports = function post({ source, options, ...rest })
     const [_, year, month, day, name] = parsed;
     const pathname = `/${year}/${month}/${day}/${name}/`;
     const destination = `${dirname(rest.destination)}/${pathname}`;
+    const date = new Date(`${year}-${month}-${day}`);
 
     if (fs.tstat(source) === "directory")
     {
         const file = fs.readdir(source).find(same.name(filename));
-        const metadata = { pathname, ...options.props };
+        const metadata = { pathname, date, ...options.props };
         const transforms =
         [{
             match: file,

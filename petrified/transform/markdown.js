@@ -17,7 +17,8 @@ module.exports = function markdown({ contents, options })
     // FIXME: resolve() isn't right.
     const transformImageUri = uri => resolve(metadata.pathname, uri);
     const children = cm.render({ markdown, transformImageUri, components: components.markdown });
-    const { component, ...props } = { ...metadata, ...frontmatter };
+    const date = frontmatter.date && new Date(frontmatter.date) || metadata.date;
+    const { component, ...props } = { ...metadata, ...frontmatter, date };
 
     if (!component)
         throw new Error("Cannot render markdown file without a layout component.");

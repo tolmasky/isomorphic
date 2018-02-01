@@ -8,10 +8,10 @@ const getComponents = require("./components");
 const express = require("express");
     
 
-module.exports = function ({ config, drafts = false, source, destination, cache })
+module.exports = function ({ site, drafts = false, source, destination, cache })
 {
     const components = getComponents({ source });
-    const common = { config, components, destination, cache };
+    const common = { site, components, destination, cache };
 
     require("child_process").execSync(`rm -rf ${source}/_cache`);
 
@@ -24,9 +24,9 @@ module.exports = function ({ config, drafts = false, source, destination, cache 
         </pages>);
 }
 
-function pages({ config, components, source, destination, cache, children })
+function pages({ site, components, source, destination, cache, children })
 {
-    const options = { components, props: { config, posts: children } };
+    const options = { components, props: { site, posts: children } };
     const transforms = [{ match: page.match, transform: page, options }];
 
     return <tree { ...{ source, transforms, destination, cache } }/>;
@@ -39,9 +39,9 @@ function metadata({ children })
         .map(child => child.frontmatter);
 }
 
-function posts({ config, components, source, destination, cache })
+function posts({ site, components, source, destination, cache })
 {
-    const options = { components, props: { config } };
+    const options = { components, props: { site } };
     const transforms = [{ match: `${source}/*`, transform: post, options }];
     
     return <tree { ...{ source, transforms, destination, cache } }/>;

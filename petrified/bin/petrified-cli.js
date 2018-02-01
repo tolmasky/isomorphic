@@ -8,9 +8,9 @@ const source = options.args[0] || process.cwd();
 const destination = `${source}/_site`;
 const cache = `${source}/_cache`;
 const drafts = options.drafts;
-const config = require(`${source}/petrified.json`);
+const site = require(`${source}/petrified.json`);
 
 require("./bootstrap")({ dev: options.dev, source });
-require("../petrified")({ config, drafts, source, destination, cache });
+require("../petrified")({ site, drafts, source, destination, cache });
 
 require("./watch")({ destination });
