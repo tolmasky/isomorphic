@@ -1,3 +1,4 @@
+const React = require("react");
 const tree = require("isomorphic-tree");
 const { basename, dirname, extname } = require("path");
 const fs = require("sf-fs");
@@ -5,6 +6,7 @@ const fs = require("sf-fs");
 const same = { name: name => path => basename(path, extname(path)) === name };
 const FILENAME_FORMAT = /^(\d{4})-(\d{2})-(\d{2})-([^\.]*)/;
 const format = require("./format");
+const render = require("./react-element");
 
 
 module.exports = function post({ source, options, ...rest })
@@ -57,7 +59,3 @@ module.exports = function post({ source, options, ...rest })
 
     return <tree { ...{ source, destination: directory, cache, transforms } } />;*/
 }
-
-
-
-

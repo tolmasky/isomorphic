@@ -17,7 +17,7 @@ module.exports = function components({ source })
 {
     return fs.readdir(`${source}/components`)
         .filter(is.module)
-        .map(path => [basename(path), path])
+        .map(path => [basename(path, extname(path)), path])
         .map(([name, path]) => ({ [name]: () => require(path) }))
         .reduce((components, component) =>
             Object.assign(components, component),

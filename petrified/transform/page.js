@@ -21,5 +21,5 @@ function redirect({ children:[result], destination })
     return { ...result, metadata: { ...result.metadata, destination } };
 }
 
-module.exports.match = "**/*.(page|html|xml).(" + Array.from(format.extensions).join("|") + ")";
+module.exports.match = "**/*.*.(" + Array.from(format.extensions).join("|") + ")";
 
