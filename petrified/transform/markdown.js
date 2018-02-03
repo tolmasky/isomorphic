@@ -24,7 +24,7 @@ module.exports = function markdown({ contents, options })
         throw new Error("Cannot render markdown file without a layout component.");
 
     const Component = components[component]();
-    const markup = render(React.createElement(Component, props, children));
+    const markup = render(React.createElement(Component, props, children), options.assets);
     const preview = children.slice(0, 2);
 
     return { contents: markup, metadata: { frontmatter: { ...props, preview }, destination: options.destination } };

@@ -36,13 +36,17 @@ function file({ source, destination, cache, transforms })
     if (!match)
         return <copy { ...{ source, destination } }/>;
 
-    const { transform: location, options } = match;
+    const { transform: location, options, contents = true } = match;
     const transform = toTransform(location);
+    const partial = <transform { ...{ options, cache, source, destination } } />;
 
     return  <copy { ...{ destination } }>
-                <filesystemCache
-                    cache = { cache }
-                    transform = { <transform { ...{ options, cache, source, destination } } /> } />
+                { contents ?
+                    <filesystemCache
+                        cache = { cache }
+                        transform = { partial } /> :
+                    partial
+                }
             </copy>;
 }
 
@@ -56,11 +60,13 @@ function copy({ children:[nested], destination, source = nested.include })
     return nested;
 }
 
+module.exports.copy = copy;
+
 function directory({ source, destination, ...rest })
 {
     const match = rest.transforms.find(transform => transform.match(source));
 
-    if (match)
+    if (match && match.directories)
     {
         const { transform: location, options } = match;
         const transform = toTransform(location);

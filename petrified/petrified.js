@@ -1,13 +1,15 @@
 const runtime = require("isomorphic-runtime");
 const tree = require("isomorphic-tree");
 
+const assets = require("./assets");
+
 const page = require("./transform/page");
 const post = require("./transform/post");
 const redirects = require("./redirects");
 const getComponents = require("./components");
 
 const express = require("express");
-
+Error.stackTraceLimit = 10000;
 
 module.exports = function ({ site, drafts = false, source, destination, cache })
 {
@@ -20,7 +22,9 @@ module.exports = function ({ site, drafts = false, source, destination, cache })
         <redirects { ...common }>
             <pages source = { `${source}/pages` } { ...common }>
                 <metadata>
-                    <posts source = { `${source}/posts` } { ...common }/>
+                    <posts source = { `${source}/posts` } { ...common }>
+                        <assets source = { `${source}/pages` } { ...common } />
+                    </posts>
                     { drafts && <posts source = { `${source}/drafts` } { ...common }/> }
                 </metadata>
             </pages>
@@ -42,13 +46,13 @@ function metadata({ children })
 {
     return children
         .filter(child => child)
-        .map(child => child.frontmatter);
+        .map(child => child.frontmatter || child.metadata);
 }
 
-function posts({ site, components, source, destination, cache })
-{
-    const options = { components, props: { site } };
-    const transforms = [{ match: `${source}/*`, transform: post, options }];
+function posts({ site, components, source, destination, cache, children })
+{console.log(children.length);
+    const options = { components, props: { site }, assets:children[0] || { } };
+    const transforms = [{ match: `${source}/*`, transform: post, directories: true, options }];
     
     return <tree { ...{ source, transforms, destination, cache } }/>;
 }
