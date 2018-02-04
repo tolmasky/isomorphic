@@ -10,7 +10,7 @@ const ShadowProps = "__shadow_props";
 
 module.exports = function inject(element, definitions, metadata)
 {
-    return injectShadowProps(element, { definitions, metadata }, true);   
+    return injectShadowProps(element, { definitions, metadata }, true);
 }
 
 function injectShadowProps(element, shadowProps, injectComponents)
@@ -34,8 +34,15 @@ function injectShadowProps(element, shadowProps, injectComponents)
             stringDefinition(element, shadowProps, injectComponents);
 
     if (isArray(element))
-        return ArrayMap.call(element,
+    {
+        const injected = ArrayMap.call(element,
             element => injectShadowProps(element, shadowProps, injectComponents));
+
+        if (injected.findIndex((child, index) => child !== element[index]) === -1)
+            return element;
+
+        return injected;
+    }
 
     if (!isValidElement(element))
         return element;
@@ -48,18 +55,22 @@ function injectShadowProps(element, shadowProps, injectComponents)
                 { ...element.props, [ShadowProps]: shadowProps }) :
             element;
 
+    if (hasOwnProperty.call(definitions, type))
+        return (0, definitions[type])(element, shadowProps);
+
     const { props } = element;
     const hasChildren = hasOwnProperty.call(props, "children");
 
     if (!hasChildren)
-        return hasOwnProperty.call(definitions, type) ?
-            (0, definitions[type])(element, shadowProps) : element;
+        return element;
 
-    const children = injectShadowProps(props.children, shadowProps, false);
-    const recursed = createElement(type, { ...props, children });
+    const children = props.children;
+    const injectedChildren = injectShadowProps(children, shadowProps, false);
 
-    return hasOwnProperty.call(definitions, type) ?
-        (0, definitions[type])(recursed, shadowProps) : recursed;
+    if (children !== injectedChildren)
+        return createElement(type, { ...props, children: injectedChildren });
+
+    return element;
 }
 
 function Injected(Component, cache)
@@ -73,7 +84,7 @@ function Injected(Component, cache)
             injectShadowProps(Component(...args), args[0][ShadowProps], true);
 
     const render = Component.prototype.render;
-    
+
     return class Injected extends Component
     {
         render()
