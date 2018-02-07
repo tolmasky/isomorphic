@@ -1,3 +1,4 @@
+const url = require("url");
 const { resolve } = require("path");
 
 const React = require("react");
@@ -15,7 +16,8 @@ module.exports = function markdown({ contents, options })
 
     // React children.
     // FIXME: resolve() isn't right.
-    const transformImageUri = uri => resolve(metadata.pathname, uri);
+    const transformImageUri = uri => url.parse(uri).protocol ?
+        uri : resolve(metadata.pathname, uri);
     const children = cm.render({ markdown, transformImageUri, components: components.markdown });
     const date = frontmatter.date && new Date(frontmatter.date) || metadata.date;
     const { component, ...props } = { ...metadata, ...frontmatter, date };
