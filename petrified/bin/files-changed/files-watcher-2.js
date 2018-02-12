@@ -7,9 +7,9 @@ const fork = require("./fork");
 const message = (message, then) => () => (console.log(message), then);
 
 
-module.exports = function ({ source, match })
+module.exports = function ({ source, match, fork })
 {
-    const push = machine(states, "watching");
+    const push = machine(states, ["watching", { fork }]);
 
     const monitoring = monitor(push, source, match);
     const stepping = step(push, 1000 / 60);
@@ -59,8 +59,8 @@ function execute({ name, data }, event, push)
         (rest > 0 ? "\nand ${head.length - limit} more..." : "");
 
     console.log(message);
-
-    const { executing, cancel } = fork(() => require("child_process").fork("./tester"));
+console.log(data);
+    const { executing, cancel } = fork(data.fork);
 
     executing.then(result => push("execution-complete", result));
 

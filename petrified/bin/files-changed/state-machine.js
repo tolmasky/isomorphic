@@ -4,7 +4,7 @@ const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 module.exports = function machine(definitions, start, pull)
 {
-    const state = { name: start, data: undefined };
+    const state = { name: start[0], data: start[1] };
     const push = program(state, function update(previous, event, push)
     {
         const { name, ignorable } = event;
