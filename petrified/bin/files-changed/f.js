@@ -5,7 +5,7 @@ on(
 {
     source: "/Users/tolmasky/Desktop",
     match: "**/*",
-    fork: () => require("child_process").fork("./tester")
+    execute: () => require("child_process").fork("./tester")
 });
 
 touch("CAUSE INITIAL FIRE", 1000);

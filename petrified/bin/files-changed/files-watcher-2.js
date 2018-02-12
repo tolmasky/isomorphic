@@ -7,9 +7,9 @@ const fork = require("./fork");
 const message = (message, then) => () => (console.log(message), then);
 
 
-module.exports = function ({ source, match, fork })
+module.exports = function ({ source, match, execute })
 {
-    const push = machine(states, ["watching", { fork }]);
+    const push = machine(states, ["watching", { execute }]);
 
     const monitoring = monitor(push, source, match);
     const stepping = step(push, 1000 / 60);
@@ -59,8 +59,8 @@ function execute({ name, data }, event, push)
         (rest > 0 ? "\nand ${head.length - limit} more..." : "");
 
     console.log(message);
-console.log(data);
-    const { executing, cancel } = fork(data.fork);
+
+    const { executing, cancel } = fork(data.execute);
 
     executing.then(result => push("execution-complete", result));
 
