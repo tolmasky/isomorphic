@@ -7,6 +7,20 @@ const { matcher } = require("micromatch");
 const fork = require("./fork");
 const message = (message, then) => () => (console.log(message), then);
 
+module.exports = function ({ source, match })
+{
+    const push = machine(states, "watching");
+
+    const monitoring = monitor(push, "/Users/tolmasky/Desktop", "**/*");
+    const stepping = step(push, 1000 / 60);
+    const finish = () => (monitoring(), stepping());
+
+    touch("CAUSE INITIAL FIRE", 1000);
+    touch("CAUSE KEEP LOOKIng", 1050);
+    touch("CAUSE CANCEL", 1500);
+}
+
+setTimeout(() => module.exports({ source: "/Users/tolmasky/Desktop/", match: "**/*" }), 0);
 
 const states =
 {
@@ -59,32 +73,6 @@ function execute({ name, data }, event, push)
     return [name, { ...data, changes:[], cancel }];
 }
 
-
-(function do_()
-{
-    const p = () => {};
-    const push = machine(states, "watching", p);
-
-//    const push = program(states, "watching", pull);
-
-    const monitoring = monitor(push, "/Users/tolmasky/Desktop", "**/*");
-    const stepping = step(push, 1000 / 60);
-    const finish = () => (monitoring(), stepping());
-
-    touch("CAUSE INITIAL FIRE", 1000);
-    touch("CAUSE KEEP LOOKIng", 1050);
-    touch("CAUSE CANCEL", 1500);
-/*
-    var last;
-    function pull(state)
-    {
-        if (last !== state.name)
-    {        console.log(state.name);
-        last = state.name;
-    }
-    }*/
-})()
-
 function noteChangesThen(next)
 {
     return function updateChanges({ data }, event)
@@ -99,7 +87,6 @@ function noteChangesThen(next)
 
 function touch(message, time)
 {
-    
     setTimeout(function()
     { 
         console.log(message)
@@ -111,7 +98,7 @@ function monitor(push, source, match)
 {
     const matcher = toMatcher(match);
     const watcher = watchPath(source, { }, function (events)
-    {console.log(events);
+    {
         const filtered = events.filter(matcher);
 
         if (filtered.length > 0)
@@ -143,84 +130,3 @@ function step(push, interval)
     return () => clearInterval(id);
 }
 
-
-/*
-
-const files = next => ({ changes }, { data, timestamp }) =>
-    [next, { changes: changes.concat(data), timestamp }];
-const elapsed = ({ data: lhs }, { data: rhs }) =>
-    rhs.timestamp - lhs.timestamp;
-
-
-const states =
-{
-    "watching": {
-        "files-changed": files("files-changing"),
-        "step": "ignore",
-    },
-
-    "files-changing": {
-        "files-changed": files("files-changing"),
-        "step": (state, event) =>
-            elapsed(state, event) > 100 ?
-            ["execute", state.data] : state
-    },
-
-    "execute": {
-        "files-changed": files("cancel-execution"),
-        "execution-complete": "execution-complete",
-        "step": "ignore"
-    },
-    
-    "execution-complete": {
-        "files-changed": files("execution-complete"),
-        "do": whatever
-    },
-
-    "cancel-execution": {
-        "files-changed": files("cancel-execution"),
-        "execution-complete": "files-changing",
-        "step": "ignore"
-    },
-
-
-    "execution-complete": {
-    }
-    
-    "post-execution": {
-        "files-changed": files("post-execution"),
-        "step": "ignore"
-    },
-    
-    "cancel-execution": {
-        "files-changed": files("files-changing"),
-        "step": "ignore"
-    },
-    
-    
-    
-    
-    "execute": function(state) { console.log(state); return "watching" }
-/*
-    "execute": execute("./tester"),
-    "executing": {
-        "files-changed": cancel,
-        "execution-complete": "execution-complete"
-    },
-
-    "canceling-execution": { "canceling-complete": "watching" },
-    "execution-complete": () => (
-        console.log("BUILD COMPLETE"), "watching")
-};
-
-function data(f, next)
-{
-    return (state, event) => [next || state.name, f(state.data, event)];
-}
-
-Function.prototype.then = function (name)
-{
-    return (previous, event) => [name, this(previous, event)[1]];
-}
-
-*/
