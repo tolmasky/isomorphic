@@ -4,16 +4,24 @@ const { watchPath } = require("@atom/watcher");
 const { matcher } = require("micromatch");
 
 const fork = require("./fork");
-const message = (message, then) => () => (console.log(message), then);
+
+const { EventEmitter } = require("events");
+const emitState = handler => (state, event) =>
+    (state.data.emit(state.name), handler(state, event));
+const message = (_, then) => () => then;
 
 
-module.exports = function ({ source, match, execute })
+module.exports = function ({ source, match, execute, events })
 {
-    const push = machine(states, ["watching", { execute }]);
+    const emitter = new EventEmitter();
+    const emit = (...args) => emitter.emit(...args);
+    const push = machine(states, { name: "watching", data: { execute, emit } });
 
     const monitoring = monitor(push, source, match);
     const stepping = step(push, 1000 / 60);
     const finish = () => (monitoring(), stepping());
+
+    return emitter;
 }
 
 const states =
@@ -24,53 +32,42 @@ const states =
 
     "files-changing": {
         "files-changed": noteChangesThen("files-changing"),
-        "step": ({ name, data }, { timestamp }) =>
-            [timestamp - data.timestamp > 100 ? "execute" : name, data]
+        "step": (state, { timestamp }) =>
+            timestamp - state.data.timestamp > 100 ?
+            { ...state, name:"execute" } : state
     },
 
-    "execute": {
-        ":enter": execute,
+    "execute": execute,
+    "executing": {
         "files-changed": noteChangesThen("execution-cancel"),
         "execution-complete": message("Execution completed.", "watching")
     },
+    "executing-complete": state => (console.log("DONE"), "watching"),
 
-    "execution-cancel": {
-        ":enter": state => (state.data.cancel(), [state.name, state.data]),
-        "files-changed": noteChangesThen("execution-execution"),
-        "execution-complete": message("Execution canceled.", "files-changing")
+    "execution-cancel": emitState(state =>
+        (state.data.cancel(), "execution-canceling")),
+    "execution-canceling": {
+        "files-changed": noteChangesThen("execution-canceling"),
+        "execution-complete": "files-changing"
     },
-    
-    "execution-complete": {
-        ":enter": state => (console.log("DONE"), state)
-    }
 };
 
-function execute({ name, data }, event, push)
+function execute(state, event, push)
 {
-    const source = "/Users/tolmasky/Desktop/";
-    const changes = data.changes;
-    const expanded = changes.length > 15 ? 10 : 15;
-
-    const head = changes.slice(0, expanded);
-    const rest = Math.max(changes.length - expanded, 0);
-
-    const message = changes.map(change => 
-        `${change.path.substr(source.length)} was ${change.action}.`).join("\n") +
-        (rest > 0 ? "\nand ${head.length - limit} more..." : "");
-
-    console.log(message);
-
-    const { executing, cancel } = fork(data.execute);
+    const { executing, cancel } = fork(state.data.execute);
+    const data = { ...state.data, changes:[], cancel };
 
     executing.then(result => push("execution-complete", result));
 
-    return [name, { ...data, changes:[], cancel }];
+    return { name: "executing", data };
 }
 
 function noteChangesThen(next)
 {
     return function updateChanges({ data }, event)
     {
+        data.emit("files-changed", event.data);
+
         const timestamp = event.timestamp;
         const changes = (data && data.changes || [])
             .concat(event.data);
