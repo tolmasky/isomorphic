@@ -1,11 +1,11 @@
 const machine = require("./state-machine");
 
-const { execSync } = require("child_process");
 const { watchPath } = require("@atom/watcher");
 const { matcher } = require("micromatch");
 
 const fork = require("./fork");
 const message = (message, then) => () => (console.log(message), then);
+
 
 module.exports = function ({ source, match })
 {
@@ -15,8 +15,6 @@ module.exports = function ({ source, match })
     const stepping = step(push, 1000 / 60);
     const finish = () => (monitoring(), stepping());
 }
-
-setTimeout(() => module.exports({ source: "/Users/tolmasky/Desktop/", match: "**/*" }), 0);
 
 const states =
 {

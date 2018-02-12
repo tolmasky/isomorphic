@@ -12,6 +12,6 @@ function touch(message, time)
     setTimeout(function()
     { 
         console.log(message)
-        execSync("touch touch ~/Desktop/Form.pdf");
+        execSync("touch ~/Desktop/Form.pdf");
     }, time);
 }
