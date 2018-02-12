@@ -14,10 +14,6 @@ module.exports = function ({ source, match })
     const monitoring = monitor(push, source, match);
     const stepping = step(push, 1000 / 60);
     const finish = () => (monitoring(), stepping());
-
-    touch("CAUSE INITIAL FIRE", 1000);
-    touch("CAUSE KEEP LOOKIng", 1050);
-    touch("CAUSE CANCEL", 1500);
 }
 
 setTimeout(() => module.exports({ source: "/Users/tolmasky/Desktop/", match: "**/*" }), 0);
@@ -83,15 +79,6 @@ function noteChangesThen(next)
 
         return [next, { ...data, changes, timestamp }];
     };
-}
-
-function touch(message, time)
-{
-    setTimeout(function()
-    { 
-        console.log(message)
-        execSync("touch touch ~/Desktop/Form.pdf");
-    }, time);
 }
 
 function monitor(push, source, match)
