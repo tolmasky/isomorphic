@@ -5,15 +5,16 @@ const { fork } = require("child_process");
 const style = require("chalk").bgBlue.white.bold;
 const announce = message => console.log(style(message));
 
-(function ({ source })
+(function ({ source, finished })
 {
     const match = "**/*";
 
     on({ source, match, execute: execute(source) })
         .on("files-changed", filesChanged(source))
         .on("execution-cancel", () => announce("• Canceling build due to file changes"))
+        .on("executing-complete", () => finished());
 
-})({ source: "/Users/tolmasky/Desktop/" });
+})({ source: "/Users/tolmasky/Desktop/", finished: () => announce("BUILT!") });
 
 function execute(source)
 {
