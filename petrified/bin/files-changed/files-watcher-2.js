@@ -11,7 +11,7 @@ module.exports = function ({ source, match })
 {
     const push = machine(states, "watching");
 
-    const monitoring = monitor(push, "/Users/tolmasky/Desktop", "**/*");
+    const monitoring = monitor(push, source, match);
     const stepping = step(push, 1000 / 60);
     const finish = () => (monitoring(), stepping());
 

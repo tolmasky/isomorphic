@@ -12,7 +12,7 @@ module.exports = function fork(run)
     const cancel = () => pstree(process.pid)
         .then(children => children.map(child => child.PID))
         .then(children =>
-            exited(spawn("kill", ["-s", "SIGNIT", process.pid, ...children])));
+            exited(spawn("kill", ["-s", "SIGINT", process.pid, ...children])))
     const executing = exited(process);
 
     return Object.assign(executing, { executing, cancel });
