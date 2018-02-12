@@ -40,9 +40,9 @@ const states =
     "execute": execute,
     "executing": {
         "files-changed": noteChangesThen("execution-cancel"),
-        "execution-complete": message("Execution completed.", "watching")
+        "execution-complete": "executing-complete"
     },
-    "executing-complete": state => (console.log("DONE"), "watching"),
+    "executing-complete": emitState(() => "watching"),
 
     "execution-cancel": emitState(state =>
         (state.data.cancel(), "execution-canceling")),
