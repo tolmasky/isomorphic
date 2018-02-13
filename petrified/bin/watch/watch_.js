@@ -45,7 +45,8 @@ module.exports = function watch({ source, destination, port })
                 next(error)
             });
 
-            proxied.end();
+            request.pipe(proxied);
+//            proxied.end();
         })
         .listen(8080, () => console.log("LISTENING"));
 }
