@@ -1,14 +1,17 @@
-const { spawn } = require("child_process");
+const { dirname } = require("path");
 
-const buildOnFileChange = require("@isomorphic/build-on-file-change");
+const { spawn } = require("child_process");
+const { unlinkSync } = require("fs");
+
+const executeOnFileChange = require("@isomorphic/execute-on-file-change");
 
 const style = require("chalk").bgBlue.white.bold;
 const announce = message => console.log(style(message));
 
-const uuid = require("uuid");
-
 const express = require("express");
 const http = require("http");
+
+const tmp = require("../get-tmp");
 process.on('unhandledRejection', error => {
   // Will print "unhandledRejection err is not defined"
   console.log('unhandledRejection', error.stack);
@@ -17,20 +20,16 @@ process.on('unhandledRejection', error => {
 module.exports = function watch({ source, destination, port })
 {
     const match = `${source}/!(_site|_cache)(*|**)`;
-    const socketPath = `/tmp/${uuid.v4()}`;
-    
-    const build = () => fork("• Building blog.runkit.com... ",
-        "../petrified-cli", ["--dev", source]);
-    const deploy = () => fork("• Starting blog.runkit.com... ",
-        "../serve", ["--serve", "--socket", socketPath, source + "/_site"]);
+    const socket = tmp(".sock");
 
-    buildOnFileChange({ source, match, build, deploy });
+    buildOnFileChange({ source });
+    deployOnFileChange({ socket, source: destination });
 
     express()
         .get("*", function (request, response, next)
         {
             const { method, headers, originalUrl: path } = request;
-            const options = { socketPath, headers, method, path };
+            const options = { socketPath: socket, headers, method, path };
             const proxied = http.request(options, function (proxied)
             {
                 response.writeHead(proxied.statusCode, proxied.headers);
@@ -46,9 +45,34 @@ module.exports = function watch({ source, destination, port })
             });
 
             request.pipe(proxied);
-//            proxied.end();
         })
-        .listen(8080, () => console.log("LISTENING"));
+        .listen(port, () => console.log("LISTENING"));
+}
+
+function buildOnFileChange({ source })
+{
+    const match = `${source}/!(_site|_cache)(*|**)`;
+    const execute = () => fork("• Building blog.runkit.com... ",
+        "../petrified-cli", ["--dev", source]);
+    const { emitter } = executeOnFileChange({ source, match, execute });
+
+    emitter
+        .on("change", outputFilesChanged(source))
+        .on("execution-cancel", () => announce("• Canceling build due to file changes"))
+}
+
+function deployOnFileChange({ socket, source })
+{
+    const parent = dirname(source);
+    const match = `${source}{/**{/*,},}`;
+    const execute = () => (rm(socket, true),
+        fork("• Deploying blog.runkit.com... ",
+            "../serve", ["--socket", socket, source]));
+console.log(match);
+    const { emitter } = executeOnFileChange({ source: parent, match, execute });
+
+    emitter
+        .on("change", outputFilesChanged(source))
 }
 
 function fork(message, path, args)
@@ -57,3 +81,38 @@ function fork(message, path, args)
 
     return spawn("node", [require.resolve(path), ...args], { stdio: [0, 1, 2] });
 }
+
+function outputFilesChanged(source, changes)
+{
+    if (arguments.length === 1)
+        return changes => outputFilesChanged(source, changes);
+
+    console.log("• Detected file changes...");
+
+    const concated = [].concat(...changes);
+    console.log(concated);
+    const expanded = concated.length > 15 ? 10 : 15;
+
+    const head = concated.slice(0, expanded);
+    const rest = Math.max(concated.length - expanded, 0);
+
+    const files = changes.map(({ path, action }) =>
+        `  - ${path.substr(source.length)} was ${action}.`).join("\n") +
+        (rest > 0 ? "\n  - and ${head.length - limit} more..." : "");
+
+    console.log(files);
+}
+
+function rm (path, swallow)
+{
+    try
+    {
+        return unlinkSync(path);
+    }
+    catch (error)
+    {
+        if (!swallow)
+            return error;
+    }
+}
+

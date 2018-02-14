@@ -20,10 +20,10 @@ require("./bootstrap")({ dev: options.dev, source });
 const { build, serve, watch } = options;
 
 if (build)
-    require("../petrified")({ site, drafts, source, destination, cache });
+    require("./build")({ site, drafts, source, destination, cache });
 
 if (serve)
     return require("./serve")({ source: destination, port: options.port, socket: options.socket })
 
 if (watch)
-    return require("./watch/watch_")({ source, port: options.port })
+    return require("./watch/watch_")({ source, destination, port: options.port })

@@ -2,7 +2,7 @@
   "name": "@isomorphic/build-on-file-change",
   "version": "1.0.0",
   "description": "",
-  "main": "build-on-file-change.js",
+  "main": "execute-on-file-change.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +12,7 @@
   "dependencies": {
     "@atom/watcher": "^1.0.0",
     "micromatch": "^3.1.5",
-    "ps-tree": "^1.1.0"
+    "ps-tree": "^1.1.0",
+    "watch": "^1.0.2"
   }
 }
