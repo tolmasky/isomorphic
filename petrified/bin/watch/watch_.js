@@ -1,7 +1,8 @@
 const { dirname } = require("path");
 
 const { spawn } = require("child_process");
-const { unlinkSync } = require("fs");
+const { unlinkSync, readFileSync } = require("fs");
+const { read } = require("sf-fs");
 
 const executeOnFileChange = require("@isomorphic/execute-on-file-change");
 
@@ -17,36 +18,20 @@ process.on('unhandledRejection', error => {
   console.log('unhandledRejection', error.stack);
 });
 
+const injectionProxy = require("./injection-proxy");
+
+
 module.exports = function watch({ source, destination, port })
 {
-    const match = `${source}/!(_site|_cache)(*|**)`;
-    const socket = tmp(".sock");
+    const socketPath = tmp(".sock");
+    const injectionProxyServer = express()
+        .use(injectionProxy({ proxiedSocketPath: socketPath }))
+        .listen(port, () => console.log(`• Petrified running on port ${port}`));
 
-    buildOnFileChange({ source });
-    deployOnFileChange({ socket, source: destination });
+    const builder = buildOnFileChange({ source });
+    const deployer = deployOnFileChange({ socketPath, source: destination });
 
-    express()
-        .get("*", function (request, response, next)
-        {
-            const { method, headers, originalUrl: path } = request;
-            const options = { socketPath: socket, headers, method, path };
-            const proxied = http.request(options, function (proxied)
-            {
-                response.writeHead(proxied.statusCode, proxied.headers);
-                proxied.pipe(response);  
-            })
-
-            proxied.on("error", function (error)
-            {
-                if (error.code === "ENOENT" && error.address === socketPath)
-                    return response.send(503, "Still Building");
-
-                next(error)
-            });
-
-            request.pipe(proxied);
-        })
-        .listen(port, () => console.log("LISTENING"));
+    builder.change([]);
 }
 
 function buildOnFileChange({ source })
@@ -54,20 +39,22 @@ function buildOnFileChange({ source })
     const match = `${source}/!(_site|_cache)(*|**)`;
     const execute = () => fork("• Building blog.runkit.com... ",
         "../petrified-cli", ["--dev", source]);
-    const { emitter } = executeOnFileChange({ source, match, execute });
+    const { emitter, change } = executeOnFileChange({ source, match, execute });
 
     emitter
         .on("change", outputFilesChanged(source))
         .on("execution-cancel", () => announce("• Canceling build due to file changes"))
+
+    return { change };
 }
 
-function deployOnFileChange({ socket, source })
+function deployOnFileChange({ socketPath, source })
 {
     const parent = dirname(source);
     const match = `${source}{/**{/*,},}`;
-    const execute = () => (rm(socket, true),
+    const execute = () => (rm(socketPath, true),
         fork("• Deploying blog.runkit.com... ",
-            "../serve", ["--socket", socket, source]));
+            "../serve", ["--socket", socketPath, source]));
 console.log(match);
     const { emitter } = executeOnFileChange({ source: parent, match, execute });
 
@@ -90,7 +77,6 @@ function outputFilesChanged(source, changes)
     console.log("• Detected file changes...");
 
     const concated = [].concat(...changes);
-    console.log(concated);
     const expanded = concated.length > 15 ? 10 : 15;
 
     const head = concated.slice(0, expanded);

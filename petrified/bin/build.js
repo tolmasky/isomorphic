@@ -15,11 +15,9 @@ module.exports = function ({ site, drafts, source, destination, cache })
 
         rm(destination, true);
         renameSync(tmpDestination, destination);
-        
-        console.log("RENAME " + tmpDestination + " " + destination);
     }
     catch (error)
-    {console.log(error);
+    {
         rm(tmpDestination, true);
     }
 }
