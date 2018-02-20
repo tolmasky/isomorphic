@@ -55,8 +55,8 @@ function bubble(root, event, push, rpath)
     var traverse = rpath;
     
     while (traverse)
-        traverse = (path.unshift(rpath.ref), traverse.prev);
-
+        traverse = (path.unshift(traverse.ref), traverse.prev);
+console.log(path);
     const findChild = (state, ref) => attrs(state).children
         .find(child => attrs(child).ref === ref);
     const states = path.reduce((states, ref, index) =>
@@ -77,8 +77,10 @@ function bubble(root, event, push, rpath)
 
 function update(state, event, push, rpath)
 {
-    const scoped = event => push({ event, rpath });
-    const updated = base(state)(state, event, scoped);
+    const updated = base(state)(state, event, 
+        (state, event) => update(state, event, push,
+            { ref:attrs(state).ref, prev:rpath }),
+        event => (console.log("PUSHING TO",rpath), push({ event, rpath })));
 
     if (updated === state)
         return state;

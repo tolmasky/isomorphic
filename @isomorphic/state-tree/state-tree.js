@@ -19,12 +19,12 @@ module.exports.define = function define(callback)
 
     return Object.defineProperty(update, "name", { value: name });
 
-    function update(state, event, push)
+    function update(state, event, childUpdate, push)
     {
         const { status, children } = attrs(state);
 
         if (event.name !== "update-child")
-            return handle(routes, state, event, push, true);
+            return handle(routes, state, event, childUpdate, push, true);
 
         const { ref, child } = event;
         const index = children.findIndex(child => attrs(child).ref === ref);
@@ -36,19 +36,20 @@ module.exports.define = function define(callback)
         updatedChildren.splice(index, 1, child);
 
         const updated = <state children = { updatedChildren } />;
-        const bubbled = { name: `#${ref}:${updatedStatus}` };
+        const bubbled = { name: `#${ref}:${updatedStatus}`, timestamp:Date.now() };
 
-        return handle(routes, updated, bubbled, push, false);
+        return handle(routes, updated, bubbled, childUpdate, push, false);
     }
 }
 
-function handle(routes, state, event, push, required)
+function handle(routes, state, event, childUpdate, push, required)
 {
     const { status } = attrs(state);
     const handler = routes.find(route =>
         match(status, route[0]) &&
         match(event.name, route[1]));
-
+//console.log(typeof handler, Object.keys(handler));
+//console.log(handler + " for " + status + " " + event.name);
     if (!handler && !required)
         return state;
 
@@ -60,8 +61,8 @@ function handle(routes, state, event, push, required)
 
     if (typeof update === "string")
         return <state status = { update } />;
-
-    return update(state, event, push);
+console.log(update.name + " for " + status + " " + event.name);
+    return update(state, event, childUpdate, push);
 }
 
 function route([status, event], handler)
