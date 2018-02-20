@@ -33,9 +33,9 @@ module.exports = define(process =>
         return <state status = "exiting" />;
     },
 
-    "running -> #process:finished": "exited",
+    "running -> #process:finished": "finished",
 
-    "exiting -> #process:finished": "exited",
+    "exiting -> #process:finished": "finished",
 
-    "exited": { }
+    "finished": { }
 }));
