@@ -24,7 +24,7 @@ module.exports = function effectsProgram (initial, pull)
         
         console.log(debug(state));
         const push = program(state, update, function (state)
-        {console.log(debug(state),metadata(state).effects);
+        {console.log(debug(state));//,metadata(state).effects);
             if (pull)
                 pull(state);
 

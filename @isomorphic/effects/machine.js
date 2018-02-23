@@ -25,13 +25,13 @@ const updates = {
 module.exports = <machine effects = { Object.create(null) } />;
 
 function machine(state, event)
-{console.log(event);
+{
     const update = updates[event.name] || unrecognizedEvent;
     const updated = update(state, event);
 
     if (updated === state)
         return state;
-console.log("UPDATED:::: ", updated, metadata(updated).effects);
+
     const updatedEffects = updateEffects(
         attrs(state).effects,
         metadata(updated).effects,
@@ -55,13 +55,13 @@ function unrecognizedEvent(state, event)
 }
 
 function updateEffects(active, referenced, push)
-{console.log(active, referenced);
+{
     const removed = Object.keys(active)
         .filter(key => !referenced[key]);
 
     const added = Object.keys(referenced)
         .filter(key => !active[key]);
-console.log(removed, added);
+
     if (removed.length === 0 && added.length === 0)
         return active;
 
@@ -97,7 +97,7 @@ console.log(removed, added);
 }
 
 function bubble (state, event, euuid)
-{console.log("DIGGING INTO " + state.name, state, base(state) === effect);
+{
     const { indexes } = metadata(state).effects[euuid];
 
     if (!indexes)
@@ -112,7 +112,7 @@ function bubble (state, event, euuid)
             return update(state, events.refed(child, event));
 
         const updatedChild = bubble(child, event, euuid);
-console.log("UPDATEd CHILD", updatedChild.name, updatedChild);
+
         if (child === updatedChild)
             return state;
 
@@ -127,7 +127,7 @@ function replaceChild(state, event)
     const nextChildren = children.slice();
 
     nextChildren.splice(index, 1, child);
-console.log("NEXT CHIL: ",  nextChildren, child);
+
     return <state children = { nextChildren } />;
 }
 

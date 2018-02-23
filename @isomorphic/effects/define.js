@@ -20,7 +20,7 @@ module.exports.define = function define(callback)
     return Object.defineProperty(update, "name", { value: name });
 
     function update(state, event, childUpdate, push)
-    {console.log("INSIDE update");
+    {
         const { status, children } = attrs(state);
 
         if (event.name !== "replace-child")
@@ -66,7 +66,7 @@ function handle(routes, state, event, childUpdate, push, required)
 
     if (typeof update === "string")
         return <state status = { update } />;
-console.log(update.name + " for " + status + " " + event.name);
+
     return update(state, event, childUpdate, push);
 }
 
