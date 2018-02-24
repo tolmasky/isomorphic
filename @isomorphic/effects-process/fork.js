@@ -3,7 +3,7 @@ const { promisify } = require("util");
 const pstree = promisify(require("ps-tree"));
 
 
-module.exports = function fork(execute)
+module.exports = function fork(push, execute)
 {
     const emitter = execute();
     const { pid } = emitter;
@@ -30,7 +30,7 @@ module.exports = function fork(execute)
 
 module.exports.kill = kill;
 
-function kill(pid)
+function kill(push, pid)
 {
     return pstree(pid)
         .then(children => children.map(({ PID }) => PID))

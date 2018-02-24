@@ -1,31 +1,29 @@
-const { base, attrs } = require("./generic-jsx");
 const metadata = require("./metadata");
+const state = require("./state");
 
 
 module.exports = update;
 
-function update(state, event)
-{
-    const updated = base(state)(state, event);
-
+function update(record, event)
+{    
+    const updated = record[state.type].update(record, event);
+console.log("be", record);
+console.log("now", updated);
     metadata(updated);
 
-    return autostart(updated, event.timestamp);
+    return updated;//autostart(updated, event.timestamp);
 }
 
 module.exports.update = module.exports;
 
 module.exports.autostart = autostart;
 
-function autostart(state, timestamp)
+function autostart(machine, timestamp)
 {
-    const { status } = attrs(state);
+    const { [state.NameAttribute]: name } = attrs(machine);
 
-    if (status === void 0)
-        return update(<state status = "initial" />, { name:"start", timestamp });
+    if (name === "initial")
+        return update(machine, { name:"start", timestamp });
 
-    if (status === "initial")
-        return update(state, { name:"start", timestamp });
-
-    return state;
+    return machine;
 }

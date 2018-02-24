@@ -16,15 +16,14 @@ module.exports = function effectsProgram (initial, pull)
     {
         const previous = { status: null };
 
-        const children = (isArray(initial) ? initial : [initial])
-            .map(update.autostart);
+        const children = { "root": initial };//(isArray(initial) ? initial : [initial]);
         const asyncPush = (...args) => push(...args);
         
-        const state = <machine { ...{ push: asyncPush, children } } />;
+        const state = machine({ push: asyncPush, children });
         
-        console.log(debug(state));
+        console.log(state);
         const push = program(state, update, function (state)
-        {console.log(debug(state));//,metadata(state).effects);
+        {console.log(state);//,metadata(state).effects);
             if (pull)
                 pull(state);
 

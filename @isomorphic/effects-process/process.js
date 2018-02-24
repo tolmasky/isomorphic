@@ -12,18 +12,18 @@ module.exports = state.machine `Process`
     ({
         ...process,
         state: "initial",
-        children: { "fork": Effect({ start: () => fork(process.execute) }) }
+        children: { "fork": Effect({ start: push => fork(push, process.execute) }) }
     }),
 
     [state `initial`]:
     {
-        [on `started`]: (process, { data: { pid } }) =>
+        [on `#fork.started`]: (process, { data: { pid } }) =>
             ({ ...process, pid }),
 
         [on `kill`]: process =>
             ({ ...process, kill: true }),
 
-        [on `#execute-effect.exited`]: process =>
+        [on `#fork.exit`]: process =>
             ({ ...process, state: "finished" })
     },
 
@@ -31,9 +31,10 @@ module.exports = state.machine `Process`
     {
         [on `kill`]: ({ pid, children, ...rest }) =>
             ({ ...rest, children:
-                { ...children, "kill": Effect({ start: () => kill(pid) }) } }),
+                { ...children, "kill":
+                    Effect({ start: push => kill(push, pid) }) } }),
 
-        [on `#fork.exited`]: process =>
+        [on `#fork.exit`]: process =>
             ({ ...process, state: "finished" })
     },
 

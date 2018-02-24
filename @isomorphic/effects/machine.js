@@ -1,61 +1,68 @@
 const metadata = require("./metadata");
 const update = require("./update");
 const { base, attrs } = require("./generic-jsx");
-const effect = require("./effect");
+const Effect = require("./effect");
+const { state, on } = require("./state");
+
+const MakeEmpty = () => Object.create(null);
 
 const EffectSymbol = Symbol("effect");
 
 const events = {
-    refed: (child, { name, ...rest }) =>
-        ({ name: `#${attrs(child).ref}.${name}`, ...rest }),
-    replace: (index, child, { timestamp }) => 
-        ({ name: "replace-child", data: { child, index }, timestamp }),
+    refed: (key, child, { name, ...rest }) =>
+        ({ name: `#${key}.${name}`, ...rest }),
+    replace: (key, child, { timestamp }) => 
+        ({ name: "replace-child", data: { child, key }, timestamp }),
     effect: (name, data, effect, timestamp) => 
         ({ name:EffectSymbol, data: { event: { name, data, timestamp: Date.now() }, effect } })
 }
 
-const updates = {
-    "replace-child": replaceChild,
-    "start": start,
-    [EffectSymbol]: (state, { data }) =>
-        bubble(state, data.event, data.effect)
+const manager = state.machine `effects-manager`
+({
+    ["init"]: manager =>
+        ({ ...manager, effects: MakeEmpty() }),
+
+    [state `initial`]: 
+    {
+        [on `start`]:
+            updateEffects,
+
+        [on (EffectSymbol)]: (manager, { data }) =>
+            updateEffects(bubble(manager, data.event, data.effect))
+    }
+});
+
+module.exports = manager;
+
+function bubble(machine, event, euuid)
+{
+    const entry = metadata(machine).effects[euuid];
+console.log("ENTRY", entry, machine[state.type].name, machine[state.type]===Effect && metadata(machine).uuid, metadata(machine));
+    if (!entry)
+        throw Errors.UnrecognizedEvent(event.name);
+
+    return entry.keys.reduce(function (node, key)
+    {console.log("THE STATE IS", node, key);
+        const { children } = node;
+        const child = children[key];
+console.log(child, child[state.type] === Effect);
+        if (child[state.type] === Effect && metadata(child).uuid)
+            return update(node, events.refed(key, child, event));
+
+        const updatedChild = bubble(child, event, euuid);
+console.log("OH", updatedChild);
+        if (child === updatedChild)
+            return node;
+
+        return update(node, events.replace(key, updatedChild, event));
+    }, machine);
 }
 
-
-module.exports = <machine effects = { Object.create(null) } />;
-
-function machine(state, event)
-{
-    const update = updates[event.name] || unrecognizedEvent;
-    const updated = update(state, event);
-
-    if (updated === state)
-        return state;
-
-    const updatedEffects = updateEffects(
-        attrs(state).effects,
-        metadata(updated).effects,
-        attrs(state).push);
-
-    return <updated effects = { updatedEffects } />;
-}
-
-function start(state, event)
-{
-    const status = "running";
-    const effects = Object.create(null);
-    const children = attrs(state).children.map(update.autostart);
-
-    return <state { ...{ status, effects, children } } />;
-}
-
-function unrecognizedEvent(state, event)
-{
-    throw Errors.UnrecognizedEvent(event.name);
-}
-
-function updateEffects(active, referenced, push)
-{
+function updateEffects(manager)
+{console.log(manager);
+    const { effects: active, push } = manager;
+    const { effects: referenced } = metadata(manager);
+console.log(push);
     const removed = Object.keys(active)
         .filter(key => !referenced[key]);
 
@@ -63,7 +70,7 @@ function updateEffects(active, referenced, push)
         .filter(key => !active[key]);
 
     if (removed.length === 0 && added.length === 0)
-        return active;
+        return manager;
 
     const updated = Object.create(null);
 
@@ -87,52 +94,11 @@ function updateEffects(active, referenced, push)
             setImmediate(() =>
             {
                 push(events.effect(name, data, key));
-                
+
                 if (callback)
                     callback();
             }));
     };
 
-    return updated;
+    return { ...manager, effects: updated };
 }
-
-function bubble (state, event, euuid)
-{
-    const { indexes } = metadata(state).effects[euuid];
-
-    if (!indexes)
-        throw Errors.UnrecognizedEvent(event.name);
-
-    return indexes.reduce(function (state, index)
-    {
-        const { children } = attrs(state);
-        const child = children[index];
-
-        if (base(child) === effect && metadata(child).uuid)
-            return update(state, events.refed(child, event));
-
-        const updatedChild = bubble(child, event, euuid);
-
-        if (child === updatedChild)
-            return state;
-
-        return update(state, events.replace(index, updatedChild, event));
-    }, state);
-}
-
-function replaceChild(state, event)
-{
-    const { children } = attrs(state);
-    const { child, index } = event.data;
-    const nextChildren = children.slice();
-
-    nextChildren.splice(index, 1, child);
-
-    return <state children = { nextChildren } />;
-}
-
-const Errors = {
-    UnrecognizedEvent: name => new Error(`State machine does not recognized event ${name}.`),
-    NoRefEvent: (state, name) => new Error(`Effect ${state.name} must have a ref property.`)
-}
-

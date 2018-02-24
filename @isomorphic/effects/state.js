@@ -1,8 +1,10 @@
 
-const { base, attrs } = require("./generic-jsx");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
-const NameAttribute = Symbol("StateNameAttribute"); 
+const NameAttribute = Symbol("StateNameAttribute");
+const ReplaceChildEvent = "replace-child";
 
+
+const type = Symbol("type");
 
 module.exports = state;
 
@@ -11,7 +13,10 @@ function state(name)
     return name;
 }
 
-state.name = NameAttribute;
+state.NameAttribute = NameAttribute;
+
+state.type = type;
+state.effect = Symbol("effect");
 
 state.on = function on(name)
 {
@@ -25,53 +30,49 @@ state.machine = function machine([name], states)
     if (arguments.length < 2)
         return states => machine([name], states)
 
-    Object.keys(states).reduce((update, key) =>
-        Object.assign(update,
-            { [key]: <update { ...{ [NameAttribute]: key } }/> }),
-        update);
-
-    Object.keys(states).map(key =>
-        Object.keys(states).reduce((state, key) =>
-            Object.assign(state, { [key]: update[key] }),
-            update[key]));
-
-    Object.defineProperty(update, "name", { value: name });
-
-    return update.initial;
-
-    function update (state)
+    return Object.defineProperties(function constructor(data)
     {
-        const { [NameAttribute]: name, event } = state;
-        const events = states[name];
+        const typed = { children: { }, state: "initial", ...data, [type]: constructor };
+        const init = states["init"];
+
+        return init ? init(typed) : typed;
+    }, { "name": { value: name }, "update": { value: update } });
+
+    function update (record, event)
+    {
+        const { state } = record;
+        const events = states[state];
 
         if (event.name !== ReplaceChildEvent)
         {
             if (!hasOwnProperty.call(events, event.name))
-                throw new Error(`State ${name} can't handle event ${event.name}.`);
-
-            return states[name][event.name](state);
+                if (event.name.toString().startsWith("#"))
+                    return record;
+                else
+                    throw new Error(`State ${name} can't handle event ${event.name.toString()}.`);
+console.log("RETURN");
+            return states[state][event.name](record, event);
         }
 
-        const { index, child } = event;
-        const { children } = state;
+        const { key, child } = event.data;
+        const { children } = record;
+console.log("KEY: " + key, children);
+        const previousChildState = children[key].state;
+        const proposedChildState = child.state;
 
-        const previousChildStateName = attrs(children[index])[NameAttribute];
-        const proposedChildStateName = attrs(child)[NameAttribute];
+        const updatedChildren = { ...children, [key]: child };
+        const updatedRecord = { ...record, children: updatedChildren };
 
-        const updatedChildren = ((index, child, children) => 
-            (children.splice(index, 1, child), children))
-            (children.slice());
+        if (previousChildState === proposedChildState)
+            return updatedRecord;
 
-        if (previousChildStateName === proposedChildStateName)
-            return <machine { ...state } children = { updatedChildren }/>;
+        const stateChange = `#${key}.${proposedChildState}`;
 
-        const observedEventName = `#${ref}.${proposedChildStateName}`;
-
-        return <machine { ...state }
-                    event = { { ...event, name:observedEventName } }
-                    children = { updatedChildren } />;        
+        return update(updatedRecord, { ...event, name:stateChange });
     } 
 }
+
+module.exports = state;
 
 state.debug = function (state)
 {
