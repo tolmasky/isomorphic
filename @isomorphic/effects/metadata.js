@@ -1,7 +1,8 @@
 const { base, getArguments: attrs } = require("generic-jsx");
 const MetadataSymbol = Symbol("metadata-symbol");
-const effect = require("./effect");
+const Effect = require("./effect");
 const getMerkleChecksum = require("isomorphic-runtime/get-merkle-checksum");
+const { type } = require("./state");
 
 
 module.exports = metadata;
@@ -14,36 +15,30 @@ function metadata(node, previous)
 
 function getComputedMetadata(node)
 {
-    if (base(node) === effect)
+    if (node[type] === Effect)
     {
-        const { start } = attrs(node);
-        const uuid = getMerkleChecksum(node);
+        const { start } = node;
+        const uuid = getMerkleChecksum(start);
 
         return { effects: { [uuid]: { start } }, uuid };
     }
 
-    const { children } = attrs(node);
-    const entry = (start, index) => ({ start, indexes:[index] });
-    const effects = children
-        .map(child => metadata(child))
-        .reduce((union, { effects }, index) =>
-            Object.keys(effects).reduce(function (union, key)
+    const { children } = node;
+    const entry = (start, ref) => ({ start, keys:[ref] });
+    console.log(Object.keys(children));
+    const effects = Object.keys(children)
+        .map(key => [key, metadata(children[key])])
+        .reduce((union, [key, { effects }]) =>
+            Object.keys(effects).reduce(function (union, uuid)
             {
-                if (!union[key])
-                    union[key] = entry(effects[key].start, index);
+                if (!union[uuid])
+                    union[uuid] = entry(effects[uuid].start, key);
                 else
-                    union[key].indexes.push(index);
+                    union[uuid].keys.push(key);
 
                 return union;
             }, union),
             Object.create(null));
 
-    const references = children
-        .map(child => [attrs(child).ref, child])
-        .filter(([ref, child]) => ref !== void 0)
-        .reduce((children, [ref, child]) =>
-            Object.assign(children, { [ref]: child }),
-            Object.create(null));
-
-    return { effects, references };
+    return { effects };
 }

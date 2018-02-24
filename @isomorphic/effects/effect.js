@@ -1,4 +1,4 @@
+const state = require("./state");
 
-module.exports = function effect()
-{
-}
+console.log(state);
+module.exports = state.machine `Effect` ({ });

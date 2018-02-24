@@ -3,12 +3,8 @@ const { promisify } = require("util");
 const pstree = promisify(require("ps-tree"));
 
 
-module.exports = function fork(args)
+module.exports = function fork(execute)
 {
-    if (typeof args === "function")
-        return <fork execute = { args } />;
-
-    const { 0: push, execute } = args;
     const emitter = execute();
     const { pid } = emitter;
     const state = { exited: false, started: false };
@@ -34,13 +30,8 @@ module.exports = function fork(args)
 
 module.exports.kill = kill;
 
-function kill(args)
+function kill(pid)
 {
-    if (typeof args !== "object")
-        return <kill pid = { args } />;
-
-    const { 0: push, pid } = args;
-
     return pstree(pid)
         .then(children => children.map(({ PID }) => PID))
         .then(children => ["-s", "SIGINT", pid, ...children])

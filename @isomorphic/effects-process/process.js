@@ -1,62 +1,49 @@
-console.log("one");
-const { state, on } = require("@isomorphic/effects/state");
-console.log("hi");
+const { state, init, on } = require("@isomorphic/effects/state");
+const Effect = require("@isomorphic/effects/effect");
+
 const fork = require("./fork");
 const events = {
     kill: event => ({ ...event, name: "kill" })
 };
-console.log("HERE");
-const process = state.machine `process`
+
+module.exports = state.machine `Process`
 ({
+    ["init"]: process =>
+    ({
+        ...process,
+        state: "initial",
+        children: { "fork": Effect({ start: () => fork(process.execute) }) }
+    }),
+
     [state `initial`]:
     {
-        [on `start`]: ({ execute }) =>
-            <process.starting>
-                <effect ref = "execute-effect"
-                        start = { fork(execute) } />
-            </process.starting>
-    },
+        [on `started`]: (process, { data: { pid } }) =>
+            ({ ...process, pid }),
 
-    [state `starting`]:
-    {
-        [on `started`]: ({ event, kill, children }) =>
-            <process.running
-                pid = { event.data.pid }
-                event = { kill && events.kill(event) }
-                children = { children } />,
+        [on `kill`]: process =>
+            ({ ...process, kill: true }),
 
-        [on `kill`]: ({ event, children }) =>
-            <process.starting
-                kill = { true }
-                children = { children } />,
-
-        [on `#execute-effect.exited`]: () =>
-            <process.finished/>
+        [on `#execute-effect.exited`]: process =>
+            ({ ...process, state: "finished" })
     },
 
     [state `running`]:
     {
-        [on `kill`]: ({ event, children, ...state }) =>
-            <process.killing { ...state }>
-                { children[0] }
-                <effect ref = "effect-kill"
-                        start = { fork.kill(state.pid) } />
-            </process.killing>,
+        [on `kill`]: ({ pid, children, ...rest }) =>
+            ({ ...rest, children:
+                { ...children, "kill": Effect({ start: () => kill(pid) }) } }),
 
-        [on `#execute-effect.exited`]: ({ event, ...state }) =>
-            <process.finished { ...state }/>
+        [on `#fork.exited`]: process =>
+            ({ ...process, state: "finished" })
     },
 
     [state `killing`]:
     {
-        [on `kill`]: ({ event, ...state }) =>
-            <process.killing { ...state } />,
+        [on `kill`]: process => process,
 
-        [on `#execute-effect.exited`]: () =>
-            <process.finished { ...state }/>
+        [on `#fork.exited`]: () =>
+            ({ ...process, state: "killing" })
     },
 
     [state `finished`]: { }
 });
-console.log(process);
-module.exports = process;
