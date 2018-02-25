@@ -9,30 +9,38 @@ module.exports = metadata;
 
 function metadata(node, previous)
 {
-    return  node[MetadataSymbol] ||
-            (node[MetadataSymbol] = getComputedMetadata(node));
+    if (node[MetadataSymbol])
+        return node[MetadataSymbol];
+
+    Object.defineProperty(node, MetadataSymbol,
+    {
+        enumerable: false,
+        value: getComputedMetadata(node)
+    });
+    
+    return node[MetadataSymbol];
 }
 
 function getComputedMetadata(node)
 {
     if (node[type] === Effect)
     {
-        const { start } = node;
-        const uuid = getMerkleChecksum(start);
+        const { start, args } = node;
+        const uuid = getMerkleChecksum(node);
 
-        return { effects: { [uuid]: { start } }, uuid };
+        return { effects: { [uuid]: { start, args } }, uuid };
     }
 
     const { children } = node;
-    const entry = (start, ref) => ({ start, keys:[ref] });
-    console.log(Object.keys(children));
+    const entry = (effect, ref) => ({ ...effect, keys:[ref] });
+    
     const effects = Object.keys(children)
         .map(key => [key, metadata(children[key])])
         .reduce((union, [key, { effects }]) =>
             Object.keys(effects).reduce(function (union, uuid)
             {
                 if (!union[uuid])
-                    union[uuid] = entry(effects[uuid].start, key);
+                    union[uuid] = entry(effects[uuid], key);
                 else
                     union[uuid].keys.push(key);
 

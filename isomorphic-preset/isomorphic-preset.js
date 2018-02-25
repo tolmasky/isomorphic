@@ -64,7 +64,12 @@ var plugins =
 
     [ALWAYS, require("babel-plugin-transform-es2015-function-name")],
 
-    [ALWAYS, require("babel-plugin-transform-object-rest-spread")],
+    [OR(browser, range("< 8.3.0")), require("babel-plugin-transform-object-rest-spread")],
+    [range(">= 8.3.0"), () => ({
+        manipulateOptions: function manipulateOptions(opts, parserOpts) {
+          parserOpts.plugins.push("objectRestSpread");
+        }
+    })],
 
     [option("generic-jsx"), require("generic-jsx/babel-plugin-transform-generic-jsx")],
     [option("react"), ReactJSXPlugin],

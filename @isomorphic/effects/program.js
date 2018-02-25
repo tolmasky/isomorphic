@@ -3,6 +3,7 @@ const program = require("@isomorphic/program");
 const { attrs } = require("./generic-jsx");
 const EmitterPromise = require("./emitter-promise");
 
+const { state, type } = require("./state");
 const machine = require("./machine");
 const update = require("./update");
 const metadata = require("./metadata");
@@ -20,10 +21,10 @@ module.exports = function effectsProgram (initial, pull)
         const asyncPush = (...args) => push(...args);
         
         const state = machine({ push: asyncPush, children });
-        
-        console.log(state);
+        console.log(debug(state));
         const push = program(state, update, function (state)
-        {console.log(state);//,metadata(state).effects);
+        {
+        console.log(debug(state));//,metadata(state).effects);
             if (pull)
                 pull(state);
 
@@ -49,25 +50,24 @@ module.exports = function effectsProgram (initial, pull)
     });
 }
 
-function debug(state, depth = 0)
+function debug(node, lasts = [])
 {
-    const { children, ...attributes } = attrs(state);
-    const props = Object.keys(attributes)
+    const name = node[type].name;
+    const { children, state } = node;
+/*    const props = Object.keys(attributes)
         .map(key => `${key} = ${toValueString(attributes[key])}`);
 
-    const propsString = props.length > 0 ? ` ${props.join(" ")} ` : "";   
-    const nonChildren = `${state.name}${propsString}`;
+    const propsString = props.length > 0 ? ` ${props.join(" ")} ` : "";
+    const nonChildren = `${state.name}${propsString}`;*/
     
-    const padding = Array.from({ length: depth }, () => "    ").join("");
-    
-    if (children.length <= 0)
-        return `${padding}<${nonChildren}/>`;
+    const padding = branches(lasts);
+    const keys = Object.keys(children);
+    const childrenString = keys
+        .map((key, index) => debug(children[key], lasts.concat(index === keys.length - 1)))
+        .join("\n");
 
-    const childrenString = children.map(child => debug(child, depth + 1)).join("\n");
-
-    return  `${padding}<${nonChildren}>\n` +
-            childrenString +
-            `\n${padding}</${state.name}>`;
+    return `${padding}${name} [${state}]` +
+            (keys.length > 0 ? `\n${childrenString}` : "");
 }
 
 function toValueString(value)
@@ -85,5 +85,13 @@ function toValueString(value)
         return `{ ${value.constructor.name} }`;
 
     return `{ ${JSON.stringify(value)} }`;
+}
+
+function branches(lasts)
+{
+    return lasts.map((last, index) =>
+        index === lasts.length - 1 ?
+            (last ? "└── " : "├── ") :
+            (last ? "    " : "│   ")).join("")
 }
 

@@ -25,15 +25,17 @@ module.exports = function fork(push, execute)
             push("exit", state.exited);
     });            
 
-    return { cancel: kill(pid) };
+    return { cancel: () => kill(0, pid) };
 }
 
 module.exports.kill = kill;
 
 function kill(push, pid)
-{
+{console.log("KILLING " + pid);
     return pstree(pid)
         .then(children => children.map(({ PID }) => PID))
         .then(children => ["-s", "SIGINT", pid, ...children])
-        .then(args => spawn("kill", children))
+        .then(args => spawn("kill", args))
+        .then(() => console.log("TOTALLY KILLED!"))
+        .catch(console.log);
 }

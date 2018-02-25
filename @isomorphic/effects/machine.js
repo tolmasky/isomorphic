@@ -17,7 +17,7 @@ const events = {
         ({ name:EffectSymbol, data: { event: { name, data, timestamp: Date.now() }, effect } })
 }
 
-const manager = state.machine `effects-manager`
+const manager = state.machine `EffectsManager`
 ({
     ["init"]: manager =>
         ({ ...manager, effects: MakeEmpty() }),
@@ -37,20 +37,20 @@ module.exports = manager;
 function bubble(machine, event, euuid)
 {
     const entry = metadata(machine).effects[euuid];
-console.log("ENTRY", entry, machine[state.type].name, machine[state.type]===Effect && metadata(machine).uuid, metadata(machine));
+
     if (!entry)
         throw Errors.UnrecognizedEvent(event.name);
 
     return entry.keys.reduce(function (node, key)
-    {console.log("THE STATE IS", node, key);
+    {
         const { children } = node;
         const child = children[key];
-console.log(child, child[state.type] === Effect);
+
         if (child[state.type] === Effect && metadata(child).uuid)
             return update(node, events.refed(key, child, event));
 
         const updatedChild = bubble(child, event, euuid);
-console.log("OH", updatedChild);
+
         if (child === updatedChild)
             return node;
 
@@ -59,10 +59,10 @@ console.log("OH", updatedChild);
 }
 
 function updateEffects(manager)
-{console.log(manager);
+{
     const { effects: active, push } = manager;
     const { effects: referenced } = metadata(manager);
-console.log(push);
+
     const removed = Object.keys(active)
         .filter(key => !referenced[key]);
 
@@ -77,10 +77,10 @@ console.log(push);
     for (const key of Object.keys(active))
     {
         if (referenced[key])
-            effects[key] = active[key];
+            updated[key] = active[key];
 
-        else if (active[key].cancel)
-            active[key].cancel();
+        else if (active[key].cancel) { console.log("CANCELING!");
+            active[key].cancel();}
     }
 
     for (const key of Object.keys(referenced))
@@ -88,7 +88,7 @@ console.log(push);
         if (active[key])
             continue;
 
-        const { start } = referenced[key];
+        const { start, args } = referenced[key];
 
         updated[key] = start((name, data, callback) =>
             setImmediate(() =>
@@ -97,7 +97,7 @@ console.log(push);
 
                 if (callback)
                     callback();
-            }));
+            }), ...(args || []));
     };
 
     return { ...manager, effects: updated };

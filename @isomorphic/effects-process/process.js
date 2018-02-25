@@ -6,19 +6,19 @@ const events = {
     kill: event => ({ ...event, name: "kill" })
 };
 
-module.exports = state.machine `Process`
+const Process = state.machine `Process`
 ({
     ["init"]: process =>
     ({
         ...process,
         state: "initial",
-        children: { "fork": Effect({ start: push => fork(push, process.execute) }) }
+        children: { "fork": Effect({ args:[process.execute], start: fork, timestamp: process.timestamp }) }
     }),
 
     [state `initial`]:
     {
         [on `#fork.started`]: (process, { data: { pid } }) =>
-            ({ ...process, pid }),
+            ({ ...process, state: "running", pid }),
 
         [on `kill`]: process =>
             ({ ...process, kill: true }),
@@ -29,10 +29,10 @@ module.exports = state.machine `Process`
 
     [state `running`]:
     {
-        [on `kill`]: ({ pid, children, ...rest }) =>
+        [on `kill`]: ({ pid, children, ...rest }) =>(console.log("yeah..."),
             ({ ...rest, children:
                 { ...children, "kill":
-                    Effect({ start: push => kill(push, pid) }) } }),
+                    Effect({ args: [pid], start: fork.kill }) } })),
 
         [on `#fork.exit`]: process =>
             ({ ...process, state: "finished" })
@@ -42,9 +42,16 @@ module.exports = state.machine `Process`
     {
         [on `kill`]: process => process,
 
-        [on `#fork.exited`]: () =>
+        [on `#fork.exited`]: process =>
             ({ ...process, state: "killing" })
     },
 
     [state `finished`]: { }
 });
+
+module.exports = Process;
+
+module.exports.Spawn = function (path, args, timestamp)
+{
+    return Process({ timestamp, execute: () => require("child_process").spawn(path, args, { stdio:[0,1,2] }) });
+}

@@ -5,12 +5,21 @@ const state = require("./state");
 module.exports = update;
 
 function update(record, event)
-{    
+{
     const updated = record[state.type].update(record, event);
-console.log("be", record);
-console.log("now", updated);
-    metadata(updated);
 
+    metadata(updated);
+/*
+    if (updated[state.type].name === "Process")
+    {
+        if (updated.children.kill)
+        {
+            console.log(metadata(updated.children.fork));
+            console.log(metadata(updated.children.kill));
+            console.log(metadata(updated));
+        }
+    }
+*/
     return updated;//autostart(updated, event.timestamp);
 }
 

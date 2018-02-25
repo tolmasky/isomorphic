@@ -45,18 +45,18 @@ state.machine = function machine([name], states)
 
         if (event.name !== ReplaceChildEvent)
         {
-            if (!hasOwnProperty.call(events, event.name))
+            if (!events || !hasOwnProperty.call(events, event.name))
                 if (event.name.toString().startsWith("#"))
                     return record;
                 else
-                    throw new Error(`State ${name} can't handle event ${event.name.toString()}.`);
-console.log("RETURN");
+                    throw new Error(`State ${name}.${state} can't handle event ${event.name.toString()}.`);
+
             return states[state][event.name](record, event);
         }
 
         const { key, child } = event.data;
         const { children } = record;
-console.log("KEY: " + key, children);
+
         const previousChildState = children[key].state;
         const proposedChildState = child.state;
 
