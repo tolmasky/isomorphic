@@ -39,7 +39,7 @@ function bubble(machine, event, euuid)
     const entry = metadata(machine).effects[euuid];
 
     if (!entry)
-        throw Errors.UnrecognizedEvent(event.name);
+        throw new Error(`No effect registered for ${event.name}`);
 
     return entry.keys.reduce(function (node, key)
     {

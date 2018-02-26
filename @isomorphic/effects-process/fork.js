@@ -10,7 +10,7 @@ module.exports = function fork(push, execute)
     const state = { exited: false, started: false };
 
     emitter.on("exit", function (code)
-    {console.log("HERE", state.started);
+    {console.log("HERE ",code, state.started);
         state.exited = { code };
 
         if (state.started)
@@ -35,7 +35,7 @@ function kill(push, pid)
     return pstree(pid)
         .then(children => children.map(({ PID }) => PID))
         .then(children => ["-s", "SIGINT", pid, ...children])
-        .then(args => spawn("kill", args))
+        .then(args => spawn("kill", args, { stdio:[0,1,2] }))
         .then(() => console.log("TOTALLY KILLED!"))
         .catch(console.log);
 }

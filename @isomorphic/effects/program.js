@@ -50,7 +50,7 @@ module.exports = function effectsProgram (initial, pull)
     });
 }
 
-function debug(node, lasts = [])
+function debug(node, ref = "", lasts = [])
 {
     const name = node[type].name;
     const { children, state } = node;
@@ -63,10 +63,10 @@ function debug(node, lasts = [])
     const padding = branches(lasts);
     const keys = Object.keys(children);
     const childrenString = keys
-        .map((key, index) => debug(children[key], lasts.concat(index === keys.length - 1)))
+        .map((key, index) => debug(children[key], key, lasts.concat(index === keys.length - 1)))
         .join("\n");
 
-    return `${padding}${name} [${state}]` +
+    return `${padding}${name}${ref && "#" + ref} [${state}]` +
             (keys.length > 0 ? `\n${childrenString}` : "");
 }
 

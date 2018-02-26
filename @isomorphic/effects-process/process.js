@@ -30,7 +30,9 @@ const Process = state.machine `Process`
     [state `running`]:
     {
         [on `kill`]: ({ pid, children, ...rest }) =>(console.log("yeah..."),
-            ({ ...rest, children:
+            ({ ...rest, 
+                state: "killing",
+                children:
                 { ...children, "kill":
                     Effect({ args: [pid], start: fork.kill }) } })),
 
@@ -42,8 +44,8 @@ const Process = state.machine `Process`
     {
         [on `kill`]: process => process,
 
-        [on `#fork.exited`]: process =>
-            ({ ...process, state: "killing" })
+        [on `#fork.exit`]: process =>
+            ({ ...process, state: "finished" })
     },
 
     [state `finished`]: { }
