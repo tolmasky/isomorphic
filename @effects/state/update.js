@@ -11,8 +11,6 @@ const update = Object.setPrototypeOf(function update(state, event)
     const Type = Object.getPrototypeOf(state).constructor;
     const updated = apply(Type.update, state, event);
 
-console.log("sending ",event);
-
     metadata(updated);
 
     return updated;
@@ -34,24 +32,20 @@ function apply(update, state, event)
 {
     const updated = update(state, event);
 
-    if (updated instanceof Mutate) { console.log("here!");
+    if (updated instanceof Mutate)
         return updated(state, event);
-}
-else
-{
-    console.log(updated);
-}
+
     return updated;
 }
 
 function Mutate(type)
 {
-    return Object.defineProperty(function mutate(name, value)
+    return Object.defineProperty(function mutate(name, ...args)
     {
         const mutationChain =
-            new MutationChain(type, name, value, this.mutationChain);
+            new MutationChain(type, name, args, this.mutationChain);
         const apply =
-            (state, event) => finish(mutationChain, state, event);
+            (state, event) => finish(mutationChain, state, event && event.timestamp);
 
         apply.mutationChain = mutationChain;
         Object.setPrototypeOf(apply, Mutate.prototype);
@@ -65,15 +59,15 @@ Object.setPrototypeOf(Mutate.prototype, Function);
 Mutate.prototype.prop = Mutate("prop");
 Mutate.prototype.update = Mutate("update");
 
-function MutationChain(type, name, value, previous)
+function MutationChain(type, name, args, previous)
 {
     this.previous = previous;
     this.type = type;
     this.name = name;
-    this.value = value;
+    this.args = args;
 }
 
-function finish(mutationChain, state, event)
+function finish(mutationChain, state, timestamp)
 {
     const traverse = { mutationChain, mutations:[] };
 console.log("here...");
@@ -88,17 +82,18 @@ console.log("here...");
     const mutations = traverse.mutations.reverse();
     const values = Empty();
 
-    for (const { type, name, value } of mutations)
+    for (const { type, name, args } of mutations)
 
         if (type === "prop")
-            values[name] = value;
+            values[name] = args[0];
 
         else
         {
             const previous = hasOwnProperty.call(values, name) ?
                 values[name] : state[name];
+            const event = { name:args[0], data:args[1], timestamp };
 
-            values[name] = update(previous, { ...event, name: value });
+            values[name] = update(previous, event);
         }
 
     return Object.assign(Object.create(Type.prototype), state, values);

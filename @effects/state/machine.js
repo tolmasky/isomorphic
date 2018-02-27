@@ -66,7 +66,7 @@ function updateEffects(manager)
 {
     const { effects: active, push } = manager;
     const { effects: referenced } = metadata(manager);
-console.log(manager);
+
     const removed = Object.keys(active)
         .filter(key => !referenced[key]);
 
