@@ -1,44 +1,37 @@
-const state = require("@isomorphic/effects/state");
-const update = require("@isomorphic/effects/update");
+const { state, property } = require("@effects/state");
+const update = require("@effects/state/update");
 
 
-const ProcessLoop = state.machine `ProcessLoop`
+module.exports = state.machine `ProcessLoop`
 ({
-    ["init"]: loop =>
-        ({ ...loop, state: "waiting" }),
-    
+    [property.child `process`]: "object",
+
+    ["init"]: update
+        .prop("state", "waiting"),
+
     [state `waiting`]:
     {
-        [state.on `start`]: (loop, event) =>
-        ({ ...loop, 
-            state: "running",
-        children:
-        {
-            process: loop.template(event.timestamp),
-        } })
+        [state.on `start`]: ({ template }, event) => update
+            .prop("state", "running")
+            .prop("process", template(event.timestamp))
     },
 
     [state `running`]:
     {
-        [state.on `#process.finished`]: loop =>
-            ({ ...loop, state: "waiting" }),
+        [state.on `#process.finished`]: update
+            .prop("state", "waiting"),
 
-        [state.on `start`]: (loop, event) =>
-        ({ ...loop, state: "killing-then-start", children:
-            {
-                process: update(loop.children["process"], { ...event, name:"kill" }),
-            }
-        }),
+        [state.on `start`]: update
+            .prop("state", "killing-then-start")
+            .update("process", "kill")
     },
 
     [state `killing-then-start`]:
     {
-        [state.on `#process.finished`]: (loop, event) =>
-            update({ ...loop, state: "waiting" }, { ...event, name:"start" }),
+        [state.on `#process.finished`]: update
+            .prop("state", "waiting")
+            .update("process", "start"),
 
         [state.on `start`]: loop => loop
     }
-})
-
-module.exports = ProcessLoop;
-
+});

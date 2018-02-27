@@ -14,7 +14,7 @@ const on = (emitter, name, handler) =>
 
 module.exports = define(listen =>
 ({
-    "initial -> start" (state, event, update, push)
+    "initial -> start" (state, event, push)
     {
         const { emitter, events } = attrs(state);
         const handlers =  events.map(name =>
@@ -30,7 +30,7 @@ module.exports = define(listen =>
     "/^listening|(heard-\\d+)$/ -> /^emitted:.*$/" (state, event)
     {
         const { heard } = attrs(state);
-console.log("hello");
+
         return <state   status = { `heard-${heard.length + 1}` }
                         heard = { heard.concat(event) } />;
     },

@@ -2,7 +2,7 @@ const metadata = require("./metadata");
 const update = require("./update");
 const { base, attrs } = require("./generic-jsx");
 const Effect = require("./effect");
-const { state, on } = require("./state");
+const { state, on, property } = require("./state");
 
 const MakeEmpty = () => Object.create(null);
 
@@ -19,10 +19,15 @@ const events = {
 
 const manager = state.machine `EffectsManager`
 ({
-    ["init"]: manager =>
-        ({ ...manager, effects: MakeEmpty() }),
+    [property `effects`]: "object",
+    [property `push`]: "function",
 
-    [state `initial`]: 
+    [property.child `root`]: "object",
+
+    ["init"]: update
+        .prop("effects", MakeEmpty()),
+
+    [state `initial`]:
     {
         [on `start`]:
             updateEffects,
@@ -43,10 +48,9 @@ function bubble(machine, event, euuid)
 
     return entry.keys.reduce(function (node, key)
     {
-        const { children } = node;
-        const child = children[key];
+        const child = node[key];
 
-        if (child[state.type] === Effect && metadata(child).uuid)
+        if (Object.getPrototypeOf(child).constructor === Effect && metadata(child).uuid)
             return update(node, events.refed(key, child, event));
 
         const updatedChild = bubble(child, event, euuid);
@@ -62,7 +66,7 @@ function updateEffects(manager)
 {
     const { effects: active, push } = manager;
     const { effects: referenced } = metadata(manager);
-
+console.log(manager);
     const removed = Object.keys(active)
         .filter(key => !referenced[key]);
 
@@ -100,5 +104,5 @@ function updateEffects(manager)
             }), ...(args || []));
     };
 
-    return { ...manager, effects: updated };
+    return update.prop("effects", updated)(manager);
 }

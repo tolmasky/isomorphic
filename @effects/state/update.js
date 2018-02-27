@@ -1,38 +1,105 @@
 const metadata = require("./metadata");
-const state = require("./state");
+const Empty = () => Object.create(null);
 
+
+
+
+
+
+const update = Object.setPrototypeOf(function update(state, event)
+{
+    const Type = Object.getPrototypeOf(state).constructor;
+    const updated = apply(Type.update, state, event);
+
+console.log("sending ",event);
+
+    metadata(updated);
+
+    return updated;
+}, Mutate.prototype);
 
 module.exports = update;
 
-function update(record, event)
+module.exports.init = function (state)
 {
-    const updated = record[state.type].update(record, event);
+    const Type = Object.getPrototypeOf(state).constructor;
+    const initialized = Type.init ? apply(Type.init, state) : state;
 
-    metadata(updated);
-/*
-    if (updated[state.type].name === "Process")
-    {
-        if (updated.children.kill)
-        {
-            console.log(metadata(updated.children.fork));
-            console.log(metadata(updated.children.kill));
-            console.log(metadata(updated));
-        }
-    }
-*/
-    return updated;//autostart(updated, event.timestamp);
+    metadata(initialized);
+
+    return initialized;
 }
 
-module.exports.update = module.exports;
-
-module.exports.autostart = autostart;
-
-function autostart(machine, timestamp)
+function apply(update, state, event)
 {
-    const { [state.NameAttribute]: name } = attrs(machine);
+    const updated = update(state, event);
 
-    if (name === "initial")
-        return update(machine, { name:"start", timestamp });
+    if (updated instanceof Mutate) { console.log("here!");
+        return updated(state, event);
+}
+else
+{
+    console.log(updated);
+}
+    return updated;
+}
 
-    return machine;
+function Mutate(type)
+{
+    return Object.defineProperty(function mutate(name, value)
+    {
+        const mutationChain =
+            new MutationChain(type, name, value, this.mutationChain);
+        const apply =
+            (state, event) => finish(mutationChain, state, event);
+
+        apply.mutationChain = mutationChain;
+        Object.setPrototypeOf(apply, Mutate.prototype);
+
+        return apply
+    }, "name", { value: type });
+}
+
+Object.setPrototypeOf(Mutate.prototype, Function);
+
+Mutate.prototype.prop = Mutate("prop");
+Mutate.prototype.update = Mutate("update");
+
+function MutationChain(type, name, value, previous)
+{
+    this.previous = previous;
+    this.type = type;
+    this.name = name;
+    this.value = value;
+}
+
+function finish(mutationChain, state, event)
+{
+    const traverse = { mutationChain, mutations:[] };
+console.log("here...");
+    while (traverse.mutationChain !== void 0)
+    {
+        traverse.mutations.push(traverse.mutationChain);
+        traverse.mutationChain = traverse.mutationChain.previous;
+    }
+
+    const Type = Object.getPrototypeOf(state).constructor;
+
+    const mutations = traverse.mutations.reverse();
+    const values = Empty();
+
+    for (const { type, name, value } of mutations)
+
+        if (type === "prop")
+            values[name] = value;
+
+        else
+        {
+            const previous = hasOwnProperty.call(values, name) ?
+                values[name] : state[name];
+
+            values[name] = update(previous, { ...event, name: value });
+        }
+
+    return Object.assign(Object.create(Type.prototype), state, values);
 }

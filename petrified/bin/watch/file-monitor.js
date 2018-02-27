@@ -1,6 +1,6 @@
 const { createMonitor } = require("watch");
 const actions = ["created", "changed", "removed"];
-const Effect = require("@isomorphic/effects/effect");
+const Effect = require("@effects/state/effect");
 const { matcher } = require("micromatch");
 
 

@@ -1,17 +1,14 @@
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 const ReplaceChildEvent = "replace-child";
-
-const type = Symbol("type");
+const update = require("./update");
 
 module.exports = state;
 
 function state(name)
 {
-    return name;
+    return "state:" + name;
 }
-
-state.type = type;
 
 state.on = function on(name)
 {
@@ -20,51 +17,93 @@ state.on = function on(name)
 
 state.state = state;
 
-state.machine = function machine([name], states)
+state.property = function (name)
+{
+    return "property:" + name;
+}
+
+state.property.child = function (name)
+{
+    return "property.child:" + name;
+}
+
+state.machine = function machine([name], declarations)
 {
     if (arguments.length < 2)
-        return states => machine([name], states)
+        return declarations => machine([name], declarations);
 
-    return Object.defineProperties(function constructor(data)
+    const properties = Object.create(null);
+    const children = Object.create(null);
+    const states = Object.create(null);
+    const init = declarations["init"];
+
+    properties["state"] = "string";
+
+    for (const key of Object.keys(declarations))
+        if (/^property:.*$/.test(key))
+            properties[key.substr("property:".length)] = declarations[key];
+        else if (/^property\.child:.*$/.test(key))
+            children[key.substr("property.child:".length)] = declarations[key];
+        else if (/^state:.*$/.test(key))
+            states[key] = declarations[key];
+
+    constructor.properties = properties;
+    constructor.children = children;
+    constructor.states = states;
+    constructor.init = init;
+    constructor.update = state.machine.update;
+
+    return Object.defineProperty(constructor, "name", { value: name });
+
+    function constructor(data)
     {
-        const typed = { children: { }, state: "initial", ...data, [type]: constructor };
-        const init = states["init"];
+        if (!(this instanceof constructor))
+            return new constructor(data);
 
-        return init ? init(typed) : typed;
-    }, { "name": { value: name }, "update": { value: update } });
+        for (const key of Object.keys(data))
+            this[key] = data[key];
 
-    function update (record, event)
+        if (!hasOwnProperty.call(data, "state"))
+            this.state = "initial";
+
+        return update.init(this);
+    }
+}
+
+state.machine.update = function update (record, event)
+{
+    const { state } = record;
+    const Type = Object.getPrototypeOf(record);
+    const { name, states } = Type.constructor;
+    const events = states["state:" + state];
+console.log("IM IN HERE FOR " + name + " " + state + " " + event.name.toString());
+    if (event.name !== ReplaceChildEvent)
     {
-        const { state } = record;
-        const events = states[state];
+        if (!events || !hasOwnProperty.call(events, event.name))
+            if (event.name.toString().startsWith("#"))
+                return record;
+            else
+                throw new Error(`State ${name}.${state} can't handle event ${event.name.toString()}.`);
+console.log(events[event.name]);
+        return events[event.name](record, event);
+    }
 
-        if (event.name !== ReplaceChildEvent)
-        {
-            if (!events || !hasOwnProperty.call(events, event.name))
-                if (event.name.toString().startsWith("#"))
-                    return record;
-                else
-                    throw new Error(`State ${name}.${state} can't handle event ${event.name.toString()}.`);
+    const { key, child } = event.data;
 
-            return states[state][event.name](record, event);
-        }
+    const previousChildState = record[key].state;
+    const proposedChildState = child.state;
 
-        const { key, child } = event.data;
-        const { children } = record;
+    const updatedRecord = Object.assign(
+        Object.create(Type),
+        record,
+        { [key]: child });
 
-        const previousChildState = children[key].state;
-        const proposedChildState = child.state;
+    if (previousChildState === proposedChildState)
+        return updatedRecord;
 
-        const updatedChildren = { ...children, [key]: child };
-        const updatedRecord = { ...record, children: updatedChildren };
+    const stateChange = `#${key}.${proposedChildState}`;
 
-        if (previousChildState === proposedChildState)
-            return updatedRecord;
-
-        const stateChange = `#${key}.${proposedChildState}`;
-
-        return update(updatedRecord, { ...event, name:stateChange });
-    } 
+    return update(updatedRecord, { ...event, name:stateChange });
 }
 
 module.exports = state;

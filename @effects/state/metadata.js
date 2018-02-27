@@ -1,8 +1,7 @@
-const { base, getArguments: attrs } = require("generic-jsx");
+//const { base, getArguments: attrs } = require("generic-jsx");
 const MetadataSymbol = Symbol("metadata-symbol");
-const Effect = require("./effect");
+//const Effect = require("./effect");
 const getMerkleChecksum = require("isomorphic-runtime/get-merkle-checksum");
-const { type } = require("./state");
 
 
 module.exports = metadata;
@@ -23,7 +22,11 @@ function metadata(node, previous)
 
 function getComputedMetadata(node)
 {
-    if (node[type] === Effect)
+    const Type = Object.getPrototypeOf(node).constructor;
+//if (Type.name === "Object")
+//    console.log(new Error().stack);
+//console.log(Type+"", node);
+    if (Type === require("./effect"))
     {
         const { start, args } = node;
         const uuid = getMerkleChecksum(node);
@@ -31,11 +34,12 @@ function getComputedMetadata(node)
         return { effects: { [uuid]: { start, args } }, uuid };
     }
 
-    const { children } = node;
+    const { children } = Type;
     const entry = (effect, ref) => ({ ...effect, keys:[ref] });
-    
+
     const effects = Object.keys(children)
-        .map(key => [key, metadata(children[key])])
+        .filter(key => !!node[key])
+        .map(key => [key, metadata(node[key])])
         .reduce((union, [key, { effects }]) =>
             Object.keys(effects).reduce(function (union, uuid)
             {

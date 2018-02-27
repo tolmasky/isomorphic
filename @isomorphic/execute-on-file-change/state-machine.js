@@ -43,7 +43,7 @@ function handle(handler, state, event, push, route)
         if (event.ignorable)
             return state;
         else
-            throw new Error(`State "${name}" can't handle event "${key}"`);
+            throw new Error(`State "${state.name}" can't handle event "${key}"`);
 
     return handle(handler[key], state, event, push, false);
 }

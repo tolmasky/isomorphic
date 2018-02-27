@@ -1,104 +1,59 @@
+
 const { dirname } = require("path");
 
-const { spawn } = require("child_process");
-const { unlinkSync, readFileSync } = require("fs");
-const { read } = require("sf-fs");
+const Process = require("@effects/process");
+const Timer = require("@effects/state/timer");
+const metadata = require("@effects/state/metadata");
 
-const executeOnFileChange = require("@isomorphic/execute-on-file-change");
+const program = require("@effects/state/program");
 
-const style = require("chalk").bgBlue.white.bold;
-const announce = message => console.log(style(message));
+const { state, property } = require("@effects/state");
+const update = require("@effects/state/update");
+const process = require("@effects/process");
+const FileMonitor = require("./file-monitor");
+const ProcessLoop = require("./process-loop");
+const serveProxySite = require("./serve-proxy-site");
 
-const express = require("express");
-const http = require("http");
+const BUILD_PATH = require.resolve("../petrified-cli");
+const SERVER_PATH = require.resolve("../serve");
 
-const tmp = require("../get-tmp");
-process.on('unhandledRejection', error => {
-  // Will print "unhandledRejection err is not defined"
-  console.log('unhandledRejection', error.stack);
-});
+//Process.Spawn("node", ["./bin/watch/forever"], timestamp)//
+const Watch = state.machine `Watch`
+({
+    [property.child `source-monitor`]: "object",
+    [property.child `site-monitor`]: "object",
+    [property.child `builder`]: "object",
+    [property.child `server`]: "object",
 
-const injectionProxy = require("./injection-proxy");
+    ["init"]: ({ source, destination }) => update
+        .prop("source-monitor", FileMonitor({ source, match:`${source}/!(_site|_cache)(*|**)` }))
+        .prop("site-monitor", FileMonitor({ source: dirname(destination), match:`${destination}{/**{/*,},}` }))
+        .prop("builder", ProcessLoop({ template: timestamp => Process.Spawn("node", [BUILD_PATH, "--dev", source], timestamp) }))
+        .prop("server", ProcessLoop({
+                    template: timestamp => Process.Spawn("node", [SERVER_PATH, "--socket", "/tmp/abc.sock", destination], timestamp)
+                })),
 
-
-module.exports = function watch({ source, destination, port })
-{
-    const socketPath = tmp(".sock");
-    const injectionProxyServer = express()
-        .use(injectionProxy({ proxiedSocketPath: socketPath }))
-        .listen(port, () => console.log(`• Petrified running on port ${port}`));
-
-    const builder = buildOnFileChange({ source });
-    const deployer = deployOnFileChange({ socketPath, source: destination });
-
-    builder.change([]);
-}
-
-function buildOnFileChange({ source })
-{
-    const match = `${source}/!(_site|_cache)(*|**)`;
-    const execute = () => fork("• Building blog.runkit.com... ",
-        "../petrified-cli", ["--dev", source]);
-    const { emitter, change } = executeOnFileChange({ source, match, execute });
-
-    emitter
-        .on("change", outputFilesChanged(source))
-        .on("execution-cancel", () => announce("• Canceling build due to file changes"))
-
-    return { change };
-}
-
-function deployOnFileChange({ socketPath, source })
-{
-    const parent = dirname(source);
-    const match = `${source}{/**{/*,},}`;
-    const execute = () => (rm(socketPath, true),
-        fork("• Deploying blog.runkit.com... ",
-            "../serve", ["--socket", socketPath, source]));
-console.log(match);
-    const { emitter } = executeOnFileChange({ source: parent, match, execute });
-
-    emitter
-        .on("change", outputFilesChanged(source))
-}
-
-function fork(message, path, args)
-{
-    announce(message);
-
-    return spawn("node", [require.resolve(path), ...args], { stdio: [0, 1, 2] });
-}
-
-function outputFilesChanged(source, changes)
-{
-    if (arguments.length === 1)
-        return changes => outputFilesChanged(source, changes);
-
-    console.log("• Detected file changes...");
-
-    const concated = [].concat(...changes);
-    const expanded = concated.length > 15 ? 10 : 15;
-
-    const head = concated.slice(0, expanded);
-    const rest = Math.max(concated.length - expanded, 0);
-
-    const files = changes.map(({ path, action }) =>
-        `  - ${path.substr(source.length)} was ${action}.`).join("\n") +
-        (rest > 0 ? "\n  - and ${head.length - limit} more..." : "");
-
-    console.log(files);
-}
-
-function rm (path, swallow)
-{
-    try
+    [state `initial`]:
     {
-        return unlinkSync(path);
+        [state.on `#source-monitor.change`]: update
+            .update("builder", "start"),
+
+        [state.on `#site-monitor.change`]: update
+            .update("server", "start")
     }
-    catch (error)
+})
+
+module.exports = function ({ source, destination })
+{
+    serveProxySite({ proxySocketPath:"/tmp/abc.sock", port: 8080 });
+    
+//    const effects = metadata(<effect start = { () => console.log("LOG") } />).effects;
+//console.log(state.debug(Watch({ source, destination })));
+    console.log(program(Watch({ source, destination }), function (state)
     {
-        if (!swallow)
-            return error;
-    }
+//        console.log(state);
+    })
+    .catch(e => console.log(e))
+    )
 }
 

@@ -16,11 +16,11 @@ module.exports = function effectsProgram (initial, pull)
     return EmitterPromise(function(emitter, resolve, reject)
     {
         const previous = { status: null };
-
-        const children = { "root": initial };//(isArray(initial) ? initial : [initial]);
         const asyncPush = (...args) => push(...args);
         
-        const state = machine({ push: asyncPush, children });
+        const state = machine({ push: asyncPush, "root": initial });
+        console.log("HELLo");
+        console.log(state);
         console.log(debug(state));
         const push = program(state, update, function (state)
         {
@@ -50,23 +50,29 @@ module.exports = function effectsProgram (initial, pull)
     });
 }
 
+state.debug = debug;
+
 function debug(node, ref = "", lasts = [])
 {
-    const name = node[type].name;
-    const { children, state } = node;
+    const padding = branches(lasts);
+
+    if (!node)
+        return `${padding}#${ref}: Nothing`;
+
+    const { name, children } = Object.getPrototypeOf(node).constructor;
 /*    const props = Object.keys(attributes)
         .map(key => `${key} = ${toValueString(attributes[key])}`);
 
     const propsString = props.length > 0 ? ` ${props.join(" ")} ` : "";
     const nonChildren = `${state.name}${propsString}`;*/
     
-    const padding = branches(lasts);
+
     const keys = Object.keys(children);
     const childrenString = keys
-        .map((key, index) => debug(children[key], key, lasts.concat(index === keys.length - 1)))
+        .map((key, index) => debug(node[key], key, lasts.concat(index === keys.length - 1)))
         .join("\n");
 
-    return `${padding}${name}${ref && "#" + ref} [${state}]` +
+    return `${padding}${ref ? "#" + ref + ": " : ""}${name} [${node.state}]` +
             (keys.length > 0 ? `\n${childrenString}` : "");
 }
 

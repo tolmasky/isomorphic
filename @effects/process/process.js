@@ -1,5 +1,8 @@
-const { state, init, on } = require("@effects/state");
+const { property, state, init, on } = require("@effects/state");
 const Effect = require("@effects/state/effect");
+const update = require("@effects/state/update");
+const ignore = (state, event) => state;
+
 
 const fork = require("./fork");
 const events = {
@@ -8,44 +11,45 @@ const events = {
 
 const Process = state.machine `Process`
 ({
-    ["init"]: process =>
-    ({
-        ...process,
-        state: "initial",
-        children: { "fork": Effect({ args:[process.path, process.args], start: fork, timestamp: process.timestamp }) }
-    }),
+    [property `pid`]: "number",
+    [property `kill-on-start`]: "boolean",
+
+    [property.child `fork-effect`]: Effect,
+    [property.child `kill-effect`]: Effect,
+
+    init: ({ path, args }) => update
+        .prop("state", "initial")
+        .prop("fork-effect", Effect({ args:[path, args], start: fork })),
 
     [state `initial`]:
     {
-        [on `#fork.started`]: (process, { data: { pid } }) =>
-            ({ ...process, state: "running", pid }),
+        [on `#fork-effect.started`]: (_, event) => update
+            .prop("state", "running")
+            .prop("pid", event.data.pid),
 
-        [on `kill`]: process =>
-            ({ ...process, kill: true }),
+        [on `kill`]: update
+            .prop("kill-on-start", true),
 
-        [on `#fork.exit`]: process =>
-            ({ ...process, state: "finished" })
+        [on `#fork.exit`]: update
+            .prop("state", "finished")
     },
 
     [state `running`]:
     {
-        [on `kill`]: ({ pid, children, ...rest }) =>(console.log("yeah..."),
-            ({ ...rest, 
-                state: "killing",
-                children:
-                { ...children, "kill":
-                    Effect({ args: [pid], start: fork.kill }) } })),
+        [on `kill`]: ({ pid }) => update
+            .prop("state", "killing")
+            .prop("kill-effect", Effect({ args:[pid], start: fork,kill })),
 
-        [on `#fork.exit`]: process =>
-            ({ ...process, state: "finished" })
+        [on `#fork-effect.exit`]: update
+            .prop("state", "finished")
     },
 
     [state `killing`]:
     {
-        [on `kill`]: process => process,
+        [on `kill`]: ignore,
 
-        [on `#fork.exit`]: process =>
-            ({ ...process, state: "finished" })
+        [on `#fork-effect.exit`]: update
+            .prop("state", "finished")
     },
 
     [state `finished`]: { }

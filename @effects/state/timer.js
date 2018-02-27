@@ -1,34 +1,24 @@
 
-const { state, init, on } = require("@isomorphic/effects/state");
-const Effect = require("@isomorphic/effects/effect");
+const { state, init, on, property } = require("@effects/state");
+const update = require("@effects/state/update");
+const Effect = require("@effects/state/effect");
 
 
 module.exports = state.machine `Timer`
 ({
-    ["init"]: timer =>
-    {
-        const { delay, timestamp } = timer;
-        const args = [{ delay, timestamp }];
-        const timeout = Effect({ start, args });
+    [property.child `timer-effect`]: Effect,
 
-        return { ...timer, children: { timeout } };
-    },
-
-/*
-    ["init"]: ({ delay, timestamp, ...timer }) =>(console.log("INPUT", timer),
-    ({
-        ...timer,
-        children: { "timeout": Effect({ start, args: { delay: timer.delay, timestamp: timer.timestamp } }) }
-    })),
-*/
+    ["init"]: ({ delay, timestamp }) => update
+        .prop("timer-effect", Effect({ start, args:[delay, timestamp] })),
 
     [state `initial`]:
     {
-        [on `#timeout.fired`]: timer =>
-            ({ ...timer, state: "fired" }),
+        [on `#timeout.fired`]:
+            update.prop("state", "fired"),
 
-        [on `cancel`]: ({ children, ...timer }) =>
-            ({ ...timer, state: "canceled" })
+        [on `cancel`]: update
+            .prop("state", "canceled")
+            .prop("timer-effect", null)
     },
 });
 

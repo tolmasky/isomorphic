@@ -42,6 +42,11 @@ module.exports.define = function define(callback)
     }
 }
 
+module.exports.impossible = function(state, event)
+{
+    throw new Error(`It should be impossible to receive ${event.name} while ${state.name} is in ${attrs(state).status}`);
+}
+
 function handle(routes, state, event, childUpdate, push, required)
 {
     const { status } = attrs(state);

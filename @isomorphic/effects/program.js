@@ -52,8 +52,10 @@ module.exports = function effectsProgram (initial, pull)
 
 function debug(node, ref = "", lasts = [])
 {
-    const name = node[type].name;
-    const { children, state } = node;
+    if (!node)
+        return `[Nothing] #${ref}`;
+
+    const { name, children } = Object.getPrototypeOf(node);
 /*    const props = Object.keys(attributes)
         .map(key => `${key} = ${toValueString(attributes[key])}`);
 
@@ -63,7 +65,7 @@ function debug(node, ref = "", lasts = [])
     const padding = branches(lasts);
     const keys = Object.keys(children);
     const childrenString = keys
-        .map((key, index) => debug(children[key], key, lasts.concat(index === keys.length - 1)))
+        .map((key, index) => debug(node[key], key, lasts.concat(index === keys.length - 1)))
         .join("\n");
 
     return `${padding}${name}${ref && "#" + ref} [${state}]` +

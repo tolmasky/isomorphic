@@ -19,6 +19,8 @@ const events = {
 
 const manager = state.machine `EffectsManager`
 ({
+    [state.property.child `root`],
+
     ["init"]: manager =>
         ({ ...manager, effects: MakeEmpty() }),
 
