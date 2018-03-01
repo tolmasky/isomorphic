@@ -59,38 +59,41 @@ function debug(node, ref = "", lasts = [])
     if (!node)
         return `${padding}#${ref}: Nothing`;
 
-    const { name, children } = Object.getPrototypeOf(node).constructor;
-/*    const props = Object.keys(attributes)
-        .map(key => `${key} = ${toValueString(attributes[key])}`);
+    const type = Object.getPrototypeOf(node).constructor;
+    const { name, properties, children } = type;
+    const props = Object.keys(properties)
+        .filter(key => key !== "state")
+        .map(key => `${key}: ${toValueString(node[key])}`);
 
-    const propsString = props.length > 0 ? ` ${props.join(" ")} ` : "";
-    const nonChildren = `${state.name}${propsString}`;*/
-    
+    const propsString = props.length > 0 ? ` ${props.join(", ")} ` : "";
 
     const keys = Object.keys(children);
     const childrenString = keys
         .map((key, index) => debug(node[key], key, lasts.concat(index === keys.length - 1)))
         .join("\n");
 
-    return `${padding}${ref ? "#" + ref + ": " : ""}${name} [${node.state}]` +
+    return `${padding}${ref ? "#" + ref + ": " : ""}${name} [${node.state}] {${propsString}}` +
             (keys.length > 0 ? `\n${childrenString}` : "");
 }
 
 function toValueString(value)
 {
     if (typeof value === "function")
-        return `{ ${value.name || "ƒ"} }`;
+        return `${value.name || "ƒ"}`;
 
     if (typeof value === "string")
         return `${JSON.stringify(value)}`;
 
+    if (typeof value === "undefined")
+        return "Nothing";
+
     if (!Object.getPrototypeOf(value))
-        return "{ { } }";
+        return "Object";
 
     if (typeof value === "object" && !Array.isArray(value))
-        return `{ ${value.constructor.name} }`;
+        return `${value.constructor.name}`;
 
-    return `{ ${JSON.stringify(value)} }`;
+    return `${JSON.stringify(value)}`;
 }
 
 function branches(lasts)

@@ -11,37 +11,39 @@ const EffectSymbol = Symbol("effect");
 const events = {
     refed: (key, child, { name, ...rest }) =>
         ({ name: `#${key}.${name}`, ...rest }),
-    replace: (key, child, { timestamp }) => 
+    replace: (key, child, timestamp) => 
         ({ name: "replace-child", data: { child, key }, timestamp }),
     effect: (name, data, effect, timestamp) => 
-        ({ name:EffectSymbol, data: { event: { name, data, timestamp: Date.now() }, effect } })
+        ({ name:EffectSymbol, data: { event: { name, data, timestamp }, effect, timestamp } })
 }
 
 const manager = state.machine `EffectsManager`
 ({
+    [property `next-unique-effect-uuid`]: "number",
     [property `effects`]: "object",
     [property `push`]: "function",
 
     [property.child `root`]: "object",
 
     ["init"]: update
+        .prop("next-unique-effect-uuid", 0)
         .prop("effects", MakeEmpty()),
 
     [state `initial`]:
     {
-        [on `start`]:
-            updateEffects,
+        [on `start`]: (manager, { timestamp }) =>
+            updateEffects(manager, timestamp),
 
-        [on (EffectSymbol)]: (manager, { data }) =>
-            updateEffects(bubble(manager, data.event, data.effect))
+        [on (EffectSymbol)]: (manager, { data, timestamp }) =>
+            updateEffects(bubble(manager, data.event, data.effect), timestamp)
     }
 });
 
 module.exports = manager;
 
-function bubble(machine, event, euuid)
+function bubble(node, event, uuid)
 {
-    const entry = metadata(machine).effects[euuid];
+    const entry = metadata(node).effects[uuid];
 
     if (!entry)
         throw new Error(`No effect registered for ${event.name}`);
@@ -50,20 +52,51 @@ function bubble(machine, event, euuid)
     {
         const child = node[key];
 
-        if (Object.getPrototypeOf(child).constructor === Effect && metadata(child).uuid)
+        if (child instanceof Effect)
             return update(node, events.refed(key, child, event));
 
-        const updatedChild = bubble(child, event, euuid);
+        const updatedChild = bubble(child, event, uuid);
 
         if (child === updatedChild)
             return node;
 
-        return update(node, events.replace(key, updatedChild, event));
-    }, machine);
+        return update(node, events.replace(key, updatedChild, event.timestamp));
+    }, node);
 }
 
-function updateEffects(manager)
+function register(node, timestamp, uuid)
 {
+    if (node instanceof Effect)
+        return [update(node, { name:"register", timestamp, data:{ uuid } }), uuid + 1];
+
+    const entry = metadata(node).effects["unregistered"];
+
+    if (!entry)
+        throw new Error(`No effect registered for ${event.name}`);
+
+    return entry.keys.reduce(function ([node, uuid], key)
+    {
+        const child = node[key];
+        const [updatedChild, updatedUUID] = register(child, timestamp, uuid);
+
+        if (child === updatedChild)
+            return [node, uuid];
+
+        return [update(node, events.replace(key, updatedChild, timestamp)), updatedUUID];
+    }, [node, uuid]);
+}
+
+function updateEffects(manager, timestamp)
+{
+    if (metadata(manager).effects["unregistered"])
+    {
+        const [registered, nextUUID] =
+            register(manager, timestamp, manager["next-unique-effect-uuid"]);
+        const updated = update.prop("next-unique-effect-uuid", nextUUID)(registered);
+
+        return updateEffects(updated, timestamp);
+    }
+
     const { effects: active, push } = manager;
     const { effects: referenced } = metadata(manager);
 

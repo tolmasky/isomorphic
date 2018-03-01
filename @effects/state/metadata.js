@@ -28,8 +28,8 @@ function getComputedMetadata(node)
 //console.log(Type+"", node);
     if (Type === require("./effect"))
     {
-        const { start, args } = node;
-        const uuid = getMerkleChecksum(node);
+        const { start, args, shared } = node;
+        const uuid = !shared ? (node.uuid || "unregistered") : getMerkleChecksum(node);
 
         return { effects: { [uuid]: { start, args } }, uuid };
     }

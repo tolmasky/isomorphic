@@ -77,6 +77,7 @@ state.machine.update = function update (record, event)
     const { name, states } = Type.constructor;
     const events = states["state:" + state];
 console.log("IM IN HERE FOR " + name + " " + state + " " + event.name.toString());
+console.log(event);
     if (event.name !== ReplaceChildEvent)
     {
         if (!events || !hasOwnProperty.call(events, event.name))
