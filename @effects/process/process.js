@@ -3,16 +3,17 @@ const Effect = require("@effects/state/effect");
 const update = require("@effects/state/update");
 const ignore = (state, event) => state;
 
-
 const fork = require("./fork");
-const events = {
-    kill: event => ({ ...event, name: "kill" })
-};
+const finish = (_, event) => update
+    .prop("state", "finished")
+    .prop("event", { ...event, name:"finished" });
+
 
 const Process = state.machine `Process`
 ({
     [property `pid`]: "number",
     [property `kill-on-start`]: "boolean",
+    [property `event`]: "object",
 
     [property.child `fork-effect`]: Effect,
     [property.child `kill-effect`]: Effect,
@@ -30,8 +31,7 @@ const Process = state.machine `Process`
         [on `kill`]: update
             .prop("kill-on-start", true),
 
-        [on `#fork.exit`]: update
-            .prop("state", "finished")
+        [on `#fork.exit`]: finish
     },
 
     [state `running`]:
@@ -40,16 +40,14 @@ const Process = state.machine `Process`
             .prop("state", "killing")
             .prop("kill-effect", Effect({ args:[pid], start: fork.kill })),
 
-        [on `#fork-effect.exit`]: update
-            .prop("state", "finished")
+        [on `#fork-effect.exit`]: finish
     },
 
     [state `killing`]:
     {
         [on `kill`]: ignore,
 
-        [on `#fork-effect.exit`]: update
-            .prop("state", "finished")
+        [on `#fork-effect.exit`]: finish
     },
 
     [state `finished`]: { }

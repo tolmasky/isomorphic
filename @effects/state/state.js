@@ -76,8 +76,7 @@ state.machine.update = function update (record, event)
     const Type = Object.getPrototypeOf(record);
     const { name, states } = Type.constructor;
     const events = states["state:" + state];
-console.log("IM IN HERE FOR " + name + " " + state + " " + event.name.toString());
-console.log(event);
+
     if (event.name !== ReplaceChildEvent)
     {
         if (!events || !hasOwnProperty.call(events, event.name))
@@ -85,24 +84,24 @@ console.log(event);
                 return record;
             else
                 throw new Error(`State ${name}.${state} can't handle event ${event.name.toString()}.`);
-console.log(events[event.name]);
+
         return events[event.name](record, event);
     }
 
     const { key, child } = event.data;
 
-    const previousChildState = record[key].state;
-    const proposedChildState = child.state;
+    const previousChildEvent = record[key].event;
+    const proposedChildEvent = child.event;
 
     const updatedRecord = Object.assign(
         Object.create(Type),
         record,
         { [key]: child });
 
-    if (previousChildState === proposedChildState)
+    if (previousChildEvent === proposedChildEvent)
         return updatedRecord;
 
-    const stateChange = `#${key}.${proposedChildState}`;
+    const stateChange = `#${key}.${proposedChildEvent.name}`;
 
     return update(updatedRecord, { ...event, name:stateChange });
 }
