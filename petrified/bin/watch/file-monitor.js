@@ -6,7 +6,7 @@ const { matcher } = require("micromatch");
 
 module.exports = function FileMonitor({ source, match })
 {
-    return Effect({ start, args: [source, match] });
+    return Effect({ start, args: [source, match], shared: true });
 }
 
 function start(push, source, match)

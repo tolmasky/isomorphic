@@ -38,7 +38,7 @@ const Process = state.machine `Process`
     {
         [on `kill`]: ({ pid }) => update
             .prop("state", "killing")
-            .prop("kill-effect", Effect({ args:[pid], start: fork,kill })),
+            .prop("kill-effect", Effect({ args:[pid], start: fork.kill })),
 
         [on `#fork-effect.exit`]: update
             .prop("state", "finished")
@@ -57,7 +57,7 @@ const Process = state.machine `Process`
 
 module.exports = Process;
 
-module.exports.Spawn = function (path, args, timestamp)
+module.exports.Spawn = function (path, args)
 {
-    return Process({ timestamp, path, args });
+    return Process({ path, args });
 }
