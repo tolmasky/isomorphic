@@ -1,15 +1,12 @@
 {
-  "name": "@isomorphic/runtime",
+  "name": "@isomorphic/react-inject",
   "version": "1.0.0",
   "description": "",
-  "main": "isomorphic-runtime.js",
+  "main": "isomorphic-react-inject.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "generic-jsx": "^18.0.0-beta.3"
-  }
+  "license": "MIT"
 }

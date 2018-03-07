@@ -2,7 +2,7 @@
 const { basename, join } = require("path");
 const { existsSync, readFileSync, writeFileSync } = require("fs");
 
-const getMerkleChecksum = require("isomorphic-runtime/get-merkle-checksum");
+const getMerkleChecksum = require("@isomorphic/runtime/get-merkle-checksum");
 const { getArguments } = require("generic-jsx");
 
 

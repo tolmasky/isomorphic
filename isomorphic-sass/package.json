@@ -1,15 +1,18 @@
 {
-  "name": "@isomorphic/runtime",
+  "name": "@isomorphic/sass",
   "version": "1.0.0",
   "description": "",
-  "main": "isomorphic-runtime.js",
+  "main": "isomorphic-sass.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": "4.x.x"
+  },
   "keywords": [],
-  "author": "",
+  "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
   "dependencies": {
-    "generic-jsx": "^18.0.0-beta.3"
+    "node-sass": "^4.6.1"
   }
 }

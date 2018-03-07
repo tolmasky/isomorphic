@@ -1,5 +1,5 @@
 {
-  "name": "isomorphic-tree",
+  "name": "@isomorphic/tree",
   "version": "1.0.0",
   "description": "",
   "main": "isomorphic-tree.js",
@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "micromatch": "^3.1.5",
-    "sf-fs": "^2.0.0"
+    "sf-fs": "^2.0.0",
+    "generic-jsx": "^18.0.0-beta.3"
   }
 }
