@@ -14,4 +14,4 @@ const serializedValue = objectSerializationStringify(myValue);
 console.log("Serialized to " + serializedValue.length + " bytes.");
 
 const objectSerializationParse = require("isomorphic-serialize/parse");
-objectSerializationParse(serializedValue);
+const revivedObject = objectSerializationParse(serializedValue);

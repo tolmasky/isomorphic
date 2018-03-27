@@ -1,6 +1,6 @@
 {
-  "name": "isomorphic-serialization",
-  "version": "1.0.0",
+  "name": "@isomorphic/serialize",
+  "version": "0.0.1-beta",
   "description": "",
   "main": "./isomorphic-serialization",
   "runkitExampleFilename": "runkit-example.js",
