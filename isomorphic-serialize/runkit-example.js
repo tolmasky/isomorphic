@@ -1,4 +1,4 @@
-const objectSerializationStringify = require("isomorphic-serialize/stringify");
+const { stringify, parse } = require("@isomorphic/serialize");
 
 const myValue = {
     name: "RunKit",
@@ -10,8 +10,7 @@ const bar = {
 
 myValue.bar = bar;
 
-const serializedValue = objectSerializationStringify(myValue);
+const serializedValue = stringify(myValue);
 console.log("Serialized to " + serializedValue.length + " bytes.");
 
-const objectSerializationParse = require("isomorphic-serialize/parse");
-const revivedObject = objectSerializationParse(serializedValue);
+const revivedObject = parse(serializedValue);
