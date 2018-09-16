@@ -5,6 +5,8 @@ const { existsSync, readFileSync, writeFileSync } = require("fs");
 const getMerkleChecksum = require("@isomorphic/runtime/get-merkle-checksum");
 const { getArguments } = require("generic-jsx");
 
+const React = (() => { try { return require("react") } catch (e) { } })();
+
 
 module.exports = function fsCache({ cache, transform })
 {
@@ -52,6 +54,9 @@ function cacheMetadata(aPath, metadata)
 
     writeFileSync(aPath, JSON.stringify(metadata, function (key, value)
     {
+        if (React && React.isValidElement(value))
+            return { type:value.type, props:value.props, __isReactElement: true };
+
         if (value instanceof Set)
             return Array.from(value);
 
@@ -64,7 +69,15 @@ function getCachedMetadata(aPath)
     if (!existsSync(aPath))
         return { };
 
-    return JSON.parse(readFileSync(aPath, "utf-8"));
+    return JSON.parse(readFileSync(aPath, "utf-8"), function (key, value)
+    {
+        if (React && value && typeof value === "object" && value.__isReactElement)
+        {
+            console.log(value);
+            return React.createElement(value.type, value.props);
+            }
+        return value;
+    });
 }
 
 function getContentsCachePath(cache, checksum, filename)

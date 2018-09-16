@@ -7,7 +7,11 @@ const CachedChecksums = new WeakMap();
 
 const NativeRegExp = /^function [$A-Z_a-z][0-9A-Z_a-z$]*\(\) { \[native code\] }$/;
 
-const { base, getArguments } = require("generic-jsx");
+const { base, getArguments } = (function ()
+{
+    try { return require("generic-jsx"); }
+    catch (e) { return { base: x => x, getArguments: () => [] } };
+})();
 
 module.exports = getMerkleChecksum;
 
