@@ -83,6 +83,7 @@ function fromObjectSerialization(index, context)
     {
         return context.deserializedObjects[index] = base.withMutations(function(aDeserializedObject)
         {
+            context.deserializedObjects[index] = aDeserializedObject;
             mutator(aDeserializedObject, serializedObject, context, fromObjectSerialization);
         });
     }
