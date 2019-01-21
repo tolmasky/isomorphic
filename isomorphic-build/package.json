@@ -1,0 +1,23 @@
+{
+  "name": "@isomorphic/build",
+  "version": "1.0.0",
+  "description": "",
+  "main": "isomorphic-build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Francisco Ryan Tolmasky I",
+  "license": "MIT",
+  "dependencies": {
+    "@algebraic/collections": "^1.0.0-alpha.5",
+    "@algebraic/type": "^1.0.0-alpha.5",
+    "@cause/cause": "^1.0.0-alpha.7",
+    "@cause/fork": "^1.0.0-alpha.7",
+    "@cause/pool": "^1.0.0-alpha.7",
+    "@cause/process": "^1.0.0-alpha.7",
+    "commander": "^2.19.0",
+    "fast-glob": "^2.2.6",
+    "moment": "^2.23.0"
+  }
+}
