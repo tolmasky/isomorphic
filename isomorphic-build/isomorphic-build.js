@@ -1,10 +1,11 @@
-const { string } = require("@algebraic/type");
-const { List, OrderedMap, Set } = require("@algebraic/collections");
+const { data, string } = require("@algebraic/type");
+const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 
 const { Cause, field, event, update, IO } = require("@cause/cause");
 const Pool = require("@cause/pool");
 const Fork = require("@cause/fork");
 const Plugin = require("./plugin");
+const Response = Plugin.Response;
 
 
 module.exports = async function main(entrypoints, options)
@@ -15,28 +16,37 @@ module.exports = async function main(entrypoints, options)
     return await promise;
 }
 
+const Bundle = data `Bundle` (
+    entrypoint      => string,
+    descendents     => Set(string),
+    compilations    => [Map(string, Response), Map(string, Response)()]);
+
 const Build = Cause("Build",
 {
-    [field `entrypoints`]: -1,
+    [field `bundles`]: -1,
+
     [field `transformPool`]: -1,
     [field `responses`]: -1,
     [field `visited`]: -1,
 
     init({ entrypoints: iterable, concurrency })
     {
-        const entrypoints = List(string)(iterable);
+        const bundles = Map(string, Bundle)
+            (iterable.map(entrypoint =>
+                [entrypoint, Bundle({ entrypoint, descendents:Set(string)([entrypoint]) })]));
+
 console.log("AMOUNT: " + concurrency);
         const fork = Fork.create({ type: Plugin, fields: { path: "../isomorphic-compile-javascript/" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
         const responses = OrderedMap(string, Plugin.Response)();
-        const visited = Set(string)(entrypoints);
+        const visited = Set(string)(iterable);
 
-        return { transformPool, entrypoints, responses, visited };
+        return { transformPool, responses, visited, bundles };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
-        Pool.Enqueue({ requests: build.entrypoints })),
+        Pool.Enqueue({ requests: List(string)(build.bundles.keySeq()) })),
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
@@ -52,12 +62,27 @@ console.log("AMOUNT: " + concurrency);
         const request = inBuild.transformPool.occupied.get(index);
         const responses = inBuild.responses.set(request, response);
 
+        const dependencies = response.metadata.dependencies;
+        const compilations = Map(string, Response)(dependencies
+            .filter(dependency => inBuild.responses.has(dependency))
+            .map(dependency => [dependency, inBuild.responses.get(dependency)]))
+
+        const bundles = inBuild.bundles
+            .map(bundle => !bundle.descendents.has(request) ?
+                bundle : Bundle(
+                {
+                    ...bundle,
+                    compilations: bundle.compilations.merge(compilations),
+                    descendents: bundle.descendents.union(dependencies)
+                }));
+
         const requests = response.metadata.dependencies.subtract(inBuild.visited);
         const visited = inBuild.visited.union(requests);
 
         const outBuild = inBuild
             .set("responses", responses)
-            .set("visited", visited);
+            .set("visited", visited)
+            .set("bundles", bundles);
 
 //        console.log("REMAINING " + outBuild.transformPool.occupied.size + " " + requests.size);
 //        console.log("COMPLETED: " + responses.size + " " + visited.size);
@@ -65,6 +90,7 @@ console.log("AMOUNT: " + concurrency);
         if (inBuild.transformPool.occupied.size === 1 &&
             requests.size === 0)
         {
+        console.log(bundles);
             console.log("ALL DONE");
             process.exit(1);
         }
