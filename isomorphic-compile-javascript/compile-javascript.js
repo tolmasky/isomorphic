@@ -15,7 +15,11 @@ const readResponse = path =>
 const writeResponse = (path, response) =>
     writeFileSync(path, JSON.stringify(serialize(Response, response)), "utf-8");
 
-const builtIns = require("node-libs-browser");
+const builtIns =
+{
+    ...require("node-libs-browser"),
+    module: require.resolve("./built-in/module")
+};
 const { hasOwnProperty } = Object;
 
 
@@ -56,7 +60,7 @@ module.exports = function compile({ input, cache, options })
         return response;
     })();
 
-    const dependencies = metadata.dependencies.map(resolve("", input));
+    const dependencies = metadata.dependencies.map(resolve("", input)).filter(x => !!x);
     const resolvedMetadata = Metadata({ ...metadata, dependencies });
     const resolvedResponse = Response({ output, metadata: resolvedMetadata });
 
