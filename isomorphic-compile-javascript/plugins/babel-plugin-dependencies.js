@@ -1,5 +1,5 @@
 const { join, sep, dirname } = require("path");
-const Metadata = require("../metadata");
+const Metadata = require("../../isomorphic-build/plugin/metadata");
 
 
 module.exports = function ({ types: t })

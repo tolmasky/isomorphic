@@ -1,10 +1,10 @@
 const { string } = require("@algebraic/type");
-const { List } = require("@algebraic/collections");
+const { List, OrderedMap, Set } = require("@algebraic/collections");
 
 const { Cause, field, event, update, IO } = require("@cause/cause");
 const Pool = require("@cause/pool");
 const Fork = require("@cause/fork");
-const Worker = require("./worker");
+const Plugin = require("./plugin");
 
 
 module.exports = async function main(entrypoints, options)
@@ -19,16 +19,20 @@ const Build = Cause("Build",
 {
     [field `entrypoints`]: -1,
     [field `transformPool`]: -1,
+    [field `responses`]: -1,
+    [field `visited`]: -1,
 
     init({ entrypoints: iterable, concurrency })
     {
         const entrypoints = List(string)(iterable);
-
-        const fork = Fork.create({ type: Worker, fields: { } });
+console.log("AMOUNT: " + concurrency);
+        const fork = Fork.create({ type: Plugin, fields: { path: "../isomorphic-compile-javascript/" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
+        const responses = OrderedMap(string, Plugin.Response)();
+        const visited = Set(string)(entrypoints);
 
-        return { transformPool, entrypoints };
+        return { transformPool, entrypoints, responses, visited };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
@@ -36,12 +40,39 @@ const Build = Cause("Build",
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
-        
-        console.log("well, here." + request);
+
+        console.log("COMPILING " + request);
         return update.in(
             build,
             ["transformPool", "items", index],
-            Worker.Transform({ source: request })) },
+            Plugin.Request({ input: request })) },
+
+    [event._on (Plugin.Response)]: function (inBuild, response, [,, index])
+    {
+        const request = inBuild.transformPool.occupied.get(index);
+        const responses = inBuild.responses.set(request, response);
+
+        const requests = response.metadata.dependencies.subtract(inBuild.visited);
+        const visited = inBuild.visited.union(requests);
+
+        const outBuild = inBuild
+            .set("responses", responses)
+            .set("visited", visited);
+
+//        console.log("REMAINING " + outBuild.transformPool.occupied.size + " " + requests.size);
+//        console.log("COMPLETED: " + responses.size + " " + visited.size);
+
+        if (inBuild.transformPool.occupied.size === 1 &&
+            requests.size === 0)
+        {
+            console.log("ALL DONE");
+            process.exit(1);
+        }
+
+        return update.in.reduce(outBuild,
+            "transformPool",
+            [Pool.Release({ indexes:[index] }), Pool.Enqueue({ requests })]);
+    }
 
 //    [event._on(Log)]: (main, log) => (console.log(log.message), [main, []]),
 /*

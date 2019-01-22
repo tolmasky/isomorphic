@@ -1,7 +1,6 @@
 const { string } = require("@algebraic/type");
 const { Set } = require("@algebraic/collections");
-
-const Metadata = require("../metadata");
+const Metadata = require("../../isomorphic-build/plugin/metadata");
 
 
 module.exports = function (_, options)

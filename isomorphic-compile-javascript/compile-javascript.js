@@ -1,38 +1,66 @@
 const { existsSync, readFileSync, writeFileSync } = require("fs");
-const { join } = require("path");
+const { basename, extname, join } = require("path");
 const { transform: babelTransform } = require("@babel/core");
 
 const { data, string, deserialize, serialize } = require("@algebraic/type");
-const Metadata = require("./metadata");
-
-const Result = data `Result` (
-    output          => string,
-    metadata        => Metadata );
-
+const Metadata = require("../isomorphic-build/plugin/metadata");
+const { Response } = require("../isomorphic-build/plugin");
 const getSha512 = require("./get-sha-512");
 const getResolvedOptions = require("./get-resolved-options");
+
+const resolve = require("./require-resolve");
+
+const readResponse = path =>
+    deserialize(Response, JSON.parse(readFileSync(path, "utf-8")));
+const writeResponse = (path, response) =>
+    writeFileSync(path, JSON.stringify(serialize(Response, response)), "utf-8");
+
+const builtIns = require("node-libs-browser");
+const { hasOwnProperty } = Object;
 
 
 module.exports = function compile({ input, cache, options })
 {
+    if (extname(input) === ".json")
+        return Response({ output: input, metadata: Metadata({}) });
+
+    if (hasOwnProperty.call(builtIns, input))
+        return Response({ output: builtIns[input] || "SKIP", metadata: Metadata({}) });
+
     const resolvedOptions = getResolvedOptions(options);
     const contents = readFileSync(input, "utf-8");
-    const checksum = getSha512(contents);
-    const resultCachePath = join(cache, "results", checksum + ".json");
+    const contentsChecksum = getSha512(contents);
+    const inputChecksum = getSha512.JSON({ input, contentsChecksum });
+    const inputCachePath =
+        join(cache, "inputs", basename(input, extname(input)) + ".json");
 
-    if (existsSync(resultCachePath))
-        return deserialize(Result,
-            JSON.parse(readFileSync(resultCachePath, "utf-8")));
+    if (existsSync(inputCachePath))
+        return readResponse(inputCachePath);
 
-    const { code, metadata } = babelTransform(contents, resolvedOptions);
-    const transformedChecksum = getSha512(code);
+    const contentsCachePath =
+        join(cache, "contents", contentsChecksum + ".json");
 
-    const output = join(cache, "outputs", transformedChecksum + ".js");
-    const result = Result({ metadata, output });
+    const { output, metadata } = (function ()
+    {
+        if (existsSync(contentsCachePath))
+            return readResponse(contentsCachePath);
 
-    writeFileSync(output, code, "utf-8");
-    writeFileSync(resultCachePath,
-        JSON.stringify(serialize(Result, result)), "utf-8");
+        const { code, metadata } = babelTransform(contents, resolvedOptions);
+        const transformedChecksum = getSha512(code);
+        const output = join(cache, "outputs", transformedChecksum + ".js");
+        const response = Response({ output, metadata });
 
-    return result;
+        writeFileSync(output, code, "utf-8");
+        writeResponse(contentsCachePath, response);
+
+        return response;
+    })();
+
+    const dependencies = metadata.dependencies.map(resolve("", input));
+    const resolvedMetadata = Metadata({ ...metadata, dependencies });
+    const resolvedResponse = Response({ output, metadata: resolvedMetadata });
+
+    writeResponse(inputCachePath, resolvedResponse);
+
+    return resolvedResponse;
 }
