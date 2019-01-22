@@ -15,21 +15,18 @@ const readResponse = path =>
 const writeResponse = (path, response) =>
     writeFileSync(path, JSON.stringify(serialize(Response, response)), "utf-8");
 
-const builtIns =
-{
-    ...require("node-libs-browser"),
-    module: require.resolve("./built-in/module")
-};
-const { hasOwnProperty } = Object;
+const polyfill = require("./polyfill");
 
 
-module.exports = function compile({ input, cache, options })
+module.exports = function compile({ input, cache, options, ignoredDependencies })
 {
     if (extname(input) === ".json")
         return Response({ output: input, metadata: Metadata({}) });
 
-    if (hasOwnProperty.call(builtIns, input))
-        return Response({ output: builtIns[input] || "SKIP", metadata: Metadata({}) });
+    const replacement = polyfill(input);
+
+    if (replacement)
+        return compile({ cache, options, ...replacement });
 
     const resolvedOptions = getResolvedOptions(options);
     const contents = readFileSync(input, "utf-8");
@@ -60,7 +57,10 @@ module.exports = function compile({ input, cache, options })
         return response;
     })();
 
-    const dependencies = metadata.dependencies.map(resolve("", input)).filter(x => !!x);
+    const dependencies = metadata.dependencies
+        .filter(dependency =>
+            !ignoredDependencies || ignoredDependencies.test(dependency))
+        .map(resolve("", input));
     const resolvedMetadata = Metadata({ ...metadata, dependencies });
     const resolvedResponse = Response({ output, metadata: resolvedMetadata });
 
