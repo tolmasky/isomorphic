@@ -6,6 +6,7 @@ const Pool = require("@cause/pool");
 const Fork = require("@cause/fork");
 const Plugin = require("./plugin");
 const Response = Plugin.Response;
+const { basename } = require("path");
 
 
 module.exports = async function main(entrypoints, options)
@@ -66,6 +67,7 @@ console.log("AMOUNT: " + concurrency);
         const compilations = Map(string, Response)(dependencies
             .filter(dependency => inBuild.responses.has(dependency))
             .map(dependency => [dependency, inBuild.responses.get(dependency)]))
+            .set(request, response);
 
         const bundles = inBuild.bundles
             .map(bundle => !bundle.descendents.has(request) ?
@@ -89,9 +91,20 @@ console.log("AMOUNT: " + concurrency);
 
         if (inBuild.transformPool.occupied.size === 1 &&
             requests.size === 0)
-        {
-        console.log(bundles);
-            console.log("ALL DONE");
+        {            
+            const root = "/Users/tolmasky/Development/tonic/app";
+    
+            for (const [entrypoint, bundle] of bundles)
+            {
+                console.log(basename(entrypoint) + ".bundle.js contains " + bundle.compilations.size + " files for " + bundle.descendents.size + " tot: " + outBuild.responses.size);
+                //console.log("COMPILATIONS");
+                //console.log(List(string)(bundle.compilations.keySeq()).sort().join("\n"));
+                const destination = root + "/results/" + basename(entrypoint) + ".bundle.js";
+                //console.log(root, destination);
+                require("./bundle/concatenate")({ root, destination, bundle });
+            }
+
+            console.log("ALL DONE?");
             process.exit(1);
         }
 
