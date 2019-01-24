@@ -1,24 +1,15 @@
-const parameters = ["exports", "require", "module", "__filename", "__dirname"];
+const parameters = ["exports", "require", "module", "__filename", "__dirname"]
+const reversed = [...parameters].reverse();
 
 
 module.exports = function moduleWrap(globals, contents)
 {
-    const index = last(parameters, key => globals[key]) + 1;
+    const index = reversed.findIndex(key => globals.has(key));
     const used =
-        index <= 0 ? "" :
-        index >= parameters.length ? parameters.join(", ") :
-        parameters.slice(0, index).join(", ");
+        index < 0 ? "" :
+        index >= parameters.length - 1 ? 
+            parameters.join(", ") :
+            parameters.slice(0, index + 1).join(", ");
 
     return "(function (" + used + "){\n" + contents + "\n})";
-}
-
-function last(array, f)
-{
-    var count = array.length;
-    
-    while (count--)
-        if (f(array[count]))
-            return count;
-
-    return -1;
 }
