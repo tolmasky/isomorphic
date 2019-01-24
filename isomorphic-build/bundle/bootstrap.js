@@ -2,15 +2,15 @@
 {
     function cachedRequire(index)
     {
-        const module =
-            Module._cache[index] ||
-            (Module._cache[index] = new Module(index));
+        const module = Module._cache[index] || new Module(index);
 
         return module.exports;
     }
 
     function Module(index)
     {
+        Module._cache[index] = this;
+
         const file = files[index];
         const precompiled = compilations[file[0]];
         const references = file[1];
