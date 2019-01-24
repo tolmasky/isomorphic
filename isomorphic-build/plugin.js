@@ -7,6 +7,7 @@ const Request = data `Request` (
 
 const Response = data `Response` (
     output          => string,
+    checksum        => string,
     metadata        => Metadata );
 
 const Plugin = Cause(`Plugin`,

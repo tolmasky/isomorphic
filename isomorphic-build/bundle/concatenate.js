@@ -6,6 +6,7 @@ const JSONPreamble = "function(){return";
 const JSONPostamble = "\n}";
 const MUIDStore = require("./muid-store");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
+const bootstrapPath = require.resolve("./bootstrap");
 
 
 module.exports = function concatenate({ bundle, root, destination })
@@ -22,10 +23,10 @@ module.exports = function concatenate({ bundle, root, destination })
     const { fs, mount } = fsAndMount();
     const modules = new MUIDStore(module => module.checksum);
 
-    compilations.map(function ({ output }, path)
+    compilations.map(function ({ output, checksum }, path)
     {
 //        const { output, assets } = descendents.get(index);
-        const module = new Module(derooted(path), output);
+        const module = new Module(derooted(path), output, checksum);
 
         mount(modules.for(module), module.path);
 //        Array.from(assets || [], path => mount(-1, derooted(path)));
@@ -33,9 +34,9 @@ module.exports = function concatenate({ bundle, root, destination })
     });
 
     // The first item is always the bootstrap file, it doesn't get wrapped.
-//    append("(function (global) { (function (compiled, fs, entrypoint) {");
-//    append(readFileSync(children[0].include));
-//    append("} )([");
+    append("(function (global) { (function (compiled, fs, entrypoint) {");
+    append(readFileSync(bootstrapPath));
+    append("} )([");
 
     for (const module of modules.finalize())
     {
@@ -82,10 +83,10 @@ module.exports = function concatenate({ bundle, root, destination })
     }
 }
 
-function Module(path, include)
+function Module(path, include, checksum)
 {
     this.contents = readFileSync(include);
-    this.checksum = getChecksum(this.contents);
+    this.checksum = checksum;
     this.path = path;
     this.json = extname(path) === ".json";
 }

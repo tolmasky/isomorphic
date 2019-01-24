@@ -7,6 +7,7 @@ const Metadata = require("@isomorphic/build/plugin/metadata");
 const { Response } = require("@isomorphic/build/plugin");
 const getSha512 = require("./get-sha-512");
 const getResolvedOptions = require("./get-resolved-options");
+const moduleWrap = require("./module-wrap");
 
 const resolve = require("./require-resolve");
 
@@ -20,7 +21,13 @@ const polyfill = require("./polyfill");
 module.exports = function compile({ input, cache, options, ignoredDependencies })
 {
     if (extname(input) === ".json")
-        return Response({ output: input, metadata: Metadata({}) });
+    {
+        const contents = readFileSync(input, "utf-8");
+        const checksum = getSha512(contents);
+        const metadata = Metadata({});
+
+        return Response({ output: input, checksum, metadata });
+    }
 
     const replacement = polyfill(input);
 
@@ -40,28 +47,31 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
     const contentsCachePath =
         join(cache, "contents", contentsChecksum + ".json");
 
-    const { output, metadata } = (function ()
+    const unresolvedResponse = (function ()
     {
         if (existsSync(contentsCachePath))
             return readResponse(contentsCachePath);
 
         const { code, metadata } = babelTransform(contents, resolvedOptions);
-        const transformedChecksum = getSha512(code);
+        const wrapped = moduleWrap(metadata.globals, code);
+        const transformedChecksum = getSha512(wrapped);
         const output = join(cache, "outputs", transformedChecksum + ".js");
-        const response = Response({ output, metadata });
+        const response = Response({ output, metadata, checksum: transformedChecksum });
 
-        writeFileSync(output, code, "utf-8");
+        writeFileSync(output, wrapped, "utf-8");
         writeResponse(contentsCachePath, response);
 
         return response;
     })();
 
+    const { metadata } = unresolvedResponse;
     const dependencies = metadata.dependencies
         .filter(dependency =>
             !ignoredDependencies || ignoredDependencies.test(dependency))
         .map(resolve("", input));
     const resolvedMetadata = Metadata({ ...metadata, dependencies });
-    const resolvedResponse = Response({ output, metadata: resolvedMetadata });
+    const resolvedResponse =
+        Response({ ...unresolvedResponse, metadata: resolvedMetadata });
 
     writeResponse(inputCachePath, resolvedResponse);
 
