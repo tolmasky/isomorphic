@@ -33,7 +33,7 @@ const Build = Cause("Build",
     [field `visited`]: -1,
     [field `cache`]: -1,
 
-    init({ targets: iterable, root, concurrency, cache, destination })
+    init({ targets: iterable, root, concurrency, cache })
     {
         mkdirp(`${cache}/contents`);
         mkdirp(`${cache}/outputs`);
