@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/build",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "",
   "main": "isomorphic-build.js",
   "scripts": {
@@ -16,8 +16,8 @@
     "@cause/fork": "1.0.0-alpha.9",
     "@cause/pool": "1.0.0-alpha.9",
     "@cause/process": "1.0.0-alpha.9",
-    "@isomorphic/babel-preset": "1.0.0-alpha.2",
-    "@isomorphic/compile-javascript": "1.0.0-alpha.2",
+    "@isomorphic/babel-preset": "1.0.0-alpha.3",
+    "@isomorphic/compile-javascript": "1.0.0-alpha.3",
     "commander": "^2.19.0",
     "fast-glob": "^2.2.6",
     "moment": "^2.23.0"
