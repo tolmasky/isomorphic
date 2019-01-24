@@ -16,51 +16,37 @@ module.exports = function concatenate({ bundle, root, destination })
 
     mkdirp(dirname(destination));
 
+    const output = { buffers:[], length:0 };
     const { entrypoint, compilations } = bundle;
 
-    const output = { buffers:[], length:0 };
-
-    const { fs, mount } = fsAndMount();
-    const modules = new MUIDStore(module => module.checksum);
-
-    compilations.map(function ({ output, checksum }, path)
-    {
-//        const { output, assets } = descendents.get(index);
-        const module = new Module(derooted(path), output, checksum);
-
-        mount(modules.for(module), module.path);
-//        Array.from(assets || [], path => mount(-1, derooted(path)));
-//        Array.from(entrypoints || [], path => mount(-1, derooted(path)));
-    });
-
     // The first item is always the bootstrap file, it doesn't get wrapped.
-    append("(function (global) { (function (compiled, fs, entrypoint) {");
     append(readFileSync(bootstrapPath));
-    append("} )([");
+    append("(window, ")
 
-    for (const module of modules.finalize())
+    const files = bundle.files.valueSeq().map(([index]) =>
+        [index, compilations.get(index)
+            .metadata.dependencies
+                .map(filename => bundle.files.get(filename)[1])]);
+
+    append(JSON.stringify(files));
+    append(", [");
+
+    for (const { output } of compilations)
     {
-        if (module.json)
+        const isJSON = extname(output) === ".json";
+
+        if (isJSON)
             append(JSONPreamble);
 
-        append(module.contents);
+        append(readFileSync(output));
 
-        if (module.json)
+        if (isJSON)
             append(JSONPostamble);
 
         append(",");
     }
-//console.log(JSON.stringify(fs, null, 2));
-    append("],");
-    append(JSON.stringify(fs, null, 2));
-    append(",");
 
-//    if (hydrate)
-//        append(JSON.stringify("/node_modules/isomorphic/internal/hydrate.js"));
-//    else
-        append(JSON.stringify(derooted(entrypoint)));
-
-    append(") } )(window)");
+    append("])");
 
     const concated = Buffer.concat(output.buffers, output.length);
 
@@ -81,14 +67,6 @@ module.exports = function concatenate({ bundle, root, destination })
     {
         return isAbsolute(path) ? "/" + relative(root, path) : path
     }
-}
-
-function Module(path, include, checksum)
-{
-    this.contents = readFileSync(include);
-    this.checksum = checksum;
-    this.path = path;
-    this.json = extname(path) === ".json";
 }
 
 function fsAndMount()

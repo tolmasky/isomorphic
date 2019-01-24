@@ -18,18 +18,25 @@ module.exports = function ({ types: t })
 
         const argument = node.arguments[0];
 
-        if (!t.isLiteral(argument))
+        if (!t.isStringLiteral(argument))
             return;
 
         const unresolved = node.arguments[0].value;
-
-//        if (unresolved.indexOf("isomorphic/internal/") === 0)
-//            return;
-
         const metadata = state.file.metadata;
-        const dependencies = metadata.dependencies.add(unresolved);
+        const previous = metadata.dependencies.valueSeq()
+            .findIndex(dependency => dependency === unresolved);
+        const index = previous > -1 ? previous : metadata.dependencies.size;
 
-        state.file.metadata = Metadata({ ...metadata, dependencies });
+        if (typeof index === "boolean")
+            console.log("WHY: " + metadata.dependencies+"");
+        if (previous <= -1)
+        {
+            const dependencies = metadata.dependencies.add(unresolved);
+
+            state.file.metadata = Metadata({ ...metadata, dependencies });
+        }
+
+        path.replaceWith({ ...node, arguments: [t.numericLiteral(index)] });
     };
 }
 

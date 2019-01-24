@@ -1,4 +1,4 @@
-const { data, union, string } = require("@algebraic/type");
+const { data, union, number, string } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 
 const Target = require("./target");
@@ -21,7 +21,8 @@ module.exports = async function main(options)
 
 const Bundle = data `Bundle` (
     entrypoint      => string,
-    compilations    => [Map(string, Response), Map(string, Response)()]);
+    files           => [OrderedMap(string, Array), OrderedMap(string, Array)()],
+    compilations    => [List(Response), List(Response)()]);
 
 const Build = Cause("Build",
 {
@@ -103,18 +104,30 @@ const Build = Cause("Build",
 
 });
 
-function toBundle(entrypoint, responses)
+function toBundle(entrypoint, compilations)
 {
-    return treeReduce.cyclic(
-        filename => responses
-            .get(filename)
-            .metadata.dependencies,
-        (bundle, filename) => Bundle(
-        {
-            ...bundle,
-            compilations: bundle.compilations
-                .set(filename, responses.get(filename))
-        }),
-        Bundle({ entrypoint }),
-        entrypoint);
+    const children = filename => compilations.get(filename).metadata.dependencies;
+    const update = function ([orderings, bundle], filename)
+    {
+        const compilation = compilations.get(filename);
+        const checksum = compilation.checksum;
+        const index = orderings.get(checksum, orderings.size);
+
+        const newCompilation = index === orderings.size;
+        const files = bundle.files.set(filename, [index, bundle.files.size]);
+
+        if (!newCompilation)
+            return [orderings, Bundle({ ...bundle, files })];
+
+        const outOrderings = orderings.set(checksum, index);
+        const outCompilations = bundle.compilations.push(compilation);
+        const outBundle =
+            Bundle({ ...bundle, files, compilations: outCompilations });
+
+        return [outOrderings, outBundle];
+    }
+    const bundle = Bundle({ entrypoint });
+    const orderings = Map(string, number)();
+
+    return treeReduce.cyclic(children, update, [orderings, bundle], entrypoint)[1];
 }
