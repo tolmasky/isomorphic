@@ -17,7 +17,6 @@ const writeResponse = (path, response) =>
 
 const polyfill = require("./polyfill");
 
-
 module.exports = function compile({ input, cache, options, ignoredDependencies })
 {
     if (extname(input) === ".json")
@@ -33,7 +32,7 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
     const contentsChecksum = getSha512(contents);
     const inputChecksum = getSha512.JSON({ input, contentsChecksum });
     const inputCachePath =
-        join(cache, "inputs", basename(input, extname(input)) + ".json");
+        join(cache, "inputs", basename(input, extname(input)) + "-" + inputChecksum + ".json");
 
     if (existsSync(inputCachePath))
         return readResponse(inputCachePath);
