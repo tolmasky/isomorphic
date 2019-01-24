@@ -1,6 +1,7 @@
 const { data, union, string } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 
+const Target = require("./target");
 const { Cause, field, event, update, IO } = require("@cause/cause");
 const Pool = require("@cause/pool");
 const Fork = require("@cause/fork");
@@ -13,12 +14,9 @@ const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 
 
-module.exports = async function main(entrypoints, options)
+module.exports = async function main(options)
 {
-    const promise =
-        IO.toPromise(Build.create({ ...options, entrypoints }));
-
-    return await promise;
+    return await IO.toPromise(Build.create(options));
 }
 
 const Bundle = data `Bundle` (
@@ -32,42 +30,38 @@ const Status = union `Status` (
 
 const Build = Cause("Build",
 {
-
+    [field `root`]: -1,
+    [field `targets`]: -1,
 
     [field `transformPool`]: -1,
     [field `responses`]: -1,
     [field `visited`]: -1,
-    [field `entrypoints`]: -1,
     [field `cache`]: -1,
-    [field `destination`]: -1,
 
-    init({ entrypoints: iterable, concurrency, cache, destination })
+    init({ targets: iterable, root, concurrency, cache, destination })
     {
         mkdirp(`${cache}/contents`);
         mkdirp(`${cache}/outputs`);
         mkdirp(`${cache}/inputs`);
-        
-        const bundles = Map(string, Bundle)
-            (iterable.map(entrypoint =>
-                [entrypoint, Bundle({ entrypoint, descendents:Set(string)([entrypoint]) })]));
 
-console.log("AMOUNT: " + concurrency);
+        console.log("AMOUNT: " + concurrency);
+
+        const targets = List(Target)(iterable);
         const fork = Fork.create({ type: Plugin, fields: { cache, path: "../isomorphic-compile-javascript/" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
         const responses = OrderedMap(string, Plugin.Response)();
         const visited = Set(string)(iterable);
-        const entrypoints = Set(string)(iterable);
 
-        return { transformPool, responses, visited, entrypoints, cache, destination };
+        return { transformPool, responses, visited, targets, cache, root };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
-        Pool.Enqueue({ requests: List(string)(build.entrypoints) })),
+        Pool.Enqueue({ requests: List(string)(build.targets.map(target => target.entrypoint)) })),
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
-        //console.log("COMPILING " + request);
+//        console.log("COMPILING " + request);
         return update.in(
             build,
             ["transformPool", "items", index],
@@ -90,25 +84,21 @@ console.log("AMOUNT: " + concurrency);
         if (inBuild.transformPool.occupied.size === 1 &&
             inBuild.transformPool.backlog.size === 0 &&
             requests.size === 0)
-        {     
-            const root = "/Users/tolmasky/Development/tonic/app";
-              
-            for (const entrypoint of inBuild.entrypoints)
+        {
+            for (const target of inBuild.targets)
             {
-var start1 = Date.now();
-                const bundle = toBundle(entrypoint, outBuild.responses);
-var duration1 = Date.now() - start1;
-                const bundleDestination = `${outBuild.destination}/${basename(entrypoint)}.bundle.js`;
+                const root = inBuild.root;
+                const bundle = toBundle(target.entrypoint, outBuild.responses);
+                const destination = target.destination;
 
-                console.log(basename(bundleDestination) + ": " + bundle.compilations.size + " " + outBuild.responses.size);
+                console.log(basename(destination) + ": " +
+                    bundle.compilations.size + " " +
+                    outBuild.responses.size);
 
-var start = Date.now();
-                require("./bundle/concatenate")({ root, destination: bundleDestination, bundle });
-console.log("BUNDLE_TIME: " + duration1 + " " + (Date.now() - start));
+                require("./bundle/concatenate")({ root, destination, bundle });
             }
 
-            console.log("ALL DONE?");
-            process.exit(1);
+            return [outBuild, [Cause.Finished({ value: 1 })]];
         }
 
         return update.in.reduce(outBuild,
@@ -116,79 +106,6 @@ console.log("BUNDLE_TIME: " + duration1 + " " + (Date.now() - start));
             [Pool.Release({ indexes:[index] }), Pool.Enqueue({ requests })]);
     }
 
-//    [event._on(Log)]: (main, log) => (console.log(log.message), [main, []]),
-/*
-    [event._on(Result.Suite)] (main, result)
-    {
-        const [,, index] = result.fromKeyPath;
-        const [updated, events] = update.in(
-            main.update("results", results => results.push(result)),
-            "fileProcessPool",
-            Pool.Release({ indexes: [index] }));
-        const { results } = updated;
-        const finished = results.size === main.paths.size;
-
-        if (!finished)
-            return [updated, events];
-
-        const children = results.map(result => result.suite);
-        const suite = toRootSuite({ title: main.title, children });
-        const value = Result.Suite.fromChildren(suite, results);
-
-        return [updated, [...events, Cause.Finished({ value })]];
-    },
-
-    [event.on (Pool.Retained) .from `fileProcessPool`](main, event)
-    {
-        const { request: path, index } = event;
-
-        return update.in(
-            main,
-            ["fileProcessPool", "items", index],
-            FileProcess.Execute({ path }));
-    },
-
-    [event.on (Cause.Start)]: main =>
-        update.in(main,
-            "fileProcessPool",
-            Pool.Enqueue({ requests: main.paths })),
-
-
-    [event.on (FileProcess.EndpointRequest)](main, { id, fromKeyPath })
-    {
-        const [,, fromFileProcess] = fromKeyPath;
-        const requests = [List.of(fromFileProcess, id)];
-
-        return update.in(main, "browserPool", Pool.Enqueue({ requests }));
-    },
-
-    [event.on (FileProcess.EndpointRelease)](main, { ids, fromKeyPath })
-    {
-        const [,, fromFileProcess] = fromKeyPath;
-        const requests = ids.map(id => List.of(fromFileProcess, id));
-        const occupied = main.browserPool.occupied;
-        const indexes = requests
-            .map(request => occupied.keyOf(request));
-
-        return update.in.reduce(
-            main,
-            indexes.map(index => [["browserPool", "items", index], Browser.Reset()]));
-    },
-
-    [event.on (Browser.DidReset)]: (main, { fromKeyPath: [,,index] }) =>
-        update.in(main, "browserPool", Pool.Release({ indexes: [index] })),
-
-    [event.on (Pool.Retained) .from `browserPool`](main, event)
-    {
-        const { request, index } = event;
-        const [fromFileProcess, id] = request;
-        const { endpoint } = main.browserPool.items.get(index);
-
-        return update.in(
-            main,
-            ["fileProcessPool", "items", fromFileProcess],
-            FileProcess.EndpointResponse({ id, endpoint }));
-    }*/
 });
 
 /*
