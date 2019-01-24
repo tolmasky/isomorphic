@@ -3,8 +3,8 @@ const { basename, extname, join } = require("path");
 const { transform: babelTransform } = require("@babel/core");
 
 const { data, string, deserialize, serialize } = require("@algebraic/type");
-const Metadata = require("../isomorphic-build/plugin/metadata");
-const { Response } = require("../isomorphic-build/plugin");
+const Metadata = require("@isomorphic/build/plugin/metadata");
+const { Response } = require("@isomorphic/build/plugin");
 const getSha512 = require("./get-sha-512");
 const getResolvedOptions = require("./get-resolved-options");
 

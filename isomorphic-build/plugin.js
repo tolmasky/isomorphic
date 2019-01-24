@@ -22,7 +22,7 @@ const Plugin = Cause(`Plugin`,
     [event._on (Request)]: (plugin, { input }) =>
     {
     try {
-        const x = [plugin, [require("../isomorphic-compile-javascript/compile-javascript")({ input, cache:plugin.cache, options: { presets:[[require.resolve("../isomorphic-babel-preset"), { browser:true, react:true }]]} })]]
+        const x = [plugin, [require("@isomorphic/compile-javascript")({ input, cache:plugin.cache, options: { presets:[[require.resolve("@isomorphic/babel-preset"), { browser:true, react:true }]]} })]]
         
         return x;
         }

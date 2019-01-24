@@ -42,7 +42,7 @@ const Build = Cause("Build",
         console.log("AMOUNT: " + concurrency);
 
         const targets = List(Target)(iterable);
-        const fork = Fork.create({ type: Plugin, fields: { cache, path: "../isomorphic-compile-javascript/" } });
+        const fork = Fork.create({ type: Plugin, fields: { cache, path: "@isomorphic/compile-javascript" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
         const responses = OrderedMap(string, Plugin.Response)();
