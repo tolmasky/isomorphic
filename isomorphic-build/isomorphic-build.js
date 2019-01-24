@@ -23,11 +23,6 @@ const Bundle = data `Bundle` (
     entrypoint      => string,
     compilations    => [Map(string, Response), Map(string, Response)()]);
 
-const Status = union `Status` (
-    data `Uncompiled` (),
-    data `Compiled` ( incompleteDependencies => Set(string) ),
-    data `Complete` () )
-
 const Build = Cause("Build",
 {
     [field `root`]: -1,
@@ -108,71 +103,6 @@ const Build = Cause("Build",
 
 });
 
-/*
-function toRootSuite({ title, children })
-{
-    const block = Block({ id: -1, title, depth: -1 });
-
-    return Suite({ block, children, mode: Suite.Mode.Concurrent });
-}
-
-module.exports.Log = Log;*/
-
-/*
-    [field `dependents`]: Map(string, Set(string))(),
-    [field `statuses`]: Map(string, Status)(),
-
-        const filename = request;
-        const dependents = dependencies.reduce(
-            (dependents, dependency) =>
-                dependents.update(dependency, Set(string)(),
-                    dependents => dependents.add(filename)),
-            inBuild.dependents);
-
-        const incompleteDependencies = dependencies
-            .filter(filename => inBuild.statuses.get(filename) !== Status.Complete);
-        const completed = incompleteDependencies.size <= 0;
-        const status = completed ?
-            Status.Complete :
-            Status.Compiled({ incompleteDependencies });
-        const inStatuses = inBuild.statuses.set(filename, status);
-        const statuses = completed ? 
-            resolve(dependents)(inStatuses, filename) :
-            inStatuses;
-function resolve(dependents)
-{
-    return function resolve (inStatuses, dependency)
-    {
-        const [completed, outStatuses] = dependents
-            .get(dependency, Set(string)())
-            .reduce(function ([completed, inStatuses], filename)
-            {
-                const status = inStatuses.get(filename);
-                
-                if (status === Status.Complete)
-                    return [completed, inStatuses];
-                
-                if (!status)
-                console.log("COULDNT FIND " + filename);try {
-                var incompleteDependencies =
-                    status.incompleteDependencies.remove(dependency); } catch(e) { console.log(filename, dependency, status); throw e; }
-                const complete = incompleteDependencies.size <= 0;
-                const outStatuses = inStatuses.set(filename,
-                    complete ?
-                        Status.Complete :
-                        Status.Compiled({ incompleteDependencies }));
-                const outCompleted = complete ?
-                    completed.add(filename) :
-                    completed;
-            if (complete) { console.log("MARKING " + filename + " as complete"); }
-                return [outCompleted, outStatuses];
-            }, [Set(string)(), inStatuses]);
-    
-        return completed.reduce(resolve, outStatuses);
-    }
-}
-*/
-
 function toBundle(entrypoint, responses)
 {
     return treeReduce.cyclic(
@@ -188,12 +118,3 @@ function toBundle(entrypoint, responses)
         Bundle({ entrypoint }),
         entrypoint);
 }
-
-/*
-
-                if (status !== Status.Complete)
-                    console.log("NOT DONE: " + filename);
-                
-                if (filename === "url" || filename === "/Users/tolmasky/Development/isomorphic/isomorphic-compile-javascript/node_modules/url/util.js" || filename === "querystring" || filename === "/Users/tolmasky/Development/isomorphic/isomorphic-compile-javascript/node_modules/util/node_modules/inherits/inherits.js" || filename === "util" || filename === "/Users/tolmasky/Desktop/test/a.js" || filename === "/Users/tolmasky/Desktop/test/b.js")
-                    console.log(status.incompleteDependencies);
-*/
