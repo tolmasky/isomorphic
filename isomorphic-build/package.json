@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/build",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.1",
   "description": "",
   "main": "isomorphic-build.js",
   "scripts": {
@@ -10,12 +10,14 @@
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
   "dependencies": {
-    "@algebraic/collections": "^1.0.0-alpha.5",
-    "@algebraic/type": "^1.0.0-alpha.5",
-    "@cause/cause": "^1.0.0-alpha.7",
-    "@cause/fork": "^1.0.0-alpha.7",
-    "@cause/pool": "^1.0.0-alpha.7",
-    "@cause/process": "^1.0.0-alpha.7",
+    "@algebraic/collections": "1.0.0-alpha.6",
+    "@algebraic/type": "1.0.0-alpha.6",
+    "@cause/cause": "1.0.0-alpha.9",
+    "@cause/fork": "1.0.0-alpha.9",
+    "@cause/pool": "1.0.0-alpha.9",
+    "@cause/process": "1.0.0-alpha.9",
+    "@isomorphic/babel-preset": "1.0.0-alpha.1",
+    "@isomorphic/compile-javascript": "1.0.0-alpha.1",
     "commander": "^2.19.0",
     "fast-glob": "^2.2.6",
     "moment": "^2.23.0"
