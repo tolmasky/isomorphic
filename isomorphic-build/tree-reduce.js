@@ -1,4 +1,5 @@
-const { OrderedSet, Set } = require("@algebraic/collections");
+const { Set } = require("@algebraic/collections");
+//const add = (x, set) => (set.add(x), set);
 
 
 module.exports = function reduce(children, cyclic = false)
@@ -20,19 +21,24 @@ module.exports = function reduce(children, cyclic = false)
 
 module.exports.cyclic = function reduceCyclic(children, f, accum, node)
 {
-    return reduceCyclic_(children, Set(Object)([node]), f, accum, node)[1];
+    var result;
+
+    Set(Object)([node]).withMutations(set =>
+        result = reduceCyclic_(children, set, f, accum, node)[1]);
+
+    return result;
 }
 
 
 function reduceCyclic_(children, visited, f, accum, node)
 {
-    const unvisited = OrderedSet(Object)(children(node)).subtract(visited);
+    const unvisited = children(node).subtract(visited);
     const outVisited = visited.union(unvisited);
 
     return unvisited.reduce(
         ([visited, accum], node) =>
             reduceCyclic_(children, visited, f, accum, node),
-        [outVisited, f(accum, node)]);
+        [visited, f(accum, node)]);
 }
 
 function reduce_(children, f, accum, node)

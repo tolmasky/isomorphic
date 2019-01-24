@@ -38,28 +38,28 @@ const Build = Cause("Build",
     [field `responses`]: -1,
     [field `visited`]: -1,
     [field `entrypoints`]: -1,
-    [field `reallyVisited`]: -1,
+    [field `cache`]: -1,
+    [field `destination`]: -1,
 
-    init({ entrypoints: iterable, concurrency })
+    init({ entrypoints: iterable, concurrency, cache, destination })
     {
-        mkdirp("/Users/tolmasky/Development/tonic/app/cache/contents");
-        mkdirp("/Users/tolmasky/Development/tonic/app/cache/outputs");
-        mkdirp("/Users/tolmasky/Development/tonic/app/cache/inputs");
+        mkdirp(`${cache}/contents`);
+        mkdirp(`${cache}/outputs`);
+        mkdirp(`${cache}/inputs`);
         
         const bundles = Map(string, Bundle)
             (iterable.map(entrypoint =>
                 [entrypoint, Bundle({ entrypoint, descendents:Set(string)([entrypoint]) })]));
 
 console.log("AMOUNT: " + concurrency);
-        const fork = Fork.create({ type: Plugin, fields: { path: "../isomorphic-compile-javascript/" } });
+        const fork = Fork.create({ type: Plugin, fields: { cache, path: "../isomorphic-compile-javascript/" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
         const responses = OrderedMap(string, Plugin.Response)();
         const visited = Set(string)(iterable);
         const entrypoints = Set(string)(iterable);
-        const reallyVisited = Set(string)(iterable)
 
-        return { transformPool, responses, visited, entrypoints, reallyVisited };
+        return { transformPool, responses, visited, entrypoints, cache, destination };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
@@ -67,8 +67,6 @@ console.log("AMOUNT: " + concurrency);
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
-if (request === "/Users/tolmasky/Development/tonic/app/node_modules/aphrodite/lib/index.js")
-    console.log("DOING IT");
         //console.log("COMPILING " + request);
         return update.in(
             build,
@@ -81,19 +79,10 @@ if (request === "/Users/tolmasky/Development/tonic/app/node_modules/aphrodite/li
         const responses = inBuild.responses.set(request, response);
         const requests = response.metadata.dependencies.subtract(inBuild.visited);
         const visited = inBuild.visited.union(requests);
-        const reallyVisited = inBuild.visited.union(response.metadata.dependencies);
 
-        if (request === "/Users/tolmasky/Development/tonic/app/node_modules/aphrodite/lib/generate.js")
-            console.log("GOT IT!");
-        if (request.indexOf("bootstrap-app") >= 0 ||
-            request === "/Users/tolmasky/Development/tonic/app/node_modules/aphrodite/lib/index.js")
-            console.log("FOR " + request + ":\n" + requests.join("\n") + "\nvs.\n" + response.metadata.dependencies.join("\n"));
-//console.log("--\n" + requests.join("\n") + "--");
-//if (requests.size === 0) { console.log("NOTHING FOR " + request); }
         const outBuild = inBuild
             .set("responses", responses)
-            .set("visited", visited)
-            .set("reallyVisited", reallyVisited);
+            .set("visited", visited);
 
 //        console.log("REMAINING " + outBuild.transformPool.occupied.size + " " + requests.size);
 //        console.log("COMPLETED: " + responses.size + " " + visited.size);
@@ -106,14 +95,16 @@ if (request === "/Users/tolmasky/Development/tonic/app/node_modules/aphrodite/li
               
             for (const entrypoint of inBuild.entrypoints)
             {
+var start1 = Date.now();
                 const bundle = toBundle(entrypoint, outBuild.responses);
-                const destination = root + "/results/" + basename(entrypoint) + ".bundle.js";
+var duration1 = Date.now() - start1;
+                const bundleDestination = `${outBuild.destination}/${basename(entrypoint)}.bundle.js`;
 
-                console.log(basename(destination) + ": " + bundle.compilations.size + " " + outBuild.responses.size + " " + reallyVisited.size);
+                console.log(basename(bundleDestination) + ": " + bundle.compilations.size + " " + outBuild.responses.size);
 
-                require("fs").writeFileSync(root + "/results/" + visited.size + ".txt", visited.sort().join("\n"), "utf-8");
-
-                require("./bundle/concatenate")({ root, destination, bundle });
+var start = Date.now();
+                require("./bundle/concatenate")({ root, destination: bundleDestination, bundle });
+console.log("BUNDLE_TIME: " + duration1 + " " + (Date.now() - start));
             }
 
             console.log("ALL DONE?");

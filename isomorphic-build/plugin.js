@@ -1,7 +1,6 @@
 const { data, string, parameterized } = require("@algebraic/type");
 const { Cause, field, event } = require("@cause/cause");
 const Metadata = require("./plugin/metadata");
-const CACHE = "./cache";
 
 const Request = data `Request` (
     input           => string );
@@ -13,6 +12,7 @@ const Response = data `Response` (
 const Plugin = Cause(`Plugin`,
 {
     [field `path`]: -1,
+    [field `cache`]: -1,
 
 /*    [event.on (Cause.Start)]: (plugin)
     {
@@ -22,7 +22,7 @@ const Plugin = Cause(`Plugin`,
     [event._on (Request)]: (plugin, { input }) =>
     {
     try {
-        const x = [plugin, [require("../isomorphic-compile-javascript/compile-javascript")({ input, cache:CACHE, options: { presets:[[require.resolve("../isomorphic-babel-preset"), { browser:true, react:true }]]} })]]
+        const x = [plugin, [require("../isomorphic-compile-javascript/compile-javascript")({ input, cache:plugin.cache, options: { presets:[[require.resolve("../isomorphic-babel-preset"), { browser:true, react:true }]]} })]]
         
         return x;
         }
