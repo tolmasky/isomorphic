@@ -108,7 +108,7 @@ const File  = data `File` (
     outputIndex     => number );
 
 const Bundle = data `Bundle` (
-    entrypoint      => string,
+    entrypoint      => number,
     files           => List(File),
     outputs         => List(string));
 
@@ -142,7 +142,12 @@ function toBundle(entrypoint, compilations)
             return [outFiles, outOutputIndexes];
         }, [List(File)(), OrderedMap(string, number)()]);
     const outputs = List(string)(outputIndexes.keySeq());
-    const bundle = Bundle({ entrypoint, files, outputs });
+    const bundle = Bundle(
+    {
+        entrypoint: filenameIndexes.get(entrypoint),
+        files,
+        outputs
+    });
 
     return bundle;
 }

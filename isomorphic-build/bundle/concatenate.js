@@ -23,6 +23,7 @@ module.exports = function concatenate({ bundle, root, destination })
     append("(function (global) {");
     append(readFileSync(bootstrapPath));
     append("(");
+    append(entrypoint + ",");
 
     const files = bundle.files
         .map(({ outputIndex, dependencies }) =>

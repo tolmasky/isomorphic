@@ -1,4 +1,4 @@
-(function (files, compilations)
+(function (entrypoint, files, compilations)
 {
     global.process = { env: { NODE_ENV:"development" } };
 
@@ -44,5 +44,5 @@
 
     Module._cache = { };
 
-    cachedRequire(0);
+    cachedRequire(entrypoint);
 })
