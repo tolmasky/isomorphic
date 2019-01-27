@@ -14,6 +14,7 @@
         Module._cache[index] = this;
 
         const file = files[index];
+        const filename = file[0];
 
         console.log("INSTANTIATING " + file[0]);
 
@@ -21,8 +22,8 @@
         const references = file[2];
 
         this.exports = { };
-        this.__dirname = "";
-        this.__filename = "";
+        this.__dirname = filename.split("/").slice(0, -1).join("/");
+        this.__filename = filename;
         this.require = function require(index)
         {
             if (typeof index !== "number")
@@ -36,7 +37,7 @@
             return cachedRequire(reference);
         }
 
-        this.exports = precompiled.call(
+        precompiled.call(
             this.exports, /*this*/
             this.exports,
             this.require,
