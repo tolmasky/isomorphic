@@ -14,8 +14,11 @@
         Module._cache[index] = this;
 
         const file = files[index];
-        const precompiled = compilations[file[0]];
-        const references = file[1];
+
+        console.log("INSTANTIATING " + file[0]);
+
+        const precompiled = compilations[file[1]];
+        const references = file[2];
 
         this.exports = { };
         this.__dirname = "";

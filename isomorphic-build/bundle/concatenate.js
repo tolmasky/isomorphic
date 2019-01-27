@@ -26,8 +26,8 @@ module.exports = function concatenate({ bundle, root, destination })
     append(entrypoint + ",");
 
     const files = bundle.files
-        .map(({ outputIndex, dependencies }) =>
-            [outputIndex, dependencies]);
+        .map(({ filename, outputIndex, dependencies }) =>
+            [filename, outputIndex, dependencies]);
 
     append(JSON.stringify(files));
     append(", [");
@@ -69,31 +69,4 @@ module.exports = function concatenate({ bundle, root, destination })
         return isAbsolute(path) ? "/" + relative(root, path) : path
     }
 }
-
-function fsAndMount()
-{
-    const fs = { };
-    const mount = (muid, path) =>
-        path.reduce((parent, component, index) =>
-            index === path.length - 1 ?
-                store(parent, component, muid) :
-                parent[component] || (parent[component] = { }), fs);
-
-    return { fs, mount: (muid, path) => mount(muid, path.split("/")) };
-
-    function store(parent, component, muid)
-    {
-        if (muid !== -1 || !hasOwnProperty.call(parent, component))
-            parent[component] = muid;
-    }
-}
-
-function getChecksum(contents)
-{
-    return require("crypto")
-        .createHash("sha512")
-        .update(contents)
-        .digest("hex");
-}
-
 
