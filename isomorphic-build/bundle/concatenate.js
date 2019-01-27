@@ -20,18 +20,18 @@ module.exports = function concatenate({ bundle, root, destination })
     const { entrypoint, compilations } = bundle;
 
     // The first item is always the bootstrap file, it doesn't get wrapped.
+    append("(function (global) {");
     append(readFileSync(bootstrapPath));
-    append("(window, ")
+    append("(");
 
-    const files = bundle.files.valueSeq().map(([index]) =>
-        [index, compilations.get(index)
-            .metadata.dependencies
-                .map(filename => bundle.files.get(filename)[1])]);
+    const files = bundle.files
+        .map(({ outputIndex, dependencies }) =>
+            [outputIndex, dependencies]);
 
     append(JSON.stringify(files));
     append(", [");
 
-    for (const { output } of compilations)
+    for (const output of bundle.outputs)
     {
         const isJSON = extname(output) === ".json";
 
@@ -46,7 +46,7 @@ module.exports = function concatenate({ bundle, root, destination })
         append(",");
     }
 
-    append("])");
+    append("]) })(window)");
 
     const concated = Buffer.concat(output.buffers, output.length);
 

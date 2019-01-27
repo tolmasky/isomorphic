@@ -1,5 +1,7 @@
-(function (global, files, compilations)
+(function (files, compilations)
 {
+    global.process = { env: { NODE_ENV:"development" } };
+
     function cachedRequire(index)
     {
         const module = Module._cache[index] || new Module(index);

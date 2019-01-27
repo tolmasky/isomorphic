@@ -1,5 +1,5 @@
 const { data, union, number, string } = require("@algebraic/type");
-const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
+const { List, Map, OrderedMap, OrderedSet, Set } = require("@algebraic/collections");
 
 const Target = require("./target");
 const { Cause, field, event, update, IO } = require("@cause/cause");
@@ -19,10 +19,6 @@ module.exports = async function main(options)
     return await IO.toPromise(Build.create(options));
 }
 
-const Bundle = data `Bundle` (
-    entrypoint      => string,
-    files           => [OrderedMap(string, Array), OrderedMap(string, Array)()],
-    compilations    => [List(Response), List(Response)()]);
 
 const Build = Cause("Build",
 {
@@ -83,14 +79,16 @@ const Build = Cause("Build",
         {
             for (const target of inBuild.targets)
             {
+                const start = Date.now();
                 const root = inBuild.root;
                 const bundle = toBundle(target.entrypoint, outBuild.responses);
                 const destination = target.destination;
 
-                console.log(basename(destination) + ": " +
-                    bundle.compilations.size + " " +
-                    outBuild.responses.size);
-
+//                console.log(basename(destination) + ": " +
+//                    bundle.compilations.size + " " +
+//                    outBuild.responses.size);
+                const duration = Date.now() - start;
+                console.log(basename(destination) + " took " + duration);// + " " + bundle);
                 require("./bundle/concatenate")({ root, destination, bundle });
             }
 
@@ -104,30 +102,47 @@ const Build = Cause("Build",
 
 });
 
+const File  = data `File` (
+    filename        => string,
+    dependencies    => OrderedSet(number),
+    outputIndex     => number );
+
+const Bundle = data `Bundle` (
+    entrypoint      => string,
+    files           => List(File),
+    outputs         => List(string));
+
 function toBundle(entrypoint, compilations)
 {
-    const children = filename => compilations.get(filename).metadata.dependencies;
-    const update = function ([orderings, bundle], filename)
-    {
-        const compilation = compilations.get(filename);
-        const checksum = compilation.checksum;
-        const index = orderings.get(checksum, orderings.size);
+    const children = filename =>
+        compilations.get(filename).metadata.dependencies;
+    const update = (filenames, filename) => filenames.push(filename);
+    const filenames = treeReduce
+        .cyclic(children, update, List(string)(), entrypoint)
+        .sort();
+    const filenameIndexes = Map(string, number)(
+        filenames.map((filename, index) => [filename, index]));
 
-        const newCompilation = index === orderings.size;
-        const files = bundle.files.set(filename, [index, bundle.files.size]);
+    const [files, outputIndexes] = filenames.reduce(
+        function ([files, outputIndexes], filename)
+        {
+            const compilation = compilations.get(filename);
+            const dependencies = compilation
+                .metadata.dependencies
+                .map(dependency => filenameIndexes.get(dependency));
+            const output = compilation.output;
+            const outputIndex = outputIndexes.get(output, outputIndexes.size);
+            const outFiles = files.push(
+                File({ filename, dependencies, outputIndex }));
+            const outOutputIndexes =
+                outputIndex === outputIndexes.size ?
+                    outputIndexes.set(output, outputIndex) :
+                    outputIndexes;
 
-        if (!newCompilation)
-            return [orderings, Bundle({ ...bundle, files })];
+            return [outFiles, outOutputIndexes];
+        }, [List(File)(), OrderedMap(string, number)()]);
+    const outputs = List(string)(outputIndexes.keySeq());
+    const bundle = Bundle({ entrypoint, files, outputs });
 
-        const outOrderings = orderings.set(checksum, index);
-        const outCompilations = bundle.compilations.push(compilation);
-        const outBundle =
-            Bundle({ ...bundle, files, compilations: outCompilations });
-
-        return [outOrderings, outBundle];
-    }
-    const bundle = Bundle({ entrypoint });
-    const orderings = Map(string, number)();
-
-    return treeReduce.cyclic(children, update, [orderings, bundle], entrypoint)[1];
+    return bundle;
 }
