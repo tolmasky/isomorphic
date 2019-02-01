@@ -3,6 +3,7 @@ const { Map } = require("@algebraic/collections");
 const { existsSync } = require("fs");
 var { join, dirname, resolve } = require("path");
 const empty = require.resolve("node-libs-browser/mock/empty");
+const isBuiltIn = path => !/^(\.\/|\.\.\/|\/)/.test(path);
 
 const PathMap = Map(String, string);
 const PathMapNode = union `PathMapNode` (
@@ -26,10 +27,11 @@ module.exports = function resolve(root, from)
     return function (filename)
     {try {
         const resolved = Module._resolveFilename(filename, module);
-        const pathMapNode = getCachedPathMapNode(root, dirname(resolved));
+        const context = isBuiltIn(resolved) ? from : resolved;
+        const pathMapNode = getCachedPathMapNode(root, dirname(context));
         const mapped = getMappedFilename(pathMapNode, resolved);
 
-        return mapped; } catch(e) { return "path"; }
+        return mapped; } catch(e) { console.log("Can't find " + filename + " from " + from); return "path"; }
     }
 }
 
@@ -86,10 +88,9 @@ function map(directory)
 {
     return function ([from, to])
     {
-        const fromResolved =
-            /^(\.\/|\.\.\/|\/)/.test(from) ?
-                resolve(directory, from) :
-                from;
+        const fromResolved = isBuiltIn(from) ?
+            from :
+            resolve(directory, from);
         const toResolved = to === false ?
             empty :
             resolve(directory, to);
