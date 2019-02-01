@@ -2,7 +2,7 @@ const { dirname, extname, relative, isAbsolute } = require("path");
 const { existsSync, readFileSync, writeFileSync, unlinkSync } = require("fs");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
-const JSONPreamble = "function(){return";
+const JSONPreamble = "function(module) { module.exports = ";
 const JSONPostamble = "\n}";
 const MUIDStore = require("./muid-store");
 const hasOwnProperty = Object.prototype.hasOwnProperty;
