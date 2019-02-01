@@ -32,7 +32,7 @@ module.exports.cyclic = function reduceCyclic(children, f, accum, node)
 
 function reduceCyclic_(children, visited, f, accum, node)
 {
-    const unvisited = children(node).subtract(visited);
+    const unvisited = Set(Object)(children(node)).subtract(visited);
     const outVisited = visited.union(unvisited);
 
     return unvisited.reduce(

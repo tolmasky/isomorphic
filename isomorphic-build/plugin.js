@@ -1,14 +1,9 @@
 const { data, string, parameterized } = require("@algebraic/type");
 const { Cause, field, event } = require("@cause/cause");
-const Metadata = require("./plugin/metadata");
 
 const Request = data `Request` (
     input           => string );
 
-const Response = data `Response` (
-    output          => string,
-    checksum        => string,
-    metadata        => Metadata );
 
 const Plugin = Cause(`Plugin`,
 {
@@ -34,6 +29,5 @@ const Plugin = Cause(`Plugin`,
 });
 
 Plugin.Request = Request;
-Plugin.Response = Response;
 
 module.exports = Plugin;

@@ -1,5 +1,5 @@
 const { join, sep, dirname } = require("path");
-const Metadata = require("@isomorphic/build/plugin/metadata");
+const { Metadata } = require("./babel-plugin-metadata");
 
 
 module.exports = function ({ types: t })

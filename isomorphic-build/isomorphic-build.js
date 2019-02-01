@@ -6,7 +6,7 @@ const { Cause, field, event, update, IO } = require("@cause/cause");
 const Pool = require("@cause/pool");
 const Fork = require("@cause/fork");
 const Plugin = require("./plugin");
-const Response = Plugin.Response;
+const Compilation = require("./plugin/compilation");
 const { basename } = require("path");
 const treeReduce = require("./tree-reduce");
 
@@ -26,7 +26,7 @@ const Build = Cause("Build",
     [field `targets`]: -1,
 
     [field `transformPool`]: -1,
-    [field `responses`]: -1,
+    [field `compilations`]: -1,
     [field `visited`]: -1,
     [field `cache`]: -1,
 
@@ -42,10 +42,10 @@ const Build = Cause("Build",
         const fork = Fork.create({ type: Plugin, fields: { cache, path: "@isomorphic/compile-javascript" } });
         const items = List(Fork)(Array.from(Array(concurrency), () => fork));
         const transformPool = Pool.create({ items });
-        const responses = OrderedMap(string, Plugin.Response)();
+        const compilations = OrderedMap(string, Compilation)();
         const visited = Set(string)(iterable);
 
-        return { transformPool, responses, visited, targets, cache, root };
+        return { transformPool, compilations, visited, targets, cache, root };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
@@ -59,15 +59,17 @@ const Build = Cause("Build",
             ["transformPool", "items", index],
             Plugin.Request({ input: request })) },
 
-    [event._on (Plugin.Response)]: function (inBuild, response, [,, index])
+    [event._on (Compilation)]: function (inBuild, compilation, [,, index])
     {
         const request = inBuild.transformPool.occupied.get(index);
-        const responses = inBuild.responses.set(request, response);
-        const requests = response.metadata.dependencies.subtract(inBuild.visited);
+        const compilations = inBuild.compilations.set(request, compilation);
+        const requests = OrderedSet(string)
+            (compilation.dependencies)
+            .subtract(inBuild.visited);
         const visited = inBuild.visited.union(requests);
 
         const outBuild = inBuild
-            .set("responses", responses)
+            .set("compilations", compilations)
             .set("visited", visited);
 
 //        console.log("REMAINING " + outBuild.transformPool.occupied.size + " " + requests.size);
@@ -81,7 +83,7 @@ const Build = Cause("Build",
             {
                 const start = Date.now();
                 const root = inBuild.root;
-                const bundle = toBundle(target.entrypoint, outBuild.responses);
+                const bundle = toBundle(target.entrypoint, outBuild.compilations);
                 const destination = target.destination;
 
 //                console.log(basename(destination) + ": " +
@@ -104,7 +106,7 @@ const Build = Cause("Build",
 
 const File  = data `File` (
     filename        => string,
-    dependencies    => OrderedSet(number),
+    dependencies    => List(number),
     outputIndex     => number );
 
 const Bundle = data `Bundle` (
@@ -115,7 +117,7 @@ const Bundle = data `Bundle` (
 function toBundle(entrypoint, compilations)
 {
     const children = filename =>
-        compilations.get(filename).metadata.dependencies;
+        compilations.get(filename).dependencies;
     const update = (filenames, filename) => filenames.push(filename);
     const filenames = treeReduce
         .cyclic(children, update, List(string)(), entrypoint)
@@ -128,7 +130,7 @@ function toBundle(entrypoint, compilations)
         {
             const compilation = compilations.get(filename);
             const dependencies = compilation
-                .metadata.dependencies
+                .dependencies
                 .map(dependency => filenameIndexes.get(dependency));
             const output = compilation.output;
             const outputIndex = outputIndexes.get(output, outputIndexes.size);
