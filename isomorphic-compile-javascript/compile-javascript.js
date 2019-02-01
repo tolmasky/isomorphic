@@ -37,12 +37,12 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
     const resolvedOptions = getResolvedOptions(options);
     const contents = readFileSync(input, "utf-8");
     const contentsChecksum = getSha512(contents);
-    const inputChecksum = getSha512.JSON({ input, contentsChecksum });
-    const inputCachePath =
-        join(cache, "inputs", basename(input, extname(input)) + "-" + inputChecksum + ".json");
+//    const inputChecksum = getSha512.JSON({ input, contentsChecksum });
+//    const inputCachePath =
+//        join(cache, "inputs", basename(input, extname(input)) + "-" + inputChecksum + ".json");
 
-    if (existsSync(inputCachePath))
-        return readResponse(inputCachePath);
+//    if (existsSync(inputCachePath))
+//        return readResponse(inputCachePath);
 
     const contentsCachePath =
         join(cache, "contents", contentsChecksum + ".json");
@@ -68,12 +68,12 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
     const dependencies = metadata.dependencies
         .filter(dependency =>
             !ignoredDependencies || ignoredDependencies.test(dependency))
-        .map(resolve("", input));
+        .map(resolve("/", input));
     const resolvedMetadata = Metadata({ ...metadata, dependencies });
     const resolvedResponse =
         Response({ ...unresolvedResponse, metadata: resolvedMetadata });
 
-    writeResponse(inputCachePath, resolvedResponse);
+//    writeResponse(inputCachePath, resolvedResponse);
 
     return resolvedResponse;
 }
