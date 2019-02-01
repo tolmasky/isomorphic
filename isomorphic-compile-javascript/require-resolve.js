@@ -63,6 +63,20 @@ function getPathMap(directory)
 
     const { browser } = require(filename);
 
+    // FIXME: Not clear if this is the best strategy.
+    // It may be the case that require("x") should only point to browser,
+    // and not require(x/[main]).
+    if (typeof browser === "string")
+    {
+        const module = getCachedModule(directory);
+        const main = Module._resolveFilename(".", module);
+        const resolved = browser === false ?
+            empty :
+            resolve(directory, browser);
+
+        return PathMap({ [main]: resolved });
+    }
+
     if (typeof browser !== "object" || browser === null)
         return PathMap();
 
