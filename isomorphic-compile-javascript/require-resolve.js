@@ -26,11 +26,10 @@ module.exports = function resolve(root, from)
     return function (filename)
     {try {
         const resolved = Module._resolveFilename(filename, module);
-        const pathMapNode = getCachedPathMapNode(root, directory);
-        //console.log(pathMapNode);
-    if (resolved !== getMappedFilename(pathMapNode, resolved))
-        console.log("FOR " + resolved + " " + getMappedFilename(pathMapNode, resolved));
-        return getMappedFilename(pathMapNode, resolved); } catch(e) { return "path"; }
+        const pathMapNode = getCachedPathMapNode(root, dirname(resolved));
+        const mapped = getMappedFilename(pathMapNode, resolved);
+
+        return mapped; } catch(e) { return "path"; }
     }
 }
 
