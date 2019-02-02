@@ -21,16 +21,14 @@ module.exports = function ({ types: t })
         if (!t.isStringLiteral(argument))
             return;
 
-        const unresolved = node.arguments[0].value;
+        const unresolved = argument.value;
         const metadata = state.file.metadata;
         const previous = metadata.dependencies.valueSeq()
             .findIndex(dependency => dependency === unresolved);
         const index = previous > -1 ? previous : metadata.dependencies.size;
 
-        if (typeof index === "boolean")
-            console.log("WHY: " + metadata.dependencies+"");
         if (previous <= -1)
-        {
+        {console.log("ADDING " + unresolved);
             const dependencies = metadata.dependencies.add(unresolved);
 
             state.file.metadata = Metadata({ ...metadata, dependencies });

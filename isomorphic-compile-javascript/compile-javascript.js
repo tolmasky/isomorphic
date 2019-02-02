@@ -32,7 +32,6 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
     if (replacement)
         return compile({ cache, options, ...replacement });
 
-    const resolvedOptions = getResolvedOptions(options);
     const contents = readFileSync(input, "utf-8");
     const contentsChecksum = getSha512(contents);
     const contentsCachePath =
@@ -43,6 +42,7 @@ module.exports = function compile({ input, cache, options, ignoredDependencies }
         if (existsSync(contentsCachePath))
             return read(UnresolvedCompilation, contentsCachePath);
 
+        const resolvedOptions = getResolvedOptions(options);
         const { code, metadata } = babelTransform(contents, resolvedOptions);
         const { globals, dependencies } = metadata;
         const wrapped = moduleWrap(globals, code);

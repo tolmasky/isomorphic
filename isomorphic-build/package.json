@@ -18,6 +18,7 @@
     "@cause/process": "1.0.0-alpha.10",
     "@isomorphic/babel-preset": "1.0.0-alpha.21",
     "@isomorphic/compile-javascript": "1.0.0-alpha.21",
+    "babel-plugin-minify-dead-code-elimination": "^0.5.0",
     "commander": "^2.19.0",
     "fast-glob": "^2.2.6",
     "moment": "^2.23.0"
