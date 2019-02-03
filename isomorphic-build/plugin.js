@@ -16,7 +16,7 @@ const plugins = [
             env: { NODE_ENV: "development" }
         }
     }],
-    [require.resolve("@isomorphic/compile-javascript/plugins/babel-plugin-transform-eliminate-if-statements")]
+    [require.resolve("@isomorphic/reduce-javascript/babel-plugin")]
 ];
 
 const Plugin = Cause(`Plugin`,
