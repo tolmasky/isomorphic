@@ -1,6 +1,6 @@
 const { is } = require("@algebraic/type");
 const build = require("../isomorphic-build.js");
-const Target = require("../target");
+const Product = require("../product");
 
 const { basename, extname, resolve } = require("path");
 const glob = require("fast-glob");
@@ -35,10 +35,10 @@ const patterns = options.args.length <= 0 ? [] : options.args;
     const toDestination = entrypoint =>
         `${destination}/${basename(entrypoint, extname(entrypoint))}.bundle.js`;
 
-    const targets = entrypoints
+    const products = entrypoints
         .map(entrypoint => [entrypoint, toDestination(entrypoint)])
         .map(([entrypoint, destination ]) =>
-            Target({ entrypoint, destination }));
+            Product({ entrypoint, destination }));
 
     const start = Date.now();
     await build({ ...options, cache, targets });
