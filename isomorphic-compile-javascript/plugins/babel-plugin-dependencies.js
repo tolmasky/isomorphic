@@ -28,7 +28,7 @@ module.exports = function ({ types: t })
         const index = previous > -1 ? previous : metadata.dependencies.size;
 
         if (previous <= -1)
-        {console.log("ADDING " + unresolved);
+        {
             const dependencies = metadata.dependencies.add(unresolved);
 
             state.file.metadata = Metadata({ ...metadata, dependencies });
