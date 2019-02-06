@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/plugin",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.22",
   "description": "",
   "main": "plugin.js",
   "scripts": {
@@ -10,8 +10,8 @@
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
   "peerDependencies": {
-    "@algebraic/collections": "1.0.0-alpha.7",
-    "@algebraic/type": "1.0.0-alpha.7",
-    "@isomorphic/package": "1.0.0-alpha.21"
+    "@algebraic/collections": "1.0.0-alpha.8",
+    "@algebraic/type": "1.0.0-alpha.8",
+    "@isomorphic/package": "1.0.0-alpha.22"
   }
 }

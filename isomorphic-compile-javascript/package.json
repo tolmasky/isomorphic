@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/compile-javascript",
-  "version": "1.0.0-alpha.21",
+  "version": "1.0.0-alpha.22",
   "description": "",
   "main": "bundle-javascript.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "node-libs-browser": "^2.2.0"
   },
   "peerDependencies": {
-    "@algebraic/collections": "1.0.0-alpha.7",
-    "@algebraic/type": "1.0.0-alpha.7"
+    "@algebraic/collections": "1.0.0-alpha.8",
+    "@algebraic/type": "1.0.0-alpha.8"
   }
 }
