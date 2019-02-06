@@ -12,11 +12,11 @@ const builtIns = ((builtIns, empty) =>
     require.resolve("node-libs-browser/mock/empty"));
 
 
-module.exports = function polyfill(input)
+module.exports = function polyfill(filename)
 {
-    return  hasOwnProperty.call(builtIns, input) &&
+    return  hasOwnProperty.call(builtIns, filename) &&
             {
-                input: builtIns[input],
-                ignoredDependencies: ignoredDependencies[input]
+                filename: builtIns[filename],
+                ignoredDependencies: ignoredDependencies[filename]
             };
 }

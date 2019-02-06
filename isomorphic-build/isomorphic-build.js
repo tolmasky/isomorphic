@@ -1,12 +1,19 @@
+const Configuration = require("./configuration");
+const { Plugin, Compilation } = require("@isomorphic/plugin");
+
+
+module.exports = async function main(options)
+{
+    const configuration = Configuration.parse(options);
+
+    return await IO.toPromise(Build.create({ configuration }));
+}
+
 const { data, union, number, string } = require("@algebraic/type");
 const { List, Map, OrderedMap, OrderedSet, Set } = require("@algebraic/collections");
 
-const Target = require("./target");
 const { Cause, field, event, update, IO } = require("@cause/cause");
 const Pool = require("@cause/pool");
-const Fork = require("@cause/fork");
-const Plugin = require("./plugin");
-const Compilation = require("./plugin/compilation");
 const { basename } = require("path");
 const treeReduce = require("./tree-reduce");
 
@@ -14,42 +21,32 @@ const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 
 
-module.exports = async function main(options)
-{
-    return await IO.toPromise(Build.create(options));
-}
-
-
 const Build = Cause("Build",
 {
-    [field `root`]: -1,
-    [field `targets`]: -1,
+    [field `products`]: -1,
+    [field `configuration`]: -1,
 
     [field `transformPool`]: -1,
     [field `compilations`]: -1,
     [field `visited`]: -1,
-    [field `cache`]: -1,
 
-    init({ targets: iterable, root, concurrency, cache })
+    init({ configuration })
     {
-        mkdirp(`${cache}/contents`);
-        mkdirp(`${cache}/outputs`);
-        mkdirp(`${cache}/inputs`);
+        const { cache, concurrency, pluginConfigurations } = configuration;
+        const plugin = Plugin.fork(
+            { parentCache: cache, configuration: pluginConfigurations.first() });
 
-        console.log("AMOUNT: " + concurrency);
-
-        const targets = List(Target)(iterable);
-        const fork = Fork.create({ type: Plugin, fields: { cache, path: "@isomorphic/compile-javascript" } });
-        const items = List(Fork)(Array.from(Array(concurrency), () => fork));
-        const transformPool = Pool.create({ items });
+        const products = configuration.products;
+        const plugins = List(Plugin)(Array.from(Array(concurrency), () => plugin));
+        const transformPool = Pool.create({ items: plugins });
         const compilations = OrderedMap(string, Compilation)();
-        const visited = Set(string)(iterable);
+        const visited = Set(string)(products.map(product => product.entrypoint));
 
-        return { transformPool, compilations, visited, targets, cache, root };
+        return { products, configuration, transformPool, compilations, visited };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
-        Pool.Enqueue({ requests: List(string)(build.targets.map(target => target.entrypoint)) })),
+        Pool.Enqueue({ requests: List(string)(build.products.map(product => product.entrypoint)) })),
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
@@ -57,7 +54,7 @@ const Build = Cause("Build",
         return update.in(
             build,
             ["transformPool", "items", index],
-            Plugin.Request({ input: request })) },
+            Plugin.Compile({ filename: request, cache: build.configuration.cache })) },
 
     [event._on (Compilation)]: function (inBuild, compilation, [,, index])
     {
@@ -79,7 +76,7 @@ const Build = Cause("Build",
             inBuild.transformPool.backlog.size === 0 &&
             requests.size === 0)
         {
-            for (const target of inBuild.targets)
+            for (const target of inBuild.products)
             {
                 const start = Date.now();
                 const root = inBuild.root;
@@ -132,7 +129,7 @@ function toBundle(entrypoint, compilations)
             const dependencies = compilation
                 .dependencies
                 .map(dependency => filenameIndexes.get(dependency));
-            const output = compilation.output;
+            const output = compilation.filename;
             const outputIndex = outputIndexes.get(output, outputIndexes.size);
             const outFiles = files.push(
                 File({ filename, dependencies, outputIndex }));

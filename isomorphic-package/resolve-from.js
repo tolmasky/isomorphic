@@ -15,7 +15,7 @@ const JSONCached = require("./json-cached");
 const Module = require("module");
 const getCachedModule = JSONCached(filename =>
     Object.assign(new Module(filename),
-        { filename, paths: Module._nodeModulePaths(filename) }));
+        ({ filename, paths: Module._nodeModulePaths(filename) })));
 
 
 module.exports = function resolve(...args)
@@ -28,8 +28,17 @@ module.exports = function resolve(...args)
 
     function resolve(filename)
     {
-        const resolved = Module._resolveFilename(filename, module);
+        const paths = Module._resolveLookupPaths(filename, module, true);
+//console.log(module);
+//console.log(Module._resolveFilename(filename, module));
+//console.log(paths);console.log(filename);
+        const resolved = Module._findPath(filename, paths, false);
 
+//        const resolved = Module._resolveFilename(filename, module);
+
+        if (!resolved)
+            return resolved;
+    
         if (!options.browser)
             return resolved;
 
