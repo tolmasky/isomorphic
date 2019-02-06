@@ -9,5 +9,9 @@
   "keywords": [],
   "author": "Francisco Ryan Tolmasky I",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {},
+  "peerDependencies": {
+    "@algebraic/collections": "1.0.0-alpha.7",
+    "@algebraic/type": "1.0.0-alpha.7"
+  }
 }

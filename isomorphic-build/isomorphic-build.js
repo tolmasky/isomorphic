@@ -87,7 +87,7 @@ const Build = Cause("Build",
 //                    bundle.compilations.size + " " +
 //                    outBuild.responses.size);
                 const duration = Date.now() - start;
-                console.log(basename(destination) + " took " + duration);// + " " + bundle);
+                console.log(basename(destination) + " took " + duration + " " + bundle.outputs.size + " " + bundle.outputs.size);
                 require("./bundle/concatenate")({ root, destination, bundle });
             }
 

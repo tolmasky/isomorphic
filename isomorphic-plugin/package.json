@@ -8,5 +8,10 @@
   },
   "keywords": [],
   "author": "Francisco Ryan Tolmasky I",
-  "license": "MIT"
+  "license": "MIT",
+  "peerDependencies": {
+    "@algebraic/collections": "1.0.0-alpha.7",
+    "@algebraic/type": "1.0.0-alpha.7",
+    "@isomorphic/package": "1.0.0-alpha.21"
+  }
 }
