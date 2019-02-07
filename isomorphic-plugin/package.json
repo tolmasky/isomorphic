@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/plugin",
-  "version": "1.0.0-alpha.22",
+  "version": "1.0.0-alpha.23",
   "description": "",
   "main": "plugin.js",
   "scripts": {
@@ -12,6 +12,6 @@
   "peerDependencies": {
     "@algebraic/collections": "1.0.0-alpha.8",
     "@algebraic/type": "1.0.0-alpha.8",
-    "@isomorphic/package": "1.0.0-alpha.22"
+    "@isomorphic/package": "1.0.0-alpha.23"
   }
 }
