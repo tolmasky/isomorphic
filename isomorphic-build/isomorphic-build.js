@@ -50,6 +50,7 @@ const Build = Cause("Build",
 
     [event.on (Pool.Retained) .from `transformPool`]:
         (build, { request, index }) => {
+        if (!global.first) { global.first = Date.now(); console.log(Date.now()) }
 //        console.log("COMPILING " + request);
         return update.in(
             build,
@@ -75,7 +76,7 @@ const Build = Cause("Build",
         if (inBuild.transformPool.occupied.size === 1 &&
             inBuild.transformPool.backlog.size === 0 &&
             requests.size === 0)
-        {
+        {console.log("end: " +  Date.now());
             for (const target of inBuild.products)
             {
                 const start = Date.now();
@@ -83,14 +84,11 @@ const Build = Cause("Build",
                 const bundle = toBundle(target.entrypoint, outBuild.compilations);
                 const destination = target.destination;
 
-//                console.log(basename(destination) + ": " +
-//                    bundle.compilations.size + " " +
-//                    outBuild.responses.size);
-                const duration = Date.now() - start;
-                console.log(basename(destination) + " took " + duration + " " + bundle.outputs.size + " " + bundle.outputs.size);
                 require("./bundle/concatenate")({ root, destination, bundle });
+                const duration = Date.now() - start;
+                console.log(basename(destination) + " took " + duration + " " + bundle.outputs.size + " " + bundle.files.size);
             }
-
+console.log("very end: " + Date.now());
             return [outBuild, [Cause.Finished({ value: 1 })]];
         }
 

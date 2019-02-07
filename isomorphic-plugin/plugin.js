@@ -22,7 +22,7 @@ const Plugin = Cause(`Plugin`,
     [field `cache`]: -1,
 
     init({ configuration, parentCache })
-    {
+    {console.log("started... " + Date.now());
         const parentPackage = Package.for(configuration.filename);
         const cache = `${parentCache}/${parentPackage.checksum}`;
 

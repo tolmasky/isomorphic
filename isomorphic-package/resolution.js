@@ -130,6 +130,8 @@ function mapAccum(fn, acc, list)
 // package-style path or a relative path. As such, it can't rely on previous
 // knowledge that search-path doesn't exist, because it needs to potentailly try
 // ${search-path}/{../../something}.
+// FIXME: This is technically still possible require("x/../y"), but we can
+// check for that...
 //
 // 2. It doesn't know ahead of time that you are looking for a specific file,
 // so it has to try all ${index.js|[main] as well.

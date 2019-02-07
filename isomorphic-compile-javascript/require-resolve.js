@@ -1,7 +1,7 @@
 const { string, data, union } = require("@algebraic/type");
 const { Map } = require("@algebraic/collections");
 const { existsSync } = require("fs");
-var { join, dirname, resolve } = require("path");
+const { join, dirname, resolve } = require("path");
 const empty = require.resolve("node-libs-browser/mock/empty");
 const isBuiltIn = path => !/^(\.\/|\.\.\/|\/)/.test(path);
 
@@ -13,25 +13,36 @@ const PathMapNode = union `PathMapNode` (
         parent  => PathMapNode ) );
 
 const Module = require("module");
-const getCachedModule = JSONCached(directory =>
-    ((filename, paths) => Object.assign(new Module(filename),
-        { filename, paths }))(`${directory}/:`,
-        Module._nodeModulePaths(directory)));
+const getCachedModule = JSONCached(filename =>
+    Object.assign(new Module(filename),
+        { filename, paths: Module._nodeModulePaths(filename) }));
+const builtinModules = Module.builtinModules.reduce(
+    (builtinModules, name) =>
+        (builtinModules[name] = true, builtinModules),
+        Object.create(null));
 
 
-module.exports = function resolve(root, from)
+module.exports = function resolve(root, basePath)
 {
-    const directory = dirname(from);
-    const module = getCachedModule(directory);
+    return function (request)
+    {
+        const module = getCachedModule(basePath);
+        const isBuiltIn = !!builtinModules[request];
+        const resolved = isBuiltIn ?
+            request :
+            Module._findPath(
+                request,
+                Module._resolveLookupPaths(request, module, true),
+                false);
 
-    return function (filename)
-    {try {
-        const resolved = Module._resolveFilename(filename, module);
-        const context = isBuiltIn(resolved) ? from : resolved;
+        if (!resolved)
+            return "path";
+
+        const context = isBuiltIn ? basePath : resolved;
         const pathMapNode = getCachedPathMapNode(root, dirname(context));
         const mapped = getMappedFilename(pathMapNode, resolved);
 
-        return mapped; } catch(e) { console.log("Can't find " + filename + " from " + from); return "path"; }
+        return mapped;
     }
 }
 
@@ -69,7 +80,7 @@ function getPathMap(directory)
     // and not require(x/[main]).
     if (typeof browser === "string")
     {
-        const module = getCachedModule(directory);
+        const module = getCachedModule(filename);
         const main = Module._resolveFilename(".", module);
         const resolved = browser === false ?
             empty :
