@@ -37,7 +37,17 @@ module.exports = function (_, options)
         `@isomorphic/babel-preset. Using the default "development", but you ` +
         `should specify this explicitly.`);
     const browser = options.engine === "browser";
-    const generatedReplacements = { NODE_ENV:environment, process:{ browser } };
+    const generatedReplacements =
+    {
+        process:
+        {
+            browser,
+            env:
+            {
+                NODE_ENV: environment
+            }
+        }
+    };
     const memberExpressionsReplacements = withDefault(generatedReplacements,
         options.memberExpressionsReplacements/*,
         `No "memberExpressionsReplacements" specified in the options for ` +
