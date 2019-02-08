@@ -9,7 +9,7 @@ const resolve = require("./require-resolve");
 
 const { data, string, deserialize, serialize } = require("@algebraic/type");
 const { OrderedSet } = require("@algebraic/collections");
-const Compilation = require("@isomorphic/plugin/compilation");
+const Compilation = require("@isomorphic/build/plugin/compilation");
 const UnresolvedCompilation = data `UnresolvedCompilation` (
     filename        => string,
     dependencies    => OrderedSet(string) );

@@ -2,7 +2,7 @@ const { data, string, serialize } = require("@algebraic/type");
 const { Cause, field, event } = require("@cause/cause");
 const Fork = require("@cause/fork");
 const Package = require("@isomorphic/package");
-const Compilation = require("./compilation");
+const Compilation = require("./plugin/compilation");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 

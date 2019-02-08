@@ -2,7 +2,7 @@ const DEBUG = process.env.NODE_ENV !== "production"
 
 const { data, string, number } = require("@algebraic/type");
 const { List } = require("@algebraic/collections");
-const PluginConfiguration = require("@isomorphic/plugin/configuration");
+const PluginConfiguration = require("./plugin/configuration");
 const Product = require("./product");
 
 // FIXME: These lists should probaby be OrderedSets.

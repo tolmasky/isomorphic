@@ -1,5 +1,6 @@
 const Configuration = require("./configuration");
-const { Plugin, Compilation } = require("@isomorphic/plugin");
+const Plugin = require("./plugin");
+const Compilation = require("./plugin/compilation");
 
 
 module.exports = async function main(options)
