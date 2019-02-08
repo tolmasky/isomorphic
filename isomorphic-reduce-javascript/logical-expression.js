@@ -1,6 +1,6 @@
 const { is } = require("@algebraic/type");
 const reduce = require(".");
-const { Value, isPureCoercableToBoolean } = require("./value");
+const { Value, isPureCoercableToBoolean, Unknown } = require("./value");
 const { PureNode } = require("./node-type");
 const truthy = value => isPureCoercableToBoolean(value) && !!value;
 const falsey = value => isPureCoercableToBoolean(value) && !value;
@@ -44,25 +44,25 @@ module.exports.LogicalExpression = function LogicalExpression(node)
     // _ || [false] => _
     // _ ?? [null]  => _
     // We can only drop if it's pure.
-    if (is(PureNode, right_) && drop(rightValue))
-        return left_;
+    // if (is(PureNode, right_) && drop(rightValue))
+    //    return left_;
 
     // At this point we know we must include left_ and right_.
     const value =
         operator === "&&" ?
-            truthy(left_) ? rightValue :
-            falsey(left_) ? leftValue :
-            falsey(right_) ? Value.Indefinite.Falsey :
+            truthy(leftValue) ? rightValue :
+            falsey(leftValue) ? leftValue :
+            falsey(rightValue) ? Value.Indefinite.Falsey :
             Unknown :
         operator === "||" ?
-            truthy(left_) ? leftValue :
-            falsey(left_) ? rightValue :
-            truthy(right_) ? Value.Indefinite.Truthy :
+            truthy(leftValue) ? leftValue :
+            falsey(leftValue) ? rightValue :
+            truthy(rightValue) ? Value.Indefinite.Truthy :
             Unknown :
         operator === "??" ?
-            notNullary(left_) ? leftValue :
-            nullary(left_) ? rightValue :
-            notNullary(right_) ? Value.Indefinite.Truthy :
+            notNullary(leftValue) ? leftValue :
+            nullary(leftValue) ? rightValue :
+            notNullary(rightValue) ? Value.Indefinite.Truthy :
             Unknown :
         unreachable();
 
