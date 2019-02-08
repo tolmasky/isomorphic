@@ -55,8 +55,7 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
         return unresolvedCompilation;
     })();
-if (unresolvedCompilation
-        .dependencies.has("ws")) console.log("ADDING ws from " + filename + "\n" + unresolvedCompilation.filename);
+
     const dependencies = unresolvedCompilation
         .dependencies
         .toList()
@@ -64,9 +63,6 @@ if (unresolvedCompilation
             !ignoredDependencies ||
             ignoredDependencies.test(dependency))
         .map(resolve("/", filename));
-
-    if (dependencies.size !== unresolvedCompilation.dependencies.size)
-        console.log("OH NO! " + dependencies.size + " " + unresolvedCompilation.dependencies.size);
 
     return Compilation({ ...unresolvedCompilation, dependencies });
 }
