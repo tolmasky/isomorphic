@@ -76,7 +76,7 @@ Value.isPureCoercableToNumber = function isPureCoercableToNumber(value)
 Value.toNumber = function (value)
 {
     if (!Value.isPureCoercableToNumber(value))
-        throw TypeError("Cannot convert Unknown to boolean.");
+        throw TypeError("Cannot convert Unknown to number.");
 
     return +value;
 }

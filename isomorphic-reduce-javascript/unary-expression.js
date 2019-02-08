@@ -25,7 +25,7 @@ module.exports.UnaryExpression = function UnaryExpression(node)
                 !toBoolean(inValue) :
                 Unknown :
 
-        Value.isPureCoercableToNumber(inValue) ?
+        !Value.isPureCoercableToNumber(inValue) ?
             Unknown :
             operator === "+" ? +toNumber(inValue) :
             operator === "-" ? -toNumber(inValue) :

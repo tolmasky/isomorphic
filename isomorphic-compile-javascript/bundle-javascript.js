@@ -1,4 +1,4 @@
-const compile = require("./transform");
+const compile = require("./compile");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 

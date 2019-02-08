@@ -21,9 +21,11 @@ const flag = flag => options =>
     !isArray(options.engine.node) ||
     options.engine.node.slice(1).indexOf(flag) >= 0;
 
-const withDefault = (value, message) => existing =>
-    (console.warn(message), value)
-console.log("here!!!");
+const withDefault = (value, existing, message) =>
+    existing === void(0) ?
+        (message && console.warn(message), value) :
+        existing;
+
 
 module.exports = function (_, options)
 {
@@ -34,16 +36,13 @@ module.exports = function (_, options)
         `No "environment" specified in the options for ` +
         `@isomorphic/babel-preset. Using the default "development", but you ` +
         `should specify this explicitly.`);
-    const browser = options.engine.browser;
-    const memberExpressionsReplacements = withDefault(
-    {
-        NODE_ENV: environment,
-        process: { browser: true },
-    },
-        options.memberExpressionsReplacements,
+    const browser = options.engine === "browser";
+    const generatedReplacements = { NODE_ENV:environment, process:{ browser } };
+    const memberExpressionsReplacements = withDefault(generatedReplacements,
+        options.memberExpressionsReplacements/*,
         `No "memberExpressionsReplacements" specified in the options for ` +
-        `@isomorphic/babel-preset. Using { NODE_ENV: "${environment}" } as ` +
-        `to match the "environment" option.`);
+        `@isomorphic/babel-preset. Using ` +JSON.stringify(generatedReplacements)*/);
+
     const react = !!options.react;
     const normalized =
         { react, engine, environment, memberExpressionsReplacements };
@@ -51,7 +50,7 @@ module.exports = function (_, options)
         .filter(pluginDescription => pluginDescription[0](normalized))
         .map(([, generator]) =>
             typeof generator === "string" ? require(generator) :
-            isArray(generator) ? [require(generator), generator[1]] :
+            isArray(generator) ? [require(generator[0]), generator[1]] :
             typeof generator === "function" ? generator(normalized) :
             (() => { throw Error("Can't parse plugin") })());
 

@@ -6,6 +6,9 @@ module.exports = function reduce(node)
     if (isArray(node))
         return node.map(reduce);
 
+    if (node === null)
+        return null;
+
     return (handlers[node.type] || handlers.Node)(node);
 }
 

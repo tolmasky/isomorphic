@@ -3,7 +3,7 @@ const name = "transform-inline-global-expressions";
 const None = { };
 
 
-module.exports = function({ types: t }, replacements)
+module.exports = function({ types: t }, { replacements })
 {
     const MemberExpression = function (path)
     {
