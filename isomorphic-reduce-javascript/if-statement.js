@@ -31,10 +31,10 @@ module.exports.IfStatement = function IfStatement(node)
     return passes ?
         consequent_ ?
             t.ifStatement(test_, consequent_) :
-            test_ :
+            asStatement(test_) :
         alternate_ ?
             t.ifStatement(t.unaryExpression("!", test_), alternate_) :
-            test_;
+            asStatement(test_);
 }
 
 function asStatement(node)

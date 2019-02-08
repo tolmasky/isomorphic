@@ -64,6 +64,6 @@ function tryTypeof(value)
         value === Value.Indefinite.Falsey)
         return Unknown;
 
-    return "object";
+    return Unknown;
 }
 

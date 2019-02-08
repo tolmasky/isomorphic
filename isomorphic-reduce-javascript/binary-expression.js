@@ -13,8 +13,9 @@ module.exports.BinaryExpression = function BinaryExpression (node)
     const leftValue = Value.from(left_);
     const rightValue = Value.from(right_);
 
+    // FIXME: Indefinite.Truthy == Indefinte.Truthy is knowable.
     const value =
-        !is(Value.Definite, leftValue) &&
+        !is(Value.Definite, leftValue) ||
         !is(Value.Definite, rightValue) ? Unknown :
 
         operator === "+" ? leftValue + rightValue :
