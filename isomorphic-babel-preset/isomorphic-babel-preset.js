@@ -1,88 +1,121 @@
 const intersects = require("semver").intersects;
 
-const range = range => options => options.node && intersects(range, options.node);
-const flag = flag => options => (options.flags || []).indexOf(flag) >= 0;
 const option = key => options => !!options[key];
-const browser = option("browser");
-
 const OR = (lhs, rhs) => input => lhs(input) || rhs(input);
 const AND = (lhs, rhs) => input => lhs(input) && rhs(input);
 const NOT = lhs => input => !lhs(input);
 
 const ALWAYS = () => true;
 
-const ReactJSXPlugin = require("@babel/plugin-transform-react-jsx");
+const { isArray } = Array;
+const browser = options => options.engine === "browser";
+const node = range => options =>
+    options.engine &&
+    options.engine.node &&
+    (isArray(options.engine.node) ?
+        intersects(range, options.engine.node[0]) :
+        intersects(range, options.engine.node));
+const flag = flag => options =>
+    options.engine &&
+    options.engine.node &&
+    !isArray(options.engine.node) ||
+    options.engine.node.slice(1).indexOf(flag) >= 0;
 
+const withDefault = (value, message) => existing =>
+    (console.warn(message), value)
+console.log("here!!!");
 
 module.exports = function (_, options)
 {
-    const JSXPragma = options.JSXPragma;
+    const engine = withDefault("browser", options.engine,
+        `No "engine" specified in the options for @isomorphic/babel-preset. ` +
+        `Using the default "browser", but you should specify this explicitly.`);
+    const environment = withDefault("development", options.environment,
+        `No "environment" specified in the options for ` +
+        `@isomorphic/babel-preset. Using the default "development", but you ` +
+        `should specify this explicitly.`);
+    const browser = options.engine.browser;
+    const memberExpressionsReplacements = withDefault(
+    {
+        NODE_ENV: environment,
+        process: { browser: true },
+    },
+        options.memberExpressionsReplacements,
+        `No "memberExpressionsReplacements" specified in the options for ` +
+        `@isomorphic/babel-preset. Using { NODE_ENV: "${environment}" } as ` +
+        `to match the "environment" option.`);
+    const react = !!options.react;
+    const normalized =
+        { react, engine, environment, memberExpressionsReplacements };
+    const plugins = pluginDescriptions
+        .filter(pluginDescription => pluginDescription[0](normalized))
+        .map(([, generator]) =>
+            typeof generator === "string" ? require(generator) :
+            isArray(generator) ? [require(generator), generator[1]] :
+            typeof generator === "function" ? generator(normalized) :
+            (() => { throw Error("Can't parse plugin") })());
 
-    return  {
-                "plugins": pluginDescriptions
-                    .filter(pluginDescription => pluginDescription[0](options))
-                    .map(function (pluginDescription)
-                    {
-                        const plugin = pluginDescription[1];
-                        const predicate = pluginDescription[0];
-
-                        return  plugin === ReactJSXPlugin && JSXPragma ?
-                                [plugin, { pragma: JSXPragma }] :
-                                plugin;
-                    })
-            };
+    return { plugins };
 }
 
-var pluginDescriptions =
+const pluginDescriptions =
 [
-    [OR(browser, range("< 0.12")), require("@babel/plugin-transform-for-of")],
-    [OR(browser, range("< 0.12")), require("@babel/plugin-check-constants")],
-    [OR(browser, range("< 0.12")), require("@babel/plugin-transform-typeof-symbol")],
+    [OR(browser, node("< 0.12")), "@babel/plugin-transform-for-of"],
+    [OR(browser, node("< 0.12")), "@babel/plugin-check-constants"],
+    [OR(browser, node("< 0.12")), "@babel/plugin-transform-typeof-symbol"],
 
-    [OR(browser, AND(range("< 0.13.0"), NOT(flag("--harmony-generators")))),
-        [require("@babel/plugin-transform-regenerator"),
-        { async: false, asyncGenerators: false }]],
+    [OR(browser, AND(node("< 0.13.0"), NOT(flag("--harmony-generators")))),
+        ["@babel/plugin-transform-regenerator",
+            { async: false, asyncGenerators: false }]],
 
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-template-literals")],
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-literals")],
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-arrow-functions")],
-    [OR(browser ,range("< 4")), require("@babel/plugin-transform-shorthand-properties")],
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-computed-properties")],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-template-literals"],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-literals"],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-arrow-functions"],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-shorthand-properties"],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-computed-properties"],
 
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-object-super")],
-    [OR(browser, range("< 4")), require("@babel/plugin-transform-classes")],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-object-super"],
+    [OR(browser, node("< 4")), "@babel/plugin-transform-classes"],
 
-    [OR(browser, range(">= 4 < 6")), require("./babel-plugin-transform-strict-classes")],
-    [OR(browser, range("4.x.x")), require("./babel-plugin-transform-super-spread")],
+    [OR(browser, node(">= 4 < 6")), "./babel-plugin-transform-strict-classes"],
+    [OR(browser, node("4.x.x")), "./babel-plugin-transform-super-spread"],
 
-    [OR(browser, range("< 5")), require("@babel/plugin-transform-spread")],
+    [OR(browser, node("< 5")), "@babel/plugin-transform-spread"],
 
-    [OR(browser, range("< 6")), require("@babel/plugin-transform-sticky-regex")],
-    [OR(browser, range("< 6")), require("@babel/plugin-transform-unicode-regex")],
+    [OR(browser, node("< 6")), "@babel/plugin-transform-sticky-regex"],
+    [OR(browser, node("< 6")), "@babel/plugin-transform-unicode-regex"],
 
-    [OR(browser, range("< 6")), require("@babel/plugin-transform-destructuring")],
-    [OR(browser, range("< 6")), require("@babel/plugin-transform-block-scoping")],
+    [OR(browser, node("< 6")), "@babel/plugin-transform-destructuring"],
+    [OR(browser, node("< 6")), "@babel/plugin-transform-block-scoping"],
 
-    [OR(browser, range("< 7")), require("@babel/plugin-transform-parameters")],
-    [OR(browser, range("< 7.6.0")), require("@babel/plugin-transform-async-to-generator")],
+    [OR(browser, node("< 7")), "@babel/plugin-transform-parameters"],
+    [OR(browser, node("< 7.6.0")), "@babel/plugin-transform-async-to-generator"],
 
-    [ALWAYS, require("@babel/plugin-transform-function-name")],
+    [ALWAYS, "@babel/plugin-transform-function-name"],
 
-    [OR(browser, range("< 8.3.0")), require("@babel/plugin-proposal-object-rest-spread")],
-    [range(">= 8.3.0"), () => ({
+    [OR(browser, node("< 8.3.0")), "@babel/plugin-proposal-object-rest-spread"],
+    [node(">= 8.3.0"), () => ({
         manipulateOptions: function manipulateOptions(opts, parserOpts) {
           parserOpts.plugins.push("objectRestSpread");
         }
     })],
 
-//    [option("generic-jsx"), require("generic-jsx/@babel/plugin-transform-generic-jsx"), "GENERIC JSX"],
-    [option("react"), ReactJSXPlugin],
+    [   option("react"),
+        options =>
+        [
+            require("@babel/plugin-transform-react-jsx"),
+            // This handles .pragma
+            typeof options.react === "object" ? options.react : { }
+        ]
+    ],
 
-//    [ALWAYS, require("./babel-plugin-metadata")],
-//    [ALWAYS, require("./babel-plugin-entrypoints")],
-//    [ALWAYS, require("./babel-plugin-dependencies")],
- //   [ALWAYS, require("./babel-plugin-hydration")]
-
-//    [always, require("@babel/plugin-transform-block-scoped-functions")],
-//    [always, require("@babel/plugin-transform-modules-commonjs")]
+    [   option("memberExpressionsReplacements"),
+        options =>
+        [
+            require("./babel-plugin-transform-replace-global-member-expressions.js"),
+            { replacements: options.memberExpressionsReplacements }
+        ]
+    ]
 ];
+
+
