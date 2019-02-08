@@ -41,6 +41,6 @@ function asStatement(node)
 {
     if (t.isStatement(node))
         return node;
-    
+
     return Value.on(t.expressionStatement(node), Value.from(node));
 }
