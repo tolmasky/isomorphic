@@ -1,7 +1,9 @@
-const { data, number, string } = require("@algebraic/type");
+const { data, number, string, parameterized } = require("@algebraic/type");
 const { List, Set } = require("@algebraic/collections");
 
-module.exports = data `Compilation` (
-    filename        => string,
-    dependencies    => [List(string), List(string)()],
-    entrypoints     => [Set(string), Set(string)()] );
+module.exports = parameterized (T =>
+    data `Compilation<${T}>` (
+        filename        => string,
+        dependencies    => [List(string), List(string)()],
+        entrypoints     => [Set(string), Set(string)()],
+        metadata        => T ) );

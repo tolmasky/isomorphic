@@ -9,10 +9,11 @@ const resolve = require("./require-resolve");
 
 const { data, string, deserialize, serialize } = require("@algebraic/type");
 const { OrderedSet } = require("@algebraic/collections");
-const Compilation = require("@isomorphic/build/plugin/compilation");
+const Compilation = require("./compilation");
 const UnresolvedCompilation = data `UnresolvedCompilation` (
     filename        => string,
-    dependencies    => OrderedSet(string) );
+    dependencies    => OrderedSet(string),
+    metadata        => Compilation.Metadata);
 
 
 const read = (type, path) =>
@@ -24,7 +25,7 @@ const write = (type, path, data) =>
 module.exports = function compile({ filename, ...rest }, configuration)
 {
     if (extname(filename) === ".json")
-        return Compilation({ filename });
+        return Compilation({ filename, metadata: Compilation.Metadata({}) });
 
     const replacement = polyfill(filename);
 
@@ -47,8 +48,16 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
         const transformedChecksum = getSha512(transformed.contents);
         const output = join(cache, "outputs", transformedChecksum + ".js");
+
+        const referencesGlobalProcess = globals.has("process");
+        const referencesGlobalBuffer = globals.has("buffer");
+        const metadata = Compilation.Metadata(
+        {
+            referencesGlobalProcess,
+            referencesGlobalBuffer
+        });
         const unresolvedCompilation =
-            UnresolvedCompilation({ filename: output, dependencies });
+            UnresolvedCompilation({ filename: output, dependencies, metadata });
 
         writeFileSync(output, transformed.contents, "utf-8");
         write(UnresolvedCompilation, contentsCachePath, unresolvedCompilation);
@@ -58,6 +67,7 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
     const dependencies = unresolvedCompilation
         .dependencies
+        .concat(getImplicitDependencies(unresolvedCompilation))
         .toList()
         .filter(dependency =>
             !ignoredDependencies ||
@@ -67,5 +77,10 @@ module.exports = function compile({ filename, ...rest }, configuration)
     return Compilation({ ...unresolvedCompilation, dependencies });
 }
 
-
-    
+function getImplicitDependencies({ metadata })
+{
+    return  [
+                metadata.referencesGlobalBuffer && "buffer",
+                metadata.referencesGlobalProcess && require.resolve("process")
+            ].filter(present => !!present);
+}

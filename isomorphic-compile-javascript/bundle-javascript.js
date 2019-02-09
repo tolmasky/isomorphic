@@ -1,19 +1,17 @@
-const compile = require("./compile");
-const { execSync } = require("child_process");
-const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
+const { mkdirSync } = require("fs");
 
-
+    
 module.exports = function ({ configuration, cache })
 {
+    const compile = require("./compile");
+    const bundle = require("./bundle");
+
     const { options } = configuration;
 
-    mkdirp(`${cache}/contents`);
-    mkdirp(`${cache}/outputs`);
+    mkdirSync(`${cache}/contents`, { recursive: true });
+    mkdirSync(`${cache}/outputs`, { recursive: true });
 
     return { compile, bundle };
 }
 
-function bundle()
-{
-    console.log("bundle");
-}
+module.exports.Compilation = require("./compilation");
