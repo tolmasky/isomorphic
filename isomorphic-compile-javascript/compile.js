@@ -43,7 +43,7 @@ module.exports = function compile({ filename, ...rest }, configuration)
             return read(UnresolvedCompilation, contentsCachePath);
 
         const { options } = configuration;
-        const transformed = transform(contents, options.babel);
+        const transformed = transform(filename, contents, options.babel);
         const { globals, dependencies } = transformed.metadata;
 
         const transformedChecksum = getSha512(transformed.contents);

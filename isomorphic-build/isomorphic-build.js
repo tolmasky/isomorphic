@@ -88,9 +88,16 @@ const Build = Cause("Build",
             const { Compilation } = require(
                 outBuild.configuration.pluginConfigurations.first().filename);
 
+            // FIXME: We want to sort these by size, since large files take
+            // longer to write out, so if we group files by size we have a
+            // higher chance of taking the time hits in parallel. The number
+            // of compilations is a bad heuristic for this. It would be nice
+            // to know the total size of the files, but to do that we need
+            // Compilations to return size.
             const requests = outBuild.products
                 .map(product => Bundle.Request(Compilation)
-                    .fromCompilationsInProduct(outBuild.compilations, product));
+                    .fromCompilationsInProduct(outBuild.compilations, product))
+                .sortBy(request => -request.compilations.size);
 
             return update.in.reduce(
                 outBuild, "transformPool",

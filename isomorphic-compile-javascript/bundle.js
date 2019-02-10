@@ -64,7 +64,7 @@ module.exports = function bundle(bundleRequest)
     const output = { buffers:[], length:0 };
 
     append("(function (global) {")
-console.log(basename(destination) + " " + implicitBuiltInDependencies);
+
     if (implicitBuiltInDependencies.size > 0)
         append("var " +
             implicitBuiltInDependencies
