@@ -1,3 +1,4 @@
+const { dirname } = require("path");
 const { loadOptions, transformSync, transformFromAstSync } =
     require("@babel/core");
 const reduce = require("@isomorphic/reduce-javascript");
@@ -23,6 +24,7 @@ module.exports = function transform(filename, contents, babelOptions)
     const { code, map, metadata } = transformFromAstSync(reduced, contents,
     {
         ...metadataOptions,
+        sourceRoot: dirname(filename),
         filename
     });
     const wrapped = moduleWrap(metadata.globals, code);
