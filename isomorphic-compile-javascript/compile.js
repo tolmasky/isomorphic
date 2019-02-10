@@ -7,12 +7,16 @@ const transform = require("./transform");
 const polyfill = require("./polyfill");
 const resolve = require("./require-resolve");
 
-const { data, string, deserialize, serialize } = require("@algebraic/type");
+const { data, string, number, deserialize, serialize } =
+    require("@algebraic/type");
 const { OrderedSet, Set } = require("@algebraic/collections");
 const Compilation = require("./compilation");
 const UnresolvedCompilation = data `UnresolvedCompilation` (
     filename        => string,
+    sourceMapPath   => string,
     dependencies    => OrderedSet(string),
+    size            => number,
+    lineCount       => number,
     metadata        => Compilation.Metadata);
 
 
@@ -25,7 +29,14 @@ const write = (type, path, data) =>
 module.exports = function compile({ filename, ...rest }, configuration)
 {
     if (extname(filename) === ".json")
-        return Compilation({ filename, metadata: Compilation.Metadata({}) });
+    {
+        const contents = readFileSync(filename, "utf-8");
+        const size = contents.length;
+        const lineCount = contents.match(/\n/g).length + 1;
+        const metadata = Compilation.Metadata({});
+
+        return Compilation({ filename, size, lineCount, metadata });
+    }
 
     const replacement = polyfill(filename);
 
@@ -47,17 +58,28 @@ module.exports = function compile({ filename, ...rest }, configuration)
         const { globals, dependencies } = transformed.metadata;
 
         const transformedChecksum = getSha512(transformed.contents);
-        const output = join(cache, "outputs", transformedChecksum + ".js");
+        const output = `${cache}/outputs/${transformedChecksum}.js`;
+        const sourceMapPath = `${cache}/source-maps/${transformedChecksum}.json`;
         const implicitBuiltInDependencies = Set(string)(
         [
             globals.has("process") && "process",
             globals.has("Buffer") && "buffer"
         ].filter(present => !!present));
         const metadata = Compilation.Metadata({ implicitBuiltInDependencies });
-        const unresolvedCompilation =
-            UnresolvedCompilation({ filename: output, dependencies, metadata });
+        const unresolvedCompilation = UnresolvedCompilation(
+        {
+            filename: output,
+            sourceMapPath,
+            size: transformed.contents.length,
+            lineCount: transformed.contents.match(/\n/g).length + 1,
+            dependencies,
+            metadata
+        });
 
         writeFileSync(output, transformed.contents, "utf-8");
+        writeFileSync(sourceMapPath,
+            JSON.stringify(transformed.sourceMap), "utf-8");
+
         write(UnresolvedCompilation, contentsCachePath, unresolvedCompilation);
 
         return unresolvedCompilation;

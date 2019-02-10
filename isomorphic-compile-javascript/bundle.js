@@ -7,7 +7,7 @@ const JSONPreamble = "function(exports, require, module) { module.exports = ";
 const JSONPostamble = "\n}";
 const bootstrapPath = require.resolve("./bundle/bootstrap");
 
-const { data, string, number } = require("@algebraic/type");
+const { data, string, number, Maybe } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
 const fromImplicitDependency =
@@ -17,9 +17,9 @@ const fromImplicitDependency =
 };
 
 const File  = data `File` (
-    filename        => string,
-    dependencies    => List(number),
-    outputIndex     => number );
+    filename            => string,
+    dependencies        => List(number),
+    compilationIndex    => number );
 
 
 module.exports = function bundle(bundleRequest)
@@ -36,24 +36,27 @@ module.exports = function bundle(bundleRequest)
     const filenameIndexes = Map(string, number)(
         sortedCompilations.map(([filename], index) => [filename, index]));
     const timing = (Date.now() - start);
-    const [files, outputIndexes] = sortedCompilations.reduce(
-        function ([files, outputIndexes], [filename, compilation])
+    const [files, dedupedCompilations] = sortedCompilations.reduce(
+        function ([files, dedupedCompilations], [filename, compilation])
         {
             const dependencies = compilation
                 .dependencies
                 .map(dependency => filenameIndexes.get(dependency));
-            const output = compilation.filename;
-            const outputIndex = outputIndexes.get(output, outputIndexes.size);
-            const outFiles = files.push(
-                File({ filename, dependencies, outputIndex }));
-            const outOutputIndexes =
-                outputIndex === outputIndexes.size ?
-                    outputIndexes.set(output, outputIndex) :
-                    outputIndexes;
 
-            return [outFiles, outOutputIndexes];
+            const output = compilation.filename;
+            const [compilationIndex] = dedupedCompilations
+                .get(output, [dedupedCompilations.size]);
+            const outDedupedCompilations =
+                compilationIndex === dedupedCompilations.size ?
+                    dedupedCompilations
+                        .set(output, [compilationIndex, compilation]) :
+                    dedupedCompilations;
+
+            const outFiles = files.push(
+                File({ filename, dependencies, compilationIndex }));
+
+            return [outFiles, outDedupedCompilations];
         }, [List(File)(), OrderedMap(string, number)()]);
-    const outputs = List(string)(outputIndexes.keySeq());
     const { entrypoint, destination } = bundleRequest.product;
 
     if (existsSync(destination))
@@ -77,18 +80,18 @@ module.exports = function bundle(bundleRequest)
     append(filenameIndexes.get(entrypoint) + ",");
 
     append(JSON.stringify(files
-        .map(({ filename, outputIndex, dependencies }) =>
-            [filename, outputIndex, dependencies])));
+        .map(({ filename, compilationIndex, dependencies }) =>
+            [filename, compilationIndex, dependencies])));
 
     append(", [");
-    for (const output of outputs)
+    for (const [, [, { filename }]] of dedupedCompilations)
     {
-        const isJSON = extname(output) === ".json";
+        const isJSON = extname(filename) === ".json";
 
         if (isJSON)
             append(JSONPreamble);
 
-        append(readFileSync(output));
+        append(readFileSync(filename));
 
         if (isJSON)
             append(JSONPostamble);
@@ -110,10 +113,13 @@ module.exports = function bundle(bundleRequest)
     }
 
     append(") })(window)");
+    append(`//# sourceMappingURL=./${basename(destination)}.map`);
 
     const concated = Buffer.concat(output.buffers, output.length);
 
     writeFileSync(destination, concated);
+    writeSourceMap(53, destination, `${destination}.map`, dedupedCompilations);
+
 console.log(destination + " took: " + timing + " " + (Date.now() - start));
     return Bundle.Response({ filename: destination });
 
@@ -125,9 +131,47 @@ console.log(destination + " took: " + timing + " " + (Date.now() - start));
         output.buffers.push(content);
         output.length += content.length;
     }
-    
+
     function derooted(path)
     {
         return isAbsolute(path) ? "/" + relative(root, path) : path
     }
 }
+
+const writeSourceMap = (function ()
+{
+    const {
+        openSync: open,
+        writeSync: write,
+        closeSync: close,
+        existsSync: exists,
+        unlinkSync: unlink } = require("fs");
+
+    return function writeSourceMap(lineCount, target, destination, dedupedCompilations)
+    {
+        if (exists(destination))
+            unlink(destination);
+
+        const fd = open(destination, "wx");
+
+        write(fd, `{"version":3,"file":${JSON.stringify(target)},"sections":[`);
+
+        dedupedCompilations.reduce(function ([existing, lineCount], [, compilation])
+        {
+            if (compilation.sourceMapPath === Maybe(string).Nothing)
+                return [existing, lineCount + compilation.lineCount - 1];
+
+            if (existing)
+                write(fd, ",");
+
+            write(fd, `{"offset":{"line":${lineCount},"column":0},"map":`)
+            write(fd, readFileSync(compilation.sourceMapPath));
+            write(fd, `}`);
+
+            return [true, lineCount + compilation.lineCount - 1];
+        }, [false, lineCount]);
+
+        write(fd, `]}`);
+        close(fd);
+    }
+})();

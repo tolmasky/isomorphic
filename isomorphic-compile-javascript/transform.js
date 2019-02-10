@@ -25,12 +25,7 @@ module.exports = function transform(filename, contents, babelOptions)
         ...metadataOptions,
         filename
     });
-    const mapComment =
-        "//"+map.sources+"\n"+
-        "//# sourceMappingURL=data:application/json;charset=utf-8;base64," +
-        Buffer.from(JSON.stringify(map), "utf-8").toString("base64");
-    const codeWithMap = `${code}\n${mapComment}\n`;
-    const wrapped = moduleWrap(metadata.globals, codeWithMap);
+    const wrapped = moduleWrap(metadata.globals, code);
 
-    return { contents: wrapped, metadata };
+    return { contents: wrapped, sourceMap: map, metadata };
 }
