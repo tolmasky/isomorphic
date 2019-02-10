@@ -1,7 +1,5 @@
-(function (entrypoint, files, compilations)
+(function (global, entrypoint, implicitBuiltInDependencies, files, compilations)
 {
-    global.process = { env: { NODE_ENV:"development" } };
-
     function cachedRequire(index)
     {
         const module = Module._cache[index] || new Module(index);
@@ -47,6 +45,12 @@
     }
 
     Module._cache = { };
+
+    if (implicitBuiltInDependencies.process !== void(0))
+        process = cachedRequire(implicitBuiltInDependencies.process);
+
+    if (implicitBuiltInDependencies.buffer !== void(0))
+        Buffer = cachedRequire(implicitBuiltInDependencies.buffer);
 
     cachedRequire(entrypoint);
 })

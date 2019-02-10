@@ -1,11 +1,13 @@
 const { dirname, extname } = require("path");
+const { openSync: open, writeSync: write, closeSync: close } = require("fs");
+
 const { existsSync, unlinkSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
 const JSONPreamble = "function(exports, require, module) { module.exports = ";
 const JSONPostamble = "\n}";
 const bootstrapPath = require.resolve("./bundle/bootstrap");
 
 const { data, string, number } = require("@algebraic/type");
-const { List, Map, OrderedMap } = require("@algebraic/collections");
+const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
 
 const File  = data `File` (
@@ -15,25 +17,19 @@ const File  = data `File` (
 
 
 module.exports = function bundle(bundleRequest)
-{
+{const start = Date.now();
     const { compilations } = bundleRequest;
-    const { referencesGlobalProcess, referencesGlobalBuffer } =
-        compilations.reduce((references, { metadata }) =>
-        ({
-            referencesGlobalProcess:
-                metadata.referencesGlobalProcess &&
-                references.referencesGlobalProcess,
-            referencesGlobalBuffer:
-                metadata.referencesGlobalBuffer &&
-                references.referencesGlobalBuffer                
-        }), { referencesGlobalProcess:false, referencesGlobalBuffer: false });
+    const implicitBuiltInDependencies = compilations.reduce(
+        (dependencies, { metadata }) =>
+            dependencies.concat(metadata.implicitBuiltInDependencies),
+        Set(string)());
     const sortedCompilations = compilations
         .entrySeq()
         .toList()
         .sortBy(([filename]) => filename);
     const filenameIndexes = Map(string, number)(
-        sortedCompilations.map(({ filename }, index) => [filename, index]));
-
+        sortedCompilations.map(([filename], index) => [filename, index]));
+    const timing = (Date.now() - start);
     const [files, outputIndexes] = sortedCompilations.reduce(
         function ([files, outputIndexes], [filename, compilation])
         {
@@ -61,37 +57,22 @@ module.exports = function bundle(bundleRequest)
 
     const output = { buffers:[], length:0 };
 
-    // The first item is always the bootstrap file, it doesn't get wrapped.
-    append("(function (global) {");
     append(readFileSync(bootstrapPath));
-    append("(");
-    append(entrypoint + ",");
 
-    const filesAsArray = files
+    append("(window, ");
+    append(filenameIndexes.get(entrypoint) + ", {");
+
+    append(implicitBuiltInDependencies
+        .map(name => `${name}: ${filenameIndexes.get(name)}`)
+        .join(","));
+
+    append("}, ");
+
+    append(JSON.stringify(files
         .map(({ filename, outputIndex, dependencies }) =>
-            [filename, outputIndex, dependencies]);
-/*
-    const references =
-    [
-        referencesGlobalProcess && "process",
-        referencesGlobalBuffer && "Buffer"
-    ].filter(present => !!present);
+            [filename, outputIndex, dependencies])));
 
-    if (references.length > 0)
-    {
-        append("(function (" + references + ") { return [");
-        append("function(name, input) { if () { } },");
-    }
-*/
-    append(JSON.stringify(filesAsArray));
-/*
-    if (references.length > 0)
-    {
-        append("}")
-    }
-*/
     append(", [");
-
     for (const output of outputs)
     {
         const isJSON = extname(output) === ".json";
@@ -106,13 +87,12 @@ module.exports = function bundle(bundleRequest)
 
         append(",");
     }
-
-    append("]) })(window)");
+    append("])");
 
     const concated = Buffer.concat(output.buffers, output.length);
 
     writeFileSync(destination, concated);
-
+console.log(destination + " took: " + timing + " " + (Date.now() - start));
     return Bundle.Response({ filename: destination });
 
     function append(content)

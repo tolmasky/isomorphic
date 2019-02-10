@@ -8,7 +8,7 @@ const polyfill = require("./polyfill");
 const resolve = require("./require-resolve");
 
 const { data, string, deserialize, serialize } = require("@algebraic/type");
-const { OrderedSet } = require("@algebraic/collections");
+const { OrderedSet, Set } = require("@algebraic/collections");
 const Compilation = require("./compilation");
 const UnresolvedCompilation = data `UnresolvedCompilation` (
     filename        => string,
@@ -48,14 +48,12 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
         const transformedChecksum = getSha512(transformed.contents);
         const output = join(cache, "outputs", transformedChecksum + ".js");
-
-        const referencesGlobalProcess = globals.has("process");
-        const referencesGlobalBuffer = globals.has("buffer");
-        const metadata = Compilation.Metadata(
-        {
-            referencesGlobalProcess,
-            referencesGlobalBuffer
-        });
+        const implicitBuiltInDependencies = Set(string)(
+        [
+            globals.has("process") && "process",
+            globals.has("Buffer") && "buffer"
+        ].filter(present => !!present));
+        const metadata = Compilation.Metadata({ implicitBuiltInDependencies });
         const unresolvedCompilation =
             UnresolvedCompilation({ filename: output, dependencies, metadata });
 
@@ -64,10 +62,9 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
         return unresolvedCompilation;
     })();
-
     const dependencies = unresolvedCompilation
         .dependencies
-        .concat(getImplicitDependencies(unresolvedCompilation))
+        .concat(unresolvedCompilation.metadata.implicitBuiltInDependencies)
         .toList()
         .filter(dependency =>
             !ignoredDependencies ||
@@ -75,12 +72,4 @@ module.exports = function compile({ filename, ...rest }, configuration)
         .map(resolve("/", filename));
 
     return Compilation({ ...unresolvedCompilation, dependencies });
-}
-
-function getImplicitDependencies({ metadata })
-{
-    return  [
-                metadata.referencesGlobalBuffer && "buffer",
-                metadata.referencesGlobalProcess && require.resolve("process")
-            ].filter(present => !!present);
 }

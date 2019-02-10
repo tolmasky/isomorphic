@@ -62,8 +62,6 @@ const Build = Cause("Build",
             inBuild.transformPool.backlog.size === 0)
             return [inBuild, [Cause.Finished({ value: 1 })]];
 
-        console.log("finished " + response.filename);
-
         return update.in(
             inBuild, "transformPool", Pool.Release({ indexes:[index] }));
     },
