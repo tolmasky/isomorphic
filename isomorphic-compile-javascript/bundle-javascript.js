@@ -1,4 +1,4 @@
-const { mkdirSync } = require("fs");
+const mkdirp = require("./mkdirp");
 
     
 module.exports = function ({ configuration, cache })
@@ -8,8 +8,8 @@ module.exports = function ({ configuration, cache })
 
     const { options } = configuration;
 
-    mkdirSync(`${cache}/contents`, { recursive: true });
-    mkdirSync(`${cache}/outputs`, { recursive: true });
+    mkdirp(`${cache}/contents`);
+    mkdirp(`${cache}/outputs`);
 
     return { compile, bundle };
 }

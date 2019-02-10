@@ -1,7 +1,8 @@
 const { dirname, extname } = require("path");
 const { openSync: open, writeSync: write, closeSync: close } = require("fs");
 
-const { existsSync, unlinkSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
+const mkdirp = require("./mkdirp");
+const { existsSync, unlinkSync, readFileSync, writeFileSync } = require("fs");
 const JSONPreamble = "function(exports, require, module) { module.exports = ";
 const JSONPostamble = "\n}";
 const bootstrapPath = require.resolve("./bundle/bootstrap");
@@ -53,7 +54,7 @@ module.exports = function bundle(bundleRequest)
     if (existsSync(destination))
         unlinkSync(destination);
 
-    mkdirSync(dirname(destination), { recursive: true });
+    mkdirp(dirname(destination));
 
     const output = { buffers:[], length:0 };
 
