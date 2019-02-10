@@ -1,4 +1,4 @@
-(function (global, entrypoint, implicitBuiltInDependencies, files, compilations)
+(function (entrypoint, files, compilations, implicitRequires)
 {
     function cachedRequire(index)
     {
@@ -46,11 +46,8 @@
 
     Module._cache = { };
 
-    if (implicitBuiltInDependencies.process !== void(0))
-        process = cachedRequire(implicitBuiltInDependencies.process);
-
-    if (implicitBuiltInDependencies.buffer !== void(0))
-        Buffer = cachedRequire(implicitBuiltInDependencies.buffer);
+    if (implicitRequires)
+        implicitRequires(cachedRequire);
 
     cachedRequire(entrypoint);
 })

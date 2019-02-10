@@ -1,4 +1,4 @@
-const { dirname, extname } = require("path");
+const { basename, dirname, extname } = require("path");
 const { openSync: open, writeSync: write, closeSync: close } = require("fs");
 
 const mkdirp = require("./mkdirp");
@@ -10,6 +10,7 @@ const bootstrapPath = require.resolve("./bundle/bootstrap");
 const { data, string, number } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
+const globalNameForImplicitDependency = { process: "process", buffer: "Buffer" };
 
 const File  = data `File` (
     filename        => string,
@@ -58,16 +59,18 @@ module.exports = function bundle(bundleRequest)
 
     const output = { buffers:[], length:0 };
 
+    append("(function (global) {")
+console.log(basename(destination) + " " + implicitBuiltInDependencies);
+    if (implicitBuiltInDependencies.size > 0)
+        append("var " +
+            implicitBuiltInDependencies
+                .map(name => globalNameForImplicitDependency[name])
+                .join(",") + ";");
+
     append(readFileSync(bootstrapPath));
 
-    append("(window, ");
-    append(filenameIndexes.get(entrypoint) + ", {");
-
-    append(implicitBuiltInDependencies
-        .map(name => `${name}: ${filenameIndexes.get(name)}`)
-        .join(","));
-
-    append("}, ");
+    append("(");
+    append(filenameIndexes.get(entrypoint) + ",");
 
     append(JSON.stringify(files
         .map(({ filename, outputIndex, dependencies }) =>
@@ -88,7 +91,21 @@ module.exports = function bundle(bundleRequest)
 
         append(",");
     }
-    append("])");
+    append("]");
+
+    if (implicitBuiltInDependencies.size > 0)
+    {
+        append(", function (require) {");
+
+        implicitBuiltInDependencies
+            .map(name =>
+                append(`${globalNameForImplicitDependency[name]} = ` +
+                    `require(${filenameIndexes.get(name)})`));
+
+        append("}");
+    }
+
+    append(") })(window)");
 
     const concated = Buffer.concat(output.buffers, output.length);
 
