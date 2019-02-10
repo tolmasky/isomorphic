@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/package",
-  "version": "1.0.0-alpha.32",
+  "version": "1.0.0-alpha.33",
   "description": "",
   "main": "package.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {},
   "peerDependencies": {
-    "@algebraic/collections": "1.0.0-alpha.8",
-    "@algebraic/type": "1.0.0-alpha.8"
+    "@algebraic/collections": "1.0.0-alpha.9",
+    "@algebraic/type": "1.0.0-alpha.9"
   }
 }
