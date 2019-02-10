@@ -10,7 +10,11 @@ const bootstrapPath = require.resolve("./bundle/bootstrap");
 const { data, string, number } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
-const globalNameForImplicitDependency = { process: "process", buffer: "Buffer" };
+const fromImplicitDependency =
+{
+    process: ["process", request => `process = require(${request})`],
+    buffer: ["Buffer", request => `Buffer = require(${request}).Buffer`]
+};
 
 const File  = data `File` (
     filename        => string,
@@ -64,7 +68,7 @@ console.log(basename(destination) + " " + implicitBuiltInDependencies);
     if (implicitBuiltInDependencies.size > 0)
         append("var " +
             implicitBuiltInDependencies
-                .map(name => globalNameForImplicitDependency[name])
+                .map(name => fromImplicitDependency[name][0])
                 .join(",") + ";");
 
     append(readFileSync(bootstrapPath));
@@ -99,8 +103,7 @@ console.log(basename(destination) + " " + implicitBuiltInDependencies);
 
         append(implicitBuiltInDependencies
             .map(name =>
-                `${globalNameForImplicitDependency[name]} = ` +
-                `require(${filenameIndexes.get(name)})`)
+                fromImplicitDependency[name][1](filenameIndexes.get(name)))
             .join(";") + ";");
 
         append("}");
