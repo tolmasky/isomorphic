@@ -97,10 +97,11 @@ console.log(basename(destination) + " " + implicitBuiltInDependencies);
     {
         append(", function (require) {");
 
-        implicitBuiltInDependencies
+        append(implicitBuiltInDependencies
             .map(name =>
-                append(`${globalNameForImplicitDependency[name]} = ` +
-                    `require(${filenameIndexes.get(name)})`));
+                `${globalNameForImplicitDependency[name]} = ` +
+                `require(${filenameIndexes.get(name)})`)
+            .join(";") + ";");
 
         append("}");
     }
