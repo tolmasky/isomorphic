@@ -7,3 +7,4 @@ const Metadata = data `Metadata` (
 
 module.exports = Compilation(Metadata);
 module.exports.Metadata = Metadata;
+module.exports.Output = Compilation.Output;

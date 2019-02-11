@@ -1,8 +1,12 @@
 const { basename, dirname, extname } = require("path");
-const { openSync: open, writeSync: write, closeSync: close } = require("fs");
+const { openSync: open,
+        writeSync: write,
+        closeSync: close,
+        existsSync: exists,
+        unlinkSync: unlink,
+        readFileSync } = require("fs");
 
 const mkdirp = require("./mkdirp");
-const { existsSync, unlinkSync, readFileSync, writeFileSync } = require("fs");
 const JSONPreamble = "function(exports, require, module) { module.exports = ";
 const JSONPostamble = "\n}";
 const bootstrapPath = require.resolve("./bundle/bootstrap");
@@ -16,162 +20,161 @@ const fromImplicitDependency =
     buffer: ["Buffer", request => `Buffer = require(${request}).Buffer`]
 };
 
-const File  = data `File` (
-    filename            => string,
-    dependencies        => List(number),
-    compilationIndex    => number );
-
 
 module.exports = function bundle(bundleRequest)
-{const start = Date.now();
-    const { compilations } = bundleRequest;
-    const implicitBuiltInDependencies = compilations.reduce(
-        (dependencies, { metadata }) =>
-            dependencies.concat(metadata.implicitBuiltInDependencies),
-        Set(string)());
-    const sortedCompilations = compilations
-        .entrySeq()
-        .toList()
-        .sortBy(([filename]) => filename);
-    const filenameIndexes = Map(string, number)(
-        sortedCompilations.map(([filename], index) => [filename, index]));
-    const timing = (Date.now() - start);
-    const [files, dedupedCompilations] = sortedCompilations.reduce(
-        function ([files, dedupedCompilations], [filename, compilation])
+{
+    const calculationStart = Date.now();
+    const sortedCompilations = bundleRequest
+        .compilations
+        .toArray()
+        .sort((lhs, rhs) => lhs.filename.localeCompare(rhs.filename));
+
+    sortedCompilations.indexes = sortedCompilations
+        .reduce((indexes, { filename }, index) =>
+            (indexes[filename] = index, indexes), { });
+
+    const [implicitBuiltInDependencies, outputs] = sortedCompilations
+        .reduce(function ([implicitBuiltInDependencies, outputs], compilation)
         {
-            const dependencies = compilation
-                .dependencies
-                .map(dependency => filenameIndexes.get(dependency));
+            const { metadata, output } = compilation;
+            const implicitBuiltInDependencies_ =
+                implicitBuiltInDependencies
+                .concat(metadata.implicitBuiltInDependencies);
 
-            const output = compilation.filename;
-            const [compilationIndex] = dedupedCompilations
-                .get(output, [dedupedCompilations.size]);
-            const outDedupedCompilations =
-                compilationIndex === dedupedCompilations.size ?
-                    dedupedCompilations
-                        .set(output, [compilationIndex, compilation]) :
-                    dedupedCompilations;
+            const existing = outputs.indexes[output.filename];
+            const index = existing === void(0) ? outputs.length : existing;
 
-            const outFiles = files.push(
-                File({ filename, dependencies, compilationIndex }));
+            if (index !== existing)
+            {
+                outputs.indexes[output.filename] = index;
+                outputs.push(output);
+            }
 
-            return [outFiles, outDedupedCompilations];
-        }, [List(File)(), OrderedMap(string, number)()]);
+            return [implicitBuiltInDependencies_, outputs];
+        }, [Set(string)(), Object.assign([], {indexes:{ }})]);
+    const implicitDependencyPairs = implicitBuiltInDependencies
+        .map(dependency => [dependency, sortedCompilations.indexes[dependency]]);
     const { entrypoint, destination } = bundleRequest.product;
+    const entrypointIndex = sortedCompilations.indexes[entrypoint];
+    const calculationsDuration = Date.now() - calculationStart;
 
-    if (existsSync(destination))
-        unlinkSync(destination);
+    const bundleStart = Date.now();
+    writeBundle(destination,
+        entrypointIndex,
+        sortedCompilations,
+        outputs,
+        implicitDependencyPairs);
+    const bundleDuration = Date.now() - bundleStart;
+
+    const sourceMapStart = Date.now();
+    writeSourceMap(54, destination, `${destination}.map`, outputs);
+    const sourceMapDuration = Date.now() - sourceMapStart;
+
+    console.log(destination +
+        sortedCompilations.length + " " +
+        " calc: " + calculationsDuration +
+        " bundle: " + bundleDuration +
+        " sourceMap: " + sourceMapDuration +
+        " total: " + (Date.now() - calculationStart));
+
+    return Bundle.Response({ filename: destination });
+}
+
+function writeBundle(destination, entrypointIndex, compilations, outputs, implicitDependencyPairs)
+{
+    if (exists(destination))
+        unlink(destination);
 
     mkdirp(dirname(destination));
 
-    const output = { buffers:[], length:0 };
+    const fd = open(destination, "wx");
 
-    append("(function (global) {")
+    write(fd, "(function (global) {")
 
-    if (implicitBuiltInDependencies.size > 0)
-        append("var " +
-            implicitBuiltInDependencies
-                .map(name => fromImplicitDependency[name][0])
+    if (implicitDependencyPairs.size > 0)
+        write(fd, "var " +
+            implicitDependencyPairs
+                .map(([name]) => fromImplicitDependency[name][0])
                 .join(",") + ";");
 
-    append(readFileSync(bootstrapPath));
+    write(fd, readFileSync(bootstrapPath));
+    write(fd, `(${entrypointIndex}, [`);
 
-    append("(");
-    append(filenameIndexes.get(entrypoint) + ",");
-
-    append(JSON.stringify(files
-        .map(({ filename, compilationIndex, dependencies }) =>
-            [filename, compilationIndex, dependencies])));
-
-    append(", [");
-    for (const [, [, { filename }]] of dedupedCompilations)
+    for (const compilation of compilations)
     {
-        const isJSON = extname(filename) === ".json";
+        const filename = JSON.stringify(compilation.filename);
+        const index = outputs.indexes[compilation.output.filename];
 
-        if (isJSON)
-            append(JSONPreamble);
+        write(fd, `[${filename}, ${index}, [`);
 
-        append(readFileSync(filename));
+        for (const dependency of compilation.dependencies)
+            write(fd, `${compilations.indexes[dependency]},`);
 
-        if (isJSON)
-            append(JSONPostamble);
-
-        append(",");
+        write(fd, `]], `);
     }
-    append("]");
 
-    if (implicitBuiltInDependencies.size > 0)
+    write(fd, "], [");
+
+    for (const output of outputs)
     {
-        append(", function (require) {");
+        const isJSON = extname(output.filename) === ".json";
 
-        append(implicitBuiltInDependencies
-            .map(name =>
-                fromImplicitDependency[name][1](filenameIndexes.get(name)))
+        if (isJSON)
+            write(fd, JSONPreamble);
+
+        write(fd, readFileSync(output.filename));
+
+        if (isJSON)
+            write(fd, JSONPostamble);
+
+        write(fd, ",");
+    }
+
+    write(fd, "]");
+
+    if (implicitDependencyPairs.size > 0)
+    {
+        write(fd, ", function (require) {");
+
+        write(fd, implicitDependencyPairs
+            .map(([name, index]) => fromImplicitDependency[name][1](index))
             .join(";") + ";");
 
-        append("}");
+        write(fd, "}");
     }
 
-    append(") })(window)");
-    append(`//# sourceMappingURL=./${basename(destination)}.map`);
+    write(fd, ") })(window)");
+    write(fd, `//# sourceMappingURL=./${basename(destination)}.map`);
 
-    const concated = Buffer.concat(output.buffers, output.length);
-
-    writeFileSync(destination, concated);
-    writeSourceMap(53, destination, `${destination}.map`, dedupedCompilations);
-
-console.log(destination + " took: " + timing + " " + (Date.now() - start));
-    return Bundle.Response({ filename: destination });
-
-    function append(content)
-    {
-        if (typeof content === "string")
-            return append(Buffer.from(content, "utf-8"));
-
-        output.buffers.push(content);
-        output.length += content.length;
-    }
-
-    function derooted(path)
-    {
-        return isAbsolute(path) ? "/" + relative(root, path) : path
-    }
+    close(fd);
 }
 
-const writeSourceMap = (function ()
+function writeSourceMap(lineCount, target, destination, outputs)
 {
-    const {
-        openSync: open,
-        writeSync: write,
-        closeSync: close,
-        existsSync: exists,
-        unlinkSync: unlink } = require("fs");
+    if (exists(destination))
+        unlink(destination);
 
-    return function writeSourceMap(lineCount, target, destination, dedupedCompilations)
+    mkdirp(dirname(destination));
+
+    const fd = open(destination, "wx");
+
+    write(fd, `{"version":3,"file":${JSON.stringify(target)},"sections":[`);
+
+    outputs.reduce(function ([existing, lineCount], output)
     {
-        if (exists(destination))
-            unlink(destination);
+        if (output.sourceMap === Maybe(string).Nothing)
+            return [existing, lineCount + output.lineCount - 1];
 
-        const fd = open(destination, "wx");
+        if (existing)
+            write(fd, ",");
 
-        write(fd, `{"version":3,"file":${JSON.stringify(target)},"sections":[`);
+        write(fd, `{"offset":{"line":${lineCount},"column":0},"map":`)
+        write(fd, readFileSync(output.sourceMap));
+        write(fd, `}`);
 
-        dedupedCompilations.reduce(function ([existing, lineCount], [, compilation])
-        {
-            if (compilation.sourceMapPath === Maybe(string).Nothing)
-                return [existing, lineCount + compilation.lineCount - 1];
+        return [true, lineCount + output.lineCount - 1];
+    }, [false, lineCount]);
 
-            if (existing)
-                write(fd, ",");
-
-            write(fd, `{"offset":{"line":${lineCount},"column":0},"map":`)
-            write(fd, readFileSync(compilation.sourceMapPath));
-            write(fd, `}`);
-
-            return [true, lineCount + compilation.lineCount - 1];
-        }, [false, lineCount]);
-
-        write(fd, `]}`);
-        close(fd);
-    }
-})();
+    write(fd, `]}`);
+    close(fd);
+}

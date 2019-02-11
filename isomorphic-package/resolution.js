@@ -84,6 +84,7 @@ const toDependencies = (function()
     const realPathCache = Object.create(null);
     const cachedRealPath = path =>
         realPathCache[path] || (realPathCache[path] = realpathSync(path));
+    const mapAccum = require("./map-accum");
 
     return function (existing, fakeFrom, ranges)
     {
@@ -104,22 +105,6 @@ const toDependencies = (function()
         return [existing_, List(Dependency)(dependencies)];
     }
 })();
-
-function mapAccum(fn, acc, list)
-{
-  var idx = 0;
-  var len = list.length;
-  if (len<=0)
-    return [acc, []];
-  var result = [];
-  var tuple = [acc];
-  while (idx < len) {
-    tuple = fn(tuple[0], list[idx]);
-    result[idx] = tuple[1];
-    idx += 1;
-  }
-  return [tuple[0], result];
-}
 
 // Module._findPath is slow because it is overloaded for a number of different
 // uses, namely both relative and package-style paths. As such it can neither

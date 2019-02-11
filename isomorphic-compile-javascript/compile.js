@@ -12,11 +12,8 @@ const { data, string, number, deserialize, serialize } =
 const { OrderedSet, Set } = require("@algebraic/collections");
 const Compilation = require("./compilation");
 const UnresolvedCompilation = data `UnresolvedCompilation` (
-    filename        => string,
-    sourceMapPath   => string,
+    output          => Compilation.Output,
     dependencies    => OrderedSet(string),
-    size            => number,
-    lineCount       => number,
     metadata        => Compilation.Metadata);
 
 
@@ -26,25 +23,26 @@ const write = (type, path, data) =>
     writeFileSync(path, JSON.stringify(serialize(type, data)), "utf-8");
 
 
-module.exports = function compile({ filename, ...rest }, configuration)
+module.exports = function compile(request, configuration)
 {
+    const { cache, filename } = request;
+
     if (extname(filename) === ".json")
     {
         const contents = readFileSync(filename, "utf-8");
         const size = contents.length;
         const lineCount = contents.match(/\n/g).length + 1;
         const metadata = Compilation.Metadata({});
+        const output = Compilation.Output({ size, lineCount, filename });
 
-        return Compilation({ filename, size, lineCount, metadata });
+        return Compilation({ filename, output, metadata });
     }
 
-    const replacement = polyfill(filename);
+    const overrides = polyfill(filename);
+    const { ignoredDependencies } = overrides || { };
+    const source = overrides ? overrides.filename : filename;
 
-    if (replacement)
-        return compile({ ...rest, ...replacement }, configuration);
-
-    const { cache, ignoredDependencies } = rest;
-    const contents = readFileSync(filename, "utf-8");
+    const contents = readFileSync(source, "utf-8");
     const contentsChecksum = getSha512(contents);
     const contentsCachePath = `${cache}/contents/${contentsChecksum}.json`;
 
@@ -55,29 +53,28 @@ module.exports = function compile({ filename, ...rest }, configuration)
 
         const { options } = configuration;
         const transformed = transform(filename, contents, options.babel);
-        const { globals, dependencies } = transformed.metadata;
 
-        const transformedChecksum = getSha512(transformed.contents);
-        const output = `${cache}/outputs/${transformedChecksum}.js`;
-        const sourceMapPath = `${cache}/source-maps/${transformedChecksum}.json`;
+        const { globals, dependencies } = transformed.metadata;
         const implicitBuiltInDependencies = Set(string)(
         [
             globals.has("process") && "process",
             globals.has("Buffer") && "buffer"
         ].filter(present => !!present));
         const metadata = Compilation.Metadata({ implicitBuiltInDependencies });
-        const unresolvedCompilation = UnresolvedCompilation(
-        {
-            filename: output,
-            sourceMapPath,
-            size: transformed.contents.length,
-            lineCount: transformed.contents.match(/\n/g).length + 1,
-            dependencies,
-            metadata
-        });
 
-        writeFileSync(output, transformed.contents, "utf-8");
-        writeFileSync(sourceMapPath,
+        const transformedChecksum = getSha512(transformed.contents);
+        const output = Compilation.Output(
+        {
+            filename: `${cache}/outputs/${transformedChecksum}.js`,
+            sourceMap: `${cache}/source-maps/${transformedChecksum}.json`,
+            size: transformed.contents.length,
+            lineCount: transformed.contents.match(/\n/g).length + 1
+        });
+        const unresolvedCompilation =
+            UnresolvedCompilation({ output, dependencies, metadata });
+
+        writeFileSync(output.filename, transformed.contents, "utf-8");
+        writeFileSync(output.sourceMap,
             JSON.stringify(transformed.sourceMap), "utf-8");
 
         write(UnresolvedCompilation, contentsCachePath, unresolvedCompilation);
@@ -91,7 +88,7 @@ module.exports = function compile({ filename, ...rest }, configuration)
         .filter(dependency =>
             !ignoredDependencies ||
             ignoredDependencies.test(dependency))
-        .map(resolve("/", filename));
+        .map(resolve("/", source));
 
-    return Compilation({ ...unresolvedCompilation, dependencies });
+    return Compilation({ ...unresolvedCompilation, filename, dependencies });
 }

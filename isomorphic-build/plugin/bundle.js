@@ -32,7 +32,8 @@ const fromCompilationsInProduct = (function ()
                 .dependencies
                 .map(filename =>
                     entryCache[filename] ||
-                    (entryCache[filename] = [filename, compilations.get(filename)]));
+                    (entryCache[filename] =
+                        [filename, compilations.get(filename)]));
 
         const { entrypoint } = product;
         const entrypointCompilation = compilations.get(entrypoint);

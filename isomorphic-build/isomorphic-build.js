@@ -9,7 +9,7 @@ const Plugin = require("./plugin");
 const Compilation = require("./plugin/compilation");
 const Bundle = require("./plugin/bundle");
 
-console.log(Bundle.Response);
+
 module.exports = async function main(options)
 {
     const configuration = Configuration.parse(options);
@@ -68,7 +68,7 @@ const Build = Cause("Build",
 
     [event._on (Compilation)]: function (inBuild, compilation, [,, index])
     {
-        const request = inBuild.transformPool.occupied.get(index).filename;
+        const request = compilation.filename;
         const compilations = inBuild.compilations.set(request, compilation);
         const dependencies = OrderedSet(string)
             (compilation.dependencies)
