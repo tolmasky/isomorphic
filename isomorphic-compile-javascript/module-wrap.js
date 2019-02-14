@@ -9,7 +9,7 @@ module.exports = function moduleWrap(globals, contents)
         index < 0 ? "" :
         index >= parameters.length - 1 ? 
             parameters.join(", ") :
-            parameters.slice(0, index + 1).join(", ");
+            parameters.slice(0, reversed.length - index).join(", ");
 
     return "(function (" + used + "){\n" + contents + "\n})";
 }
