@@ -1,33 +1,30 @@
 const { dirname } = require("path");
-const { loadOptions, transformSync, transformFromAstSync } =
-    require("@babel/core");
+const { loadOptions, transformSync } = require("@babel/core");
 const reduce = require("@isomorphic/reduce-javascript");
-const metadataOptions = loadOptions(
-{
-    plugins:
-    [
-        require("./plugins/babel-plugin-metadata"),
-        require("./plugins/babel-plugin-dependencies")
-    ],
-    sourceMaps: true
-});
-
-const getResolvedOptions = require("./get-resolved-options");
+const generate = require("@babel/generator").default;
 const moduleWrap = require("./module-wrap");
+const getDependencies = require("./get-dependencies");
 
 
 module.exports = function transform(filename, contents, babelOptions)
 {
-    const options = { ...loadOptions(babelOptions), ast: true, code: false };
-    const { ast } = transformSync(contents, options);
-    const reduced = { ...ast, program: reduce(ast.program) };
-    const { code, map, metadata } = transformFromAstSync(reduced, contents,
+    const options =
     {
-        ...metadataOptions,
+        ...loadOptions(babelOptions),
+        filename,
         sourceRoot: dirname(filename),
-        filename
-    });
-    const wrapped = moduleWrap(metadata.globals, code);
+        ast: true,
+        code: false
+    };
+    const { ast } = transformSync(contents, options);
+    const reduced = reduce(ast.program);
+    const [metadata, modified] = getDependencies(reduced);
+    const { code, map } = generate({ ...ast, program: reduced },
+    {
+        sourceMaps: true,
+        sourceFileName: filename
+    }, contents);
+    const wrapped = moduleWrap(metadata.free, code);
 
     return { contents: wrapped, sourceMap: map, metadata };
 }
