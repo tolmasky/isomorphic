@@ -23,7 +23,6 @@ module.exports = function transform(filename, contents, babelOptions)
     };
     const { ast } = transformSync(contents, options);
     const reduced = reduce(ast.program);
-    const start = Date.now();
     const [modified, metadata] = getDependencies3(Globals, reduced);
     const { code, map } = generate({ ...ast, program: modified },
     {
