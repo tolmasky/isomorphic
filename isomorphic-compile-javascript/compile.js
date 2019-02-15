@@ -54,11 +54,11 @@ module.exports = function compile(request, configuration)
         const { options } = configuration;
         const transformed = transform(filename, contents, options.babel);
 
-        const { free, dependencies } = transformed.metadata;
+        const { globals, dependencies } = transformed.metadata;
         const implicitBuiltInDependencies = Set(string)(
         [
-            free.has("process") && "process",
-            free.has("Buffer") && "buffer"
+            globals.has("process") && "process",
+            globals.has("Buffer") && "buffer"
         ].filter(present => !!present));
         const metadata = Compilation.Metadata({ implicitBuiltInDependencies });
 
