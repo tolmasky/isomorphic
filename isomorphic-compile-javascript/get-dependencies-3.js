@@ -2,7 +2,7 @@ const t = require("@babel/types");
 const { isArray } = Array;
 const { data, union, string } = require("@algebraic/type");
 const { List, Map, Set, OrderedSet } = require("@algebraic/collections");
-const babelTreeReduce = require("@climb/inner-tree-reduce/babel");
+const innerTreeReduceBabel = require("@climb/inner-tree-reduce-babel");
 
 const Metadata = data `Metadata` (
     dependencies    => OrderedSet(string),
@@ -74,7 +74,7 @@ function reduceOn(VariableSet, node)
     const { subtract, union, fromPatterns } = VariableSet;
     const reconcile = reconcileOn(VariableSet);
 
-    return babelTreeReduce.type(t,
+    return innerTreeReduceBabel.type(t,
     {
         Node(node, children)
         {
