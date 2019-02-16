@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/reduce-javascript",
-  "version": "1.0.0-alpha.35",
+  "version": "1.0.0-alpha.36",
   "description": "",
   "main": "reduce-javascript.js",
   "scripts": {
