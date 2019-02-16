@@ -5,6 +5,7 @@ const { openSync: open,
         existsSync: exists,
         unlinkSync: unlink,
         readFileSync } = require("fs");
+const crypto = require("crypto");
 
 const mkdirp = require("./mkdirp");
 const JSONPreamble = "function(exports, require, module) { module.exports = ";
@@ -59,7 +60,7 @@ module.exports = function bundle(bundleRequest)
     const calculationsDuration = Date.now() - calculationStart;
 
     const bundleStart = Date.now();
-    writeBundle(destination,
+    const integrity = writeBundle(destination,
         entrypointIndex,
         sortedCompilations,
         outputs,
@@ -75,6 +76,7 @@ module.exports = function bundle(bundleRequest)
         " calc: " + calculationsDuration +
         " bundle: " + bundleDuration +
         " sourceMap: " + sourceMapDuration +
+        " integrity: " + integrity +
         " total: " + (Date.now() - calculationStart));
 
     return Bundle.Response({ filename: destination });
@@ -88,65 +90,70 @@ function writeBundle(destination, entrypointIndex, compilations, outputs, implic
     mkdirp(dirname(destination));
 
     const fd = open(destination, "wx");
+    const integrity = crypto.createHash("sha512");
+    const writei = contents =>
+        (write(fd, contents), integrity.update(contents));
 
-    write(fd, "(function (global) {")
+    writei("(function (global) {")
 
     if (implicitDependencyPairs.size > 0)
-        write(fd, "var " +
+        writei( "var " +
             implicitDependencyPairs
                 .map(([name]) => fromImplicitDependency[name][0])
                 .join(",") + ";");
 
-    write(fd, readFileSync(bootstrapPath));
-    write(fd, `(${entrypointIndex}, [`);
+    writei(readFileSync(bootstrapPath));
+    writei(`(${entrypointIndex}, [`);
 
     for (const compilation of compilations)
     {
         const filename = JSON.stringify(compilation.filename);
         const index = outputs.indexes[compilation.output.filename];
 
-        write(fd, `[${filename}, ${index}, [`);
+        writei(`[${filename}, ${index}, [`);
 
         for (const dependency of compilation.dependencies)
-            write(fd, `${compilations.indexes[dependency]},`);
+            writei(`${compilations.indexes[dependency]},`);
 
-        write(fd, `]], `);
+        writei(`]], `);
     }
 
-    write(fd, "], [");
+    writei("], [");
 
     for (const output of outputs)
     {
         const isJSON = extname(output.filename) === ".json";
 
         if (isJSON)
-            write(fd, JSONPreamble);
+            writei(JSONPreamble);
 
-        write(fd, readFileSync(output.filename));
+        writei(readFileSync(output.filename));
 
         if (isJSON)
-            write(fd, JSONPostamble);
+            writei(JSONPostamble);
 
-        write(fd, ",");
+        writei(",");
     }
 
-    write(fd, "]");
+    writei("]");
 
     if (implicitDependencyPairs.size > 0)
     {
-        write(fd, ", function (require) {");
+        writei(", function (require) {");
 
-        write(fd, implicitDependencyPairs
+        writei(implicitDependencyPairs
             .map(([name, index]) => fromImplicitDependency[name][1](index))
             .join(";") + ";");
 
-        write(fd, "}");
+        writei("}");
     }
 
-    write(fd, ") })(window)");
-    write(fd, `//# sourceMappingURL=./${basename(destination)}.map`);
+    writei(") })(window)");
+    writei(`//# sourceMappingURL=./${basename(destination)}.map`);
 
     close(fd);
+
+    return integrity.digest("hex");
 }
 
 function writeSourceMap(lineCount, target, destination, outputs)
