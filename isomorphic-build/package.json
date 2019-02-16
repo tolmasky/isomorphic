@@ -24,6 +24,8 @@
     "@isomorphic/reduce-javascript": "1.0.0-alpha.36",
     "commander": "^2.19.0",
     "fast-glob": "^2.2.6",
-    "moment": "^2.23.0"
+    "moment": "^2.23.0",
+    "route-parser": "0.0.5",
+    "uuid": "^3.3.2"
   }
 }

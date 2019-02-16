@@ -7,7 +7,7 @@ const Bundle = data `Bundle` (
 
 Bundle.Request = parameterized (T =>
     Object.assign(data `Bundle.Request<${T}>` (
-        product         => Product,
+        entrypoint      => string,
         compilations    => Map(string, T) ),
     {
         fromCompilationsInProduct: (compilations, product) =>
@@ -24,7 +24,7 @@ const fromCompilationsInProduct = (function ()
     const update = (compilations, [filename, compilation]) =>
         compilations.set(filename, compilation);
 
-    return function fromCompilationsInProduct(Compilation, compilations, product)
+    return function fromCompilationsInProduct(Compilation, compilations, entrypoint)
     {
         const entryCache = { };
         const children = ([filename, compilation]) =>
@@ -35,12 +35,11 @@ const fromCompilationsInProduct = (function ()
                     (entryCache[filename] =
                         [filename, compilations.get(filename)]));
 
-        const { entrypoint } = product;
         const entrypointCompilation = compilations.get(entrypoint);
 
         return Bundle.Request(Compilation)(
         {
-            product,
+            entrypoint,
             compilations: treeReduce
                 .cyclic(
                     children,

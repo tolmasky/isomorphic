@@ -1,11 +1,16 @@
-const { data, string, serialize } = require("@algebraic/type");
+const { extname } = require("path");
+const { data, string, deserialize } = require("@algebraic/type");
 const { Cause, field, event } = require("@cause/cause");
 const Fork = require("@cause/fork");
 const Package = require("@isomorphic/package");
 const Compilation = require("./plugin/compilation");
 const Bundle = require("./plugin/bundle");
+const PluginConfiguration = require("./plugin/configuration");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
+const Route = require("route-parser");
+const uuid = require("uuid").v4;
+const getSha512 = require("@isomorphic/package/get-sha-512");
 
 
 const Compile = data `Compile` (
@@ -19,8 +24,10 @@ const Plugin = Cause(`Plugin`,
     [field `parentCache`]: -1,
     [field `cache`]: -1,
 
-    init({ configuration, parentCache })
-    {console.log("started... " + Date.now());
+    init({ configuration: serialized, parentCache })
+    {
+        console.log("started... " + Date.now());
+        const configuration = deserialize(PluginConfiguration, serialized);
         const parentPackage = Package.for(configuration.filename);
         const cache = `${parentCache}/${parentPackage.checksum}`;
 
@@ -54,16 +61,38 @@ const Plugin = Cause(`Plugin`,
 
     [event.on `*`]: (plugin, bundleRequest) =>
     {
-        const bundleResponse =
-            plugin.implementation.bundle(bundleRequest, plugin.configuration);
+        const { entrypoint } = bundleRequest;
+        const { matches } = plugin.configuration;
+        const bundleResponse = plugin.implementation.bundle(
+            bundleRequest,
+            toToDestination(matches, entrypoint));
 
         return [plugin, [bundleResponse]];
     }
 });
 
+function toToDestination(matches, entrypoint)
+{
+    return function (integrity)
+    {
+        const hash = integrity.replace(/\//g, "_");
+
+        return matches.reduce(function (destination, output, input)
+        {
+            if (destination)
+                return destination;
+
+            const values = (new Route(input)).match(entrypoint);
+
+            return values && (new Route(output)).reverse({ ...values, hash });
+        }, false);
+    }
+}
+
 Plugin.Plugin = Plugin;
 Plugin.Compile = Compile;
 Plugin.Compilation = Compilation;
+Plugin.Configuration = PluginConfiguration;
 
 module.exports = Plugin;
 

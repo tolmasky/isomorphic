@@ -1,21 +1,23 @@
 const { readFileSync } = require("fs");
-const { data, string } = require("@algebraic/type");
+const { data, string, object } = require("@algebraic/type");
+const { Map } = require("@algebraic/collections");
 const Package = require("@isomorphic/package");
 const getSha512 = require("@isomorphic/package/get-sha-512");
 
 
 // FIXME: Would be nice to do something like Configuration<Options>.
 const Configuration = data `Plugin.Configuration` (
-    entrypoint      => string,
+    matches         => Map(string, string),
     filename        => string,
     checksum        => string,
     parentPackage   => Package,
-    options         => Object );
+    options         => object );
 
 Configuration.parse = function (directory, unparsedOptions)
 {
-    const { entrypoint, plugin, ...options } = unparsedOptions;
+    const { match, plugin, ...options } = unparsedOptions;
 
+    const matches = Map(string, string)(match);
     const filename = Package.resolve(directory, plugin);
     const parentPackage = Package.for(filename);
 
@@ -25,7 +27,7 @@ Configuration.parse = function (directory, unparsedOptions)
 
     return Configuration(
     {
-        entrypoint,
+        matches,
         checksum,
         filename,
         parentPackage,

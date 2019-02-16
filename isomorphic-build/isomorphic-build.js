@@ -1,4 +1,4 @@
-const { data, union, number, string } = require("@algebraic/type");
+const { data, union, number, string, serialize } = require("@algebraic/type");
 const { List, Map, OrderedMap, OrderedSet, Set } = require("@algebraic/collections");
 
 const { Cause, field, event, update, IO } = require("@cause/cause");
@@ -19,7 +19,7 @@ module.exports = async function main(options)
 
 const Build = Cause("Build",
 {
-    [field `products`]: -1,
+    [field `entrypoints`]: -1,
     [field `configuration`]: -1,
 
     [field `transformPool`]: -1,
@@ -29,24 +29,31 @@ const Build = Cause("Build",
     init({ configuration })
     {
         const { cache, concurrency, pluginConfigurations } = configuration;
+        const firstPluginConfiguration = pluginConfigurations.first();
+        console.log(firstPluginConfiguration);
         const plugin = Plugin.fork(
-            { parentCache: cache, configuration: pluginConfigurations.first() });
+        {
+            parentCache: cache,
+            configuration:
+                serialize(Plugin.Configuration, firstPluginConfiguration)
+        });
 
         // FIXME: Something more elegant to access to the Compilation?
-        require(pluginConfigurations.first().filename);
+        require(firstPluginConfiguration.filename);
 
-        const products = configuration.products;
+        const entrypoints = configuration.entrypoints;
+        const visited = Set(string)(entrypoints);
+
         const plugins = List(Plugin)(Array.from(Array(concurrency), () => plugin));
         const transformPool = Pool.create({ items: plugins });
         const compilations = OrderedMap(string, Compilation)();
-        const visited = Set(string)(products.map(product => product.entrypoint));
 
-        return { products, configuration, transformPool, compilations, visited };
+        return { entrypoints, configuration, transformPool, compilations, visited };
     },
 
     [event.on (Cause.Start)]: build => update.in(build, "transformPool",
-        Pool.Enqueue({ requests: List(string)(build.products
-            .map(({ entrypoint: filename }) =>
+        Pool.Enqueue({ requests: List(string)(build.entrypoints
+            .map(filename =>
                 Plugin.Compile({ filename, cache: build.configuration.cache }))) })),
 
     [event.on (Pool.Retained) .from `transformPool`]:
@@ -94,9 +101,9 @@ const Build = Cause("Build",
             // of compilations is a bad heuristic for this. It would be nice
             // to know the total size of the files, but to do that we need
             // Compilations to return size.
-            const requests = outBuild.products
-                .map(product => Bundle.Request(Compilation)
-                    .fromCompilationsInProduct(outBuild.compilations, product))
+            const requests = outBuild.entrypoints
+                .map(entrypoint => Bundle.Request(Compilation)
+                    .fromCompilationsInProduct(outBuild.compilations, entrypoint))
                 .sortBy(request => -request.compilations.size);
 
             return update.in.reduce(
