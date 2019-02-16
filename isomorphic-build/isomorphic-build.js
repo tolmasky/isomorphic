@@ -20,7 +20,7 @@ module.exports = async function main(options)
 
 const Build = Cause("Build",
 {
-    [field `products`]: List(Product)(),
+    [field `products`]: Map(string, List(Product))(),
     [field `entrypoints`]: -1,
     [field `configuration`]: -1,
 
@@ -32,7 +32,7 @@ const Build = Cause("Build",
     {
         const { cache, concurrency, pluginConfigurations } = configuration;
         const firstPluginConfiguration = pluginConfigurations.first();
-        console.log(firstPluginConfiguration);
+
         const plugin = Plugin.fork(
         {
             parentCache: cache,
@@ -67,7 +67,8 @@ const Build = Cause("Build",
 
     [event._on (Bundle.Response)]: function (inBuild, response, [,, index])
     {
-        const products = inBuild.products.concat(response.products);
+        const products = inBuild.products
+            .set(response.entrypoint, response.products);
         const outBuild = inBuild.set("products", products);
 
         if (inBuild.transformPool.occupied.size === 1 &&

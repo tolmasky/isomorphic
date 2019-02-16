@@ -63,11 +63,11 @@ const Plugin = Cause(`Plugin`,
     {
         const { entrypoint } = bundleRequest;
         const { matches } = plugin.configuration;
-        const bundleResponse = plugin.implementation.bundle(
+        const products = plugin.implementation.bundle(
             bundleRequest,
             toToDestination(matches, entrypoint));
 
-        return [plugin, [bundleResponse]];
+        return [plugin, [Bundle.Response({ entrypoint, products })]];
     }
 });
 

@@ -71,9 +71,7 @@ module.exports = function bundle(bundleRequest, toDestination)
         " integrity: " + bundleProduct.integrity +
         " total: " + (Date.now() - calculationStart));
 
-    const products = List(Product)([sourceMapProduct, bundleProduct]);
-
-    return Bundle.Response({ products });
+    return List(Product)([sourceMapProduct, bundleProduct]);
 }
 
 function writeBundle(toDestination, sourceMapDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs)

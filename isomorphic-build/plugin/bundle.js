@@ -15,6 +15,7 @@ Bundle.Request = parameterized (T =>
     }) );
 
 Bundle.Response = data `Bundle.Response` (
+    entrypoint  => string,
     products    => List(Product) );
 
 
