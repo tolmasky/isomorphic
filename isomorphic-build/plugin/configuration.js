@@ -13,6 +13,8 @@ const Configuration = data `Plugin.Configuration` (
     parentPackage   => Package,
     options         => object );
 
+
+// FIXME: require(filename).Configuration.parse() for options.
 Configuration.parse = function (directory, unparsedOptions)
 {
     const { match, plugin, ...options } = unparsedOptions;

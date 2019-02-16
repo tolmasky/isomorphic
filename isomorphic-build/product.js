@@ -1,5 +1,6 @@
-const { data, string } = require("@algebraic/type");
+const { data, string, number } = require("@algebraic/type");
 
 module.exports = data `Product` (
-    entrypoint  => string,
-    destination => string );
+    destination => string,
+    integrity   => string,
+    duration    => number );

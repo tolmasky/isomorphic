@@ -8,6 +8,7 @@ const bootstrapPath = require.resolve("./bundle/bootstrap");
 const { data, string, number, Maybe } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
+const Product = require("@isomorphic/build/product");
 const fromImplicitDependency =
 {
     process: ["process", request => `process = require(${request})`],
@@ -70,7 +71,9 @@ module.exports = function bundle(bundleRequest, toDestination)
         " integrity: " + bundleProduct.integrity +
         " total: " + (Date.now() - calculationStart));
 
-    return Bundle.Response({ filename: bundleProduct.destination });
+    const products = List(Product)([sourceMapProduct, bundleProduct]);
+
+    return Bundle.Response({ products });
 }
 
 function writeBundle(toDestination, sourceMapDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs)
@@ -183,7 +186,7 @@ const tmpWriteTo = (function ()
 
         fs.closeSync(fd);
 
-        const integrity = hash.digest("base64");
+        const integrity = `sha512-${hash.digest("base64")}`;
         const destination = toDestination(integrity);
 
         if (fs.existsSync(destination))
@@ -194,6 +197,6 @@ const tmpWriteTo = (function ()
 
         const duration = Date.now() - start;
 
-        return { integrity, destination, duration };
+        return Product({ integrity, destination, duration });
     }
 })();

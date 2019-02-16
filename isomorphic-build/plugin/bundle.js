@@ -1,5 +1,5 @@
-const { getType, data, string, parameterized } = require("@algebraic/type");
-const { Map, Set } = require("@algebraic/collections");
+const { data, string, parameterized } = require("@algebraic/type");
+const { List, Map, Set } = require("@algebraic/collections");
 const Product = require("../product");
 
 const Bundle = data `Bundle` (
@@ -10,21 +10,21 @@ Bundle.Request = parameterized (T =>
         entrypoint      => string,
         compilations    => Map(string, T) ),
     {
-        fromCompilationsInProduct: (compilations, product) =>
-            fromCompilationsInProduct(T, compilations, product)
+        fromCompilationsInEntrypoint: (compilations, entrypoint) =>
+            fromCompilationsInEntrypoint(T, compilations, entrypoint)
     }) );
 
 Bundle.Response = data `Bundle.Response` (
-    filename    => string );
+    products    => List(Product) );
 
 
-const fromCompilationsInProduct = (function ()
+const fromCompilationsInEntrypoint = (function ()
 {
     const treeReduce = require("./tree-reduce");
     const update = (compilations, [filename, compilation]) =>
         compilations.set(filename, compilation);
 
-    return function fromCompilationsInProduct(Compilation, compilations, entrypoint)
+    return function fromCompilationsInEntrypoint(Compilation, compilations, entrypoint)
     {
         const entryCache = { };
         const children = ([filename, compilation]) =>

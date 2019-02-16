@@ -8,6 +8,7 @@ const Configuration = require("./configuration");
 const Plugin = require("./plugin");
 const Compilation = require("./plugin/compilation");
 const Bundle = require("./plugin/bundle");
+const Product = require("./product");
 
 
 module.exports = async function main(options)
@@ -19,6 +20,7 @@ module.exports = async function main(options)
 
 const Build = Cause("Build",
 {
+    [field `products`]: List(Product)(),
     [field `entrypoints`]: -1,
     [field `configuration`]: -1,
 
@@ -65,12 +67,15 @@ const Build = Cause("Build",
 
     [event._on (Bundle.Response)]: function (inBuild, response, [,, index])
     {
+        const products = inBuild.products.concat(response.products);
+        const outBuild = inBuild.set("products", products);
+
         if (inBuild.transformPool.occupied.size === 1 &&
             inBuild.transformPool.backlog.size === 0)
-            return [inBuild, [Cause.Finished({ value: 1 })]];
+            return [outBuild, [Cause.Finished({ value: products })]];
 
         return update.in(
-            inBuild, "transformPool", Pool.Release({ indexes:[index] }));
+            outBuild, "transformPool", Pool.Release({ indexes:[index] }));
     },
 
     [event._on (Compilation)]: function (inBuild, compilation, [,, index])
@@ -101,9 +106,10 @@ const Build = Cause("Build",
             // of compilations is a bad heuristic for this. It would be nice
             // to know the total size of the files, but to do that we need
             // Compilations to return size.
-            const requests = outBuild.entrypoints
+            const { entrypoints, compilations } = outBuild;
+            const requests = entrypoints
                 .map(entrypoint => Bundle.Request(Compilation)
-                    .fromCompilationsInProduct(outBuild.compilations, entrypoint))
+                    .fromCompilationsInEntrypoint(compilations, entrypoint))
                 .sortBy(request => -request.compilations.size);
 
             return update.in.reduce(
