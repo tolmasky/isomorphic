@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/build",
-  "version": "1.0.0-alpha.37",
+  "version": "1.0.0-alpha.38",
   "description": "",
   "main": "isomorphic-build.js",
   "scripts": {
@@ -18,10 +18,10 @@
     "@cause/process": "1.0.0-alpha.15",
     "@climb/inner-tree-reduce": "1.0.0-alpha.1",
     "@climb/inner-tree-reduce-babel": "1.0.0-alpha.1",
-    "@isomorphic/babel-preset": "1.0.0-alpha.37",
-    "@isomorphic/compile-javascript": "1.0.0-alpha.37",
-    "@isomorphic/package": "1.0.0-alpha.37",
-    "@isomorphic/reduce-javascript": "1.0.0-alpha.37",
+    "@isomorphic/babel-preset": "1.0.0-alpha.38",
+    "@isomorphic/compile-javascript": "1.0.0-alpha.38",
+    "@isomorphic/package": "1.0.0-alpha.38",
+    "@isomorphic/reduce-javascript": "1.0.0-alpha.38",
     "commander": "^2.19.0",
     "fast-glob": "^2.2.6",
     "moment": "^2.23.0",
