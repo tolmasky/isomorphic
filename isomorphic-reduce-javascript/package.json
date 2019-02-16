@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/reduce-javascript",
-  "version": "1.0.0-alpha.36",
+  "version": "1.0.0-alpha.37",
   "description": "",
   "main": "reduce-javascript.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "@babel/types": "^7.3.0"
   },
   "peerDependencies": {
-    "@algebraic/collections": "1.0.0-alpha.9",
-    "@algebraic/type": "1.0.0-alpha.9"
+    "@algebraic/collections": "1.0.0-alpha.10",
+    "@algebraic/type": "1.0.0-alpha.10"
   }
 }
