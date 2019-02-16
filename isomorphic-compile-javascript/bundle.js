@@ -4,6 +4,7 @@ const { openSync: open,
         closeSync: close,
         existsSync: exists,
         unlinkSync: unlink,
+        renameSync: rename,
         readFileSync } = require("fs");
 const crypto = require("crypto");
 
@@ -60,7 +61,7 @@ module.exports = function bundle(bundleRequest)
     const calculationsDuration = Date.now() - calculationStart;
 
     const bundleStart = Date.now();
-    const integrity = writeBundle(destination,
+    const [integrity, resolvedDestination] = writeBundle(destination,
         entrypointIndex,
         sortedCompilations,
         outputs,
@@ -68,10 +69,10 @@ module.exports = function bundle(bundleRequest)
     const bundleDuration = Date.now() - bundleStart;
 
     const sourceMapStart = Date.now();
-    writeSourceMap(54, destination, `${destination}.map`, outputs);
+    writeSourceMap(54, resolvedDestination, `${resolvedDestination}.map`, outputs);
     const sourceMapDuration = Date.now() - sourceMapStart;
 
-    console.log(destination +
+    console.log(resolvedDestination +
         sortedCompilations.length + " " +
         " calc: " + calculationsDuration +
         " bundle: " + bundleDuration +
@@ -153,7 +154,16 @@ function writeBundle(destination, entrypointIndex, compilations, outputs, implic
 
     close(fd);
 
-    return integrity.digest("hex");
+    const integrityString = integrity.digest("base64").replace(/\//g, "_");
+    const resolvedDestination =
+        destination.replace(/\$\{integrity\}/g, integrityString);
+
+    if (exists(resolvedDestination))
+        unlink(resolvedDestination);
+
+    rename(destination, resolvedDestination);
+
+    return [integrityString, resolvedDestination];
 }
 
 function writeSourceMap(lineCount, target, destination, outputs)
