@@ -67,7 +67,8 @@ const Plugin = Cause(`Plugin`,
         const { matches } = plugin.configuration;
         const products = plugin.implementation.bundle(
             bundleRequest,
-            toToDestination(matches, entrypoint));
+            toToDestination(matches, entrypoint),
+            plugin.configuration.inlineSourceMapURL);
 
         return [plugin, [Bundle.Response({ entrypoint, products })]];
     }

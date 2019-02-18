@@ -17,7 +17,7 @@ const fromImplicitDependency =
 };
 
 
-module.exports = function bundle(bundleRequest, toDestination)
+module.exports = function bundle(bundleRequest, toDestination, inlineSourceMapURL)
 {
     const calculationStart = Date.now();
     const sortedCompilations = bundleRequest
@@ -59,7 +59,8 @@ module.exports = function bundle(bundleRequest, toDestination)
         entrypointIndex,
         sortedCompilations,
         outputs,
-        implicitDependencyPairs);
+        implicitDependencyPairs,
+        inlineSourceMapURL);
 
     console.log(bundleProduct.destination +
         sortedCompilations.length + " " +
@@ -72,7 +73,7 @@ module.exports = function bundle(bundleRequest, toDestination)
     return List(Product)([sourceMapProduct, bundleProduct]);
 }
 
-function writeBundle(toDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs)
+function writeBundle(toDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs, inlineSourceMapURL)
 {
     return tmpWriteTo(toDestination, function (write)
     {
@@ -138,7 +139,9 @@ function writeBundle(toDestination, entrypointIndex, compilations, outputs, impl
         }
 
         write(") })(window)");
-        write(`//# sourceMappingURL=./${basename(sourceMapDestination)}`);
+
+        if (inlineSourceMapURL)
+            write(`//# sourceMappingURL=./${basename(sourceMapDestination)}`);
 
         return [sourceMapProduct];
     });
