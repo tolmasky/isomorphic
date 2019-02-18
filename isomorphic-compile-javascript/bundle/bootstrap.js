@@ -14,8 +14,6 @@
         const file = files[index];
         const filename = file[0];
 
-        console.log("INSTANTIATING " + file[0]);
-
         const precompiled = compilations[file[1]];
         const references = file[2];
 

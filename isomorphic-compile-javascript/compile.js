@@ -38,10 +38,7 @@ module.exports = function compile(request, configuration)
         return Compilation({ filename, output, metadata });
     }
 
-    const overrides = polyfill(filename);
-    const { ignoredDependencies } = overrides || { };
-    const source = overrides ? overrides.filename : filename;
-
+    const source = polyfill(filename) || filename;
     const contents = readFileSync(source, "utf-8");
     const contentsChecksum = getSha512(contents);
     const contentsCachePath = `${cache}/contents/${contentsChecksum}.json`;
@@ -86,9 +83,6 @@ module.exports = function compile(request, configuration)
         .dependencies
         .concat(unresolvedCompilation.metadata.implicitBuiltInDependencies)
         .toList()
-        .filter(dependency =>
-            !ignoredDependencies ||
-            ignoredDependencies.test(dependency))
         .map(resolve("/", source));
 
     return Compilation({ ...unresolvedCompilation, filename, dependencies });
