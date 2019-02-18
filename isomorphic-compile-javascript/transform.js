@@ -30,6 +30,10 @@ module.exports = function transform(filename, contents, babelOptions, minify)
         sourceMaps: true,
         sourceFileName: filename
     }, contents);
+
+    // FIXME: Dealing with this trailing semicolon is very annoying.
+    unminified.code = unminified.code.slice(0, -1);
+
     const { code, map } = minify ?
         terserMinify(filename, unminified) : unminified;
 
