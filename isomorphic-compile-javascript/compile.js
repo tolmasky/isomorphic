@@ -31,9 +31,9 @@ module.exports = function compile(request, configuration)
     {
         const contents = readFileSync(filename, "utf-8");
         const size = contents.length;
-        const lineCount = contents.match(/\n/g).length + 1;
+        const offset = Compilation.Output.Offset.fromString(contents);
         const metadata = Compilation.Metadata({});
-        const output = Compilation.Output({ size, lineCount, filename });
+        const output = Compilation.Output({ size, offset, filename });
 
         return Compilation({ filename, output, metadata });
     }
@@ -69,7 +69,7 @@ module.exports = function compile(request, configuration)
             filename: `${cache}/outputs/${transformedChecksum}.js`,
             sourceMap: `${cache}/source-maps/${transformedChecksum}.json`,
             size: transformed.contents.length,
-            lineCount: (transformed.contents.match(/\n/g) || []).length + 1
+            offset: Compilation.Output.Offset.fromString(transformed.contents)
         });
         const unresolvedCompilation =
             UnresolvedCompilation({ output, dependencies, metadata });

@@ -2,12 +2,13 @@ const { basename, extname } = require("path");
 const { readFileSync } = require("fs");
 
 const JSONPreamble = "function(exports, require, module) { module.exports = ";
-const JSONPostamble = "\n}";
+const JSONPostamble = "}";
 const bootstrapPath = require.resolve("./bundle/bootstrap");
 
 const { data, string, number, Maybe } = require("@algebraic/type");
 const { List, Map, OrderedMap, Set } = require("@algebraic/collections");
 const Bundle = require("@isomorphic/build/plugin/bundle");
+const { Offset } = require("@isomorphic/build/plugin/compilation").Output;
 const Product = require("@isomorphic/build/product");
 const fromImplicitDependency =
 {
@@ -53,11 +54,8 @@ module.exports = function bundle(bundleRequest, toDestination)
     const entrypointIndex = sortedCompilations.indexes[entrypoint];
     const calculationsDuration = Date.now() - calculationStart;
 
-    const sourceMapProduct =
-        writeSourceMap(integrity => `${toDestination(integrity)}.map`, 54, outputs);
-    const bundleProduct = writeBundle(
+    const [sourceMapProduct, bundleProduct] = writeBundle(
         toDestination,
-        sourceMapProduct.destination,
         entrypointIndex,
         sortedCompilations,
         outputs,
@@ -74,20 +72,27 @@ module.exports = function bundle(bundleRequest, toDestination)
     return List(Product)([sourceMapProduct, bundleProduct]);
 }
 
-function writeBundle(toDestination, sourceMapDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs)
+function writeBundle(toDestination, entrypointIndex, compilations, outputs, implicitDependencyPairs)
 {
     return tmpWriteTo(toDestination, function (write)
     {
-        write("(function (global) {")
+        const offset = [
+            "(function (global) {",
+            implicitDependencyPairs.size <= 0 ?
+                "" :
+                `var ${implicitDependencyPairs
+                        .map(([name]) => fromImplicitDependency[name][0])
+                        .join(",")};`,
+            readFileSync(bootstrapPath, "utf-8"),
+            `(${entrypointIndex}, [`
+        ].reduce((offset, string) =>
+            (write(string), Offset.sum(offset, Offset.fromString(string))),
+            Offset({ line: 0, column: 0 }));
 
-        if (implicitDependencyPairs.size > 0)
-            write( "var " +
-                implicitDependencyPairs
-                    .map(([name]) => fromImplicitDependency[name][0])
-                    .join(",") + ";");
-
-        write(readFileSync(bootstrapPath));
-        write(`(${entrypointIndex}, [`);
+        const [sourceMapProduct] =
+            writeSourceMap(integrity =>
+                `${toDestination(integrity)}.map`, offset, outputs);
+        const sourceMapDestination = sourceMapProduct.destination;
 
         for (const compilation of compilations)
         {
@@ -134,10 +139,12 @@ function writeBundle(toDestination, sourceMapDestination, entrypointIndex, compi
 
         write(") })(window)");
         write(`//# sourceMappingURL=./${basename(sourceMapDestination)}`);
+
+        return [sourceMapProduct];
     });
 }
 
-function writeSourceMap(toDestination, lineCount, outputs)
+function writeSourceMap(toDestination, offset, outputs)
 {
     return tmpWriteTo(toDestination, function (write)
     {
@@ -145,20 +152,20 @@ function writeSourceMap(toDestination, lineCount, outputs)
         // "file":${JSON.stringify(target)},
         write(`{"version":3,"sections":[`);
 
-        outputs.reduce(function ([existing, lineCount], output)
+        outputs.reduce(function ([existing, offset], output)
         {
             if (output.sourceMap === Maybe(string).Nothing)
-                return [existing, lineCount + output.lineCount - 1];
+                return [existing, Offset.sum(offset, output.offset)];
 
             if (existing)
                 write(",");
 
-            write(`{"offset":{"line":${lineCount},"column":0},"map":`)
+            write(`{"offset":{"line":${offset.line},"column":${offset.column}},"map":`);
             write(readFileSync(output.sourceMap));
             write(`}`);
 
-            return [true, lineCount + output.lineCount - 1];
-        }, [false, lineCount]);
+            return [true, Offset.sum(offset, output.offset)];
+        }, [false, offset]);
 
         write(`]}`);
     });
@@ -180,7 +187,9 @@ const tmpWriteTo = (function ()
         const fd = fs.openSync(tmpDestination, "wx");
         const hash = crypto.createHash("sha512");
 
-        f(contents => (fs.writeSync(fd, contents), hash.update(contents)));
+        const products =
+            f(contents => (fs.writeSync(fd, contents), hash.update(contents))) ||
+            [];
 
         fs.closeSync(fd);
 
@@ -195,6 +204,6 @@ const tmpWriteTo = (function ()
 
         const duration = Date.now() - start;
 
-        return Product({ integrity, destination, duration });
+        return [...products, Product({ integrity, destination, duration })];
     }
 })();
