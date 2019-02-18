@@ -32,6 +32,7 @@ module.exports = function transform(filename, contents, babelOptions, minify)
     }, contents);
 
     // FIXME: Dealing with this trailing semicolon is very annoying.
+    // Babel Bug: https://github.com/babel/babel/issues/9540
     unminified.code = unminified.code.slice(0, -1);
 
     const { code, map } = minify ?
@@ -46,7 +47,8 @@ const terserMinify = (function()
 
     // We'd like to get rid of the *trailing* semicolon for concatenation
     // purposes, but our only option is getting rid of all unecessary
-    // semicolons. https://github.com/mishoo/UglifyJS2/issues/2477
+    // semicolons.
+    // Terser Bug: https://github.com/terser-js/terser/issues/277
     const output = { semicolons: false };
     const compress = { expression: true };
 
