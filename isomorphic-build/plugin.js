@@ -35,8 +35,10 @@ const Plugin = Cause(`Plugin`,
 
         const constructor = require(configuration.filename);
 
-        // This is currently necessary.
-        console.log(Bundle.Request(constructor.Compilation));
+        // FIXME: We have to instantiate this for this type to exist. Ideally we
+        // make Plugin parameterized, then we pass this in, so that it is
+        // created and we can use it instead of `*` in the handler.
+        Bundle.Request(constructor.Compilation);
 
         const implementation = constructor({ configuration, cache });
 
