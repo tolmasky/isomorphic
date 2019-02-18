@@ -31,7 +31,10 @@ module.exports = function transform(filename, contents, babelOptions, minify)
         sourceFileName: filename
     }, contents);
 
-    // FIXME: Dealing with this trailing semicolon is very annoying.
+    // FIXME: There isn't a clear way to have @babel/generator omit the trailing
+    // semicolon. If we pass just the expression, then source-maps seem to
+    // break.
+    //
     // Babel Bug: https://github.com/babel/babel/issues/9540
     unminified.code = unminified.code.slice(0, -1);
 
@@ -48,6 +51,7 @@ const terserMinify = (function()
     // We'd like to get rid of the *trailing* semicolon for concatenation
     // purposes, but our only option is getting rid of all unecessary
     // semicolons.
+    //
     // Terser Bug: https://github.com/terser-js/terser/issues/277
     const output = { semicolons: false };
     const compress = { expression: true };
@@ -61,7 +65,13 @@ const terserMinify = (function()
             sourceMap: { content: original.map }
         });
 
-        // They *only* give this to us as a string.
+        // They *only* give this to us as a string, so we have to parse it
+        // as our client expects an object. If Terser is against fixing this,
+        // we might consider changing our expectation to be a string, or doing
+        // a similar hack to Parcel:
+        // https://github.com/parcel-bundler/parcel/blob/master/packages/core/parcel-bundler/src/transforms/terser.js#L23
+        //
+        // Terser Bug: https://github.com/terser-js/terser/issues/278
         return { code, map: JSON.parse(map) };
     };
 })();
