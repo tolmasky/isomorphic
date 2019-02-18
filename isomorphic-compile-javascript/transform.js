@@ -11,7 +11,7 @@ const Globals =
 ];
 
 
-module.exports = function transform(filename, contents, babelOptions)
+module.exports = function transform(filename, contents, babelOptions, minify)
 {
     const options =
     {
@@ -24,12 +24,39 @@ module.exports = function transform(filename, contents, babelOptions)
     const { ast } = transformSync(contents, options);
     const reduced = reduce(ast.program);
     const [modified, metadata] = getDependencies3(Globals, reduced);
-    const { code, map } = generate({ ...ast, program: modified },
+    const unminified = generate({ ...ast, program: modified },
     {
         sourceMaps: true,
         sourceFileName: filename
     }, contents);
-    const wrapped = moduleWrap(metadata.globals, code);
+    const wrapped = moduleWrap(metadata.globals, unminified.code);
+    const { code, map } = minify ?
+        terserMinify(filename, wrapped, unminified.map) :
+        { code:wrapped, map: unminified.map };
 
-    return { contents: wrapped, sourceMap: map, metadata };
+    return { contents: code, sourceMap: map, metadata };
 }
+
+const terserMinify = (function()
+{
+    const { minify } = require("terser");
+
+    // We'd like to get rid of the *trailing* semicolon for concatenation
+    // purposes, but our only option is getting rid of all unecessary
+    // semicolons. https://github.com/mishoo/UglifyJS2/issues/2477
+    const output = { semicolons: false };
+    const compress = { expression: true };
+
+    return function (filename, contents, previousSourceMap)
+    {
+        const { code, map } = minify({ [filename]: contents },
+        {
+            output,
+            compress,
+            sourceMap: { content: previousSourceMap }
+        });
+
+        // They *only* give this to us as a string.
+        return { code, map: JSON.parse(map) };
+    };
+})();

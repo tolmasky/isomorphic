@@ -52,7 +52,8 @@ module.exports = function compile(request, configuration)
             return read(UnresolvedCompilation, contentsCachePath);
 
         const { options } = configuration;
-        const transformed = transform(filename, contents, options.babel);
+        const transformed =
+            transform(filename, contents, options.babel, !!options.minify);
 
         const { globals, dependencies } = transformed.metadata;
         const implicitBuiltInDependencies = Set(string)(
@@ -68,7 +69,7 @@ module.exports = function compile(request, configuration)
             filename: `${cache}/outputs/${transformedChecksum}.js`,
             sourceMap: `${cache}/source-maps/${transformedChecksum}.json`,
             size: transformed.contents.length,
-            lineCount: transformed.contents.match(/\n/g).length + 1
+            lineCount: (transformed.contents.match(/\n/g) || []).length + 1
         });
         const unresolvedCompilation =
             UnresolvedCompilation({ output, dependencies, metadata });

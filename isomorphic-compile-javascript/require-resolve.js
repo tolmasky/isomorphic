@@ -21,6 +21,9 @@ const builtinModules = Module.builtinModules.reduce(
         (builtinModules[name] = true, builtinModules),
         Object.create(null));
 
+const fail = e => { throw e };
+const MISSING_FINE = process.env.MISSING_FINE || false;
+
 
 module.exports = function resolve(root, basePath)
 {
@@ -36,7 +39,9 @@ module.exports = function resolve(root, basePath)
                 false);
 
         if (!resolved)
-            return "path";
+            return MISSING_FINE ?
+                empty :
+                fail(Error(`Could not find ${request} from ${basePath}`));
 
         const context = isBuiltIn ? basePath : resolved;
         const pathMapNode = getCachedPathMapNode(root, dirname(context));
