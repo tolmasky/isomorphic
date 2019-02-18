@@ -24,15 +24,14 @@ module.exports = function transform(filename, contents, babelOptions, minify)
     const { ast } = transformSync(contents, options);
     const reduced = reduce(ast.program);
     const [modified, metadata] = getDependencies3(Globals, reduced);
-    const unminified = generate({ ...ast, program: modified },
+    const wrapped = moduleWrap(metadata.globals, modified);
+    const unminified = generate({ ...ast, program: wrapped },
     {
         sourceMaps: true,
         sourceFileName: filename
     }, contents);
-    const wrapped = moduleWrap(metadata.globals, unminified.code);
     const { code, map } = minify ?
-        terserMinify(filename, wrapped, unminified.map) :
-        { code:wrapped, map: unminified.map };
+        terserMinify(filename, unminified) : unminified;
 
     return { contents: code, sourceMap: map, metadata };
 }
@@ -47,13 +46,13 @@ const terserMinify = (function()
     const output = { semicolons: false };
     const compress = { expression: true };
 
-    return function (filename, contents, previousSourceMap)
+    return function (filename, original)
     {
-        const { code, map } = minify({ [filename]: contents },
+        const { code, map } = minify({ [filename]: original.code },
         {
             output,
             compress,
-            sourceMap: { content: previousSourceMap }
+            sourceMap: { content: original.map }
         });
 
         // They *only* give this to us as a string.
