@@ -1,6 +1,6 @@
 {
   "name": "@isomorphic/babel-preset",
-  "version": "1.0.0-alpha.40",
+  "version": "1.0.0-alpha.41",
   "description": "",
   "main": "isomorphic-babel-preset.js",
   "scripts": {
