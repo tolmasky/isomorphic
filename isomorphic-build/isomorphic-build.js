@@ -13,7 +13,7 @@ const Product = require("./product");
 
 module.exports = async function main(options)
 {
-    const configuration = Configuration.parse(options);
+    const configuration = Configuration.parse(require.main.filename, options);
 
     return await IO.toPromise(Build.create({ configuration }));
 }

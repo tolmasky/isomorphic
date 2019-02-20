@@ -19,7 +19,7 @@ Configuration.parse = (function ()
     const flatMap = (f, array) => [].concat(...array.map(f));
     const dedupe = array => Array.from(new Set(array));
 
-    return function parseConfiguration(options)
+    return function parseConfiguration(relativeToPath, options)
     {
         const cpus = require("os").cpus().length;
         const concurrency =
@@ -42,7 +42,7 @@ Configuration.parse = (function ()
         const root = resolve(options.root);
         const pluginConfigurations =
             List(PluginConfiguration)(options.plugins || [])
-            .map(options => PluginConfiguration.parse(root, options));
+            .map(options => PluginConfiguration.parse(relativeToPath, options));
 
         return Configuration(
         {
