@@ -80,7 +80,8 @@ const Build = Cause("Build",
     },
 
     [event._on (Compilation)]: function (inBuild, compilation, [,, index])
-    {
+    {console.log("ReSPONSE");
+    console.log(compilation);
         const request = compilation.filename;
         const compilations = inBuild.compilations.set(request, compilation);
         const dependencies = OrderedSet(string)
