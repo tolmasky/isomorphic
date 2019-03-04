@@ -1,8 +1,8 @@
 const DEBUG = process.env.NODE_ENV !== "production"
 
-const { data, string, number } = require("@algebraic/type");
-const { List } = require("@algebraic/collections");
-const PluginConfiguration = require("./plugin/configuration");
+const { data, string, number, object } = require("@algebraic/type");
+const { List, Map } = require("@algebraic/collections");
+const Rule = require("./plugin/configuration");
 
 // FIXME: These lists should probaby be OrderedSets.
 const Configuration = data `Build.Configuration` (
@@ -31,7 +31,16 @@ Configuration.parse = (function ()
                 `WARNING: concurrency of ${concurrency} chosen, but machine only ` +
                 `has ${cpus} cpus. This usually results in degraded performance.`);
 
-        const entrypoints = List(string)(
+        const [plugins, rules] = Object
+            .entries(options.entrypoints)
+            .reduce((plugins, [pattern, options]) =>
+                Rule.parse(plugins, relativeToPath, options, pattern),
+                Map(string, object)());
+
+        console.log(plugins);
+        console.log(rules);
+
+        List(string)(
             [options.entrypoint, ...options.entrypoints]
             .filter(entrypoint => entrypoint !== void(0)))
             .map(path => resolve(path));
@@ -40,9 +49,6 @@ Configuration.parse = (function ()
             return Error(`No entrypoints passed in.`);
 
         const root = resolve(options.root);
-        const pluginConfigurations =
-            List(PluginConfiguration)(options.plugins || [])
-            .map(options => PluginConfiguration.parse(relativeToPath, options));
 
         return Configuration(
         {

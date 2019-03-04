@@ -24,10 +24,11 @@ const Plugin = Cause(`Plugin`,
     [field `parentCache`]: -1,
     [field `cache`]: -1,
 
-    init({ configuration: serialized, parentCache })
+    init({ configurations: serialized, parentCache })
     {
         console.log("started... " + Date.now());
-        const configuration = deserialize(PluginConfiguration, serialized);
+        const configuration = deserialize(Map(string, PluginConfiguration), serialized);
+
         const parentPackage = Package.for(configuration.filename);
         const cache = `${parentCache}/${parentPackage.checksum}`;
 

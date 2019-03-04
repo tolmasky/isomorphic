@@ -1,43 +1,90 @@
 const { readFileSync } = require("fs");
-const { boolean, data, string, object } = require("@algebraic/type");
-const { Map } = require("@algebraic/collections");
+const { boolean, data, string, object, union } = require("@algebraic/type");
+const { List, Set } = require("@algebraic/collections");
 const Package = require("@isomorphic/package");
 const getSha512 = require("@isomorphic/package/get-sha-512");
 
 
-// FIXME: Would be nice to do something like Configuration<Options>.
-const Configuration = data `Plugin.Configuration` (
-    matches             => Map(string, string),
-    filename            => string,
-    checksum            => string,
-    inlineSourceMapURL  => boolean,
-    parentPackage       => Package,
-    options             => object );
+const Plugin = data `Plugin` (
+    id          => string,
+    filename    => string,
+    package     => Package );
 
-
-// FIXME: require(filename).Configuration.parse() for options.
-Configuration.parse = function (directory, unparsedOptions)
+Plugin.resolve = function (plugins, filename)
 {
-    const { match, plugin, ...options } = unparsedOptions;
+    if (plugins.has(filename))
+        return [plugins, plugins.get(filename)];
 
-    const matches = Map(string, string)(match);
-    const filename = Package.resolve(directory, plugin);
-    const parentPackage = Package.for(filename);
-
+    const package = Package.for(filename);
     const fileChecksum = getSha512(readFileSync(filename));
-    const checksum = getSha512(JSON.stringify(
-        { fileChecksum, packageChecksum: parentPackage.checksum }));
-    const inlineSourceMapURL = !!options.inlineSourceMapURL;
+    const packageChecksum = package.checksum;
+    const id = getSha512(JSON.stringify({ fileChecksum, packageChecksum }));
+    const plugin = Plugin({ id, filename, package });
+    const plugins_ = plugins.set(filename, plugin);
 
-    return Configuration(
-    {
-        matches,
-        checksum,
-        filename,
-        inlineSourceMapURL,
-        parentPackage,
-        options
-    });
+    return [plugins_, plugin];
 }
 
-module.exports = Configuration;
+Plugin.Configuration = data `Plugin.Configuration` (
+    destination => string,
+    plugin      => Plugin,
+    rules       => List(Rule),
+    options     => object );
+
+// FIXME: require(filename).Configuration.parse() for options.
+Plugin.Configuration.parse = function (plugins, directory, data)
+{
+    const [plugins_, plugin] = Plugin.resolve(
+        plugins,
+        Package.resolve(directory, data.plugin));
+    const destination = data.destination || "";
+    const [plugins__, rules] = Object
+        .entries(data.rules || { })
+        .reduce(function ([plugins, rules], [pattern, data])
+        {
+            const [plugins_, rule] =
+                Rule.parse(plugins, directory, data, pattern);
+
+            return [plugins_, rules.push(rule)];
+        }, [plugins_, List(Rule)()]);
+    const configuration = Plugin.Configuration(
+    {
+        destination,
+        plugin,
+        rules,
+        options: data.options || { }
+    });
+
+    return [plugins__, configuration];
+}
+
+const Action = union `Action` (
+    data `Ignore` (),
+    data `Recurse` (),
+    data `CopyWithoutBuilding` (),
+    Plugin.Configuration );
+
+Action.parse = function (plugins, directory, data)
+{
+    return false ||
+        data === ":ignore" ?
+            [plugins, Action.Ignore] :
+        data === ":recurse" ?
+            [plugins, Action.Recurse] :
+        data === ":copy-without-building" ?
+            [plugins, Action.CopyWithoutBuilding] :
+        Plugin.Configuration.parse(plugins, directory, data);
+}
+
+const Rule = data `Rule` (
+    pattern => string,
+    action  => Action );
+
+Rule.parse = function (plugins, directory, data, pattern)
+{
+    const [plugins_, action] = Action.parse(plugins, directory, data, pattern);
+
+    return [plugins_, Rule({ pattern, action })];
+}
+
+module.exports = Rule;
