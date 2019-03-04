@@ -9,14 +9,25 @@ const Plugin = require("./plugin");
 const Compilation = require("./plugin/compilation");
 const Bundle = require("./plugin/bundle");
 const Product = require("./product");
+const Rule = require("./plugin/configuration");
 
 
 module.exports = async function main(options)
 {
     const configuration = Configuration.parse(require.main.filename, options);
-
+console.log(configuration);
     return await IO.toPromise(Build.create({ configuration }));
 }
+
+/*const RulePath = union `RulePath` (
+    data `Root` (),
+    data `Child` (
+        rule => Rule,
+        parent => RulePath) );
+
+const data `Task` (
+    filename    => string,
+    rulePath    => RulePath )*/
 
 const Build = Cause("Build",
 {
@@ -30,14 +41,13 @@ const Build = Cause("Build",
 
     init({ configuration })
     {
-        const { cache, concurrency, pluginConfigurations } = configuration;
-        const firstPluginConfiguration = pluginConfigurations.first();
+        const { cache, concurrency } = configuration;
+console.log(configuration.plugins);
 
         const plugin = Plugin.fork(
         {
             parentCache: cache,
-            configuration:
-                serialize(Plugin.Configuration, firstPluginConfiguration)
+            plugins: serialize(Set(Rule.Plugin), plugins)
         });
 
         // FIXME: Something more elegant to access to the Compilation?

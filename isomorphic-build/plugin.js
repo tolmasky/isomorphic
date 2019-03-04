@@ -5,7 +5,7 @@ const Fork = require("@cause/fork");
 const Package = require("@isomorphic/package");
 const Compilation = require("./plugin/compilation");
 const Bundle = require("./plugin/bundle");
-const PluginConfiguration = require("./plugin/configuration");
+const Rule = require("./plugin/configuration");
 const { execSync } = require("child_process");
 const mkdirp = path => execSync(`mkdir -p ${JSON.stringify(path)}`) && path;
 const Route = require("route-parser");
@@ -27,7 +27,7 @@ const Plugin = Cause(`Plugin`,
     init({ configurations: serialized, parentCache })
     {
         console.log("started... " + Date.now());
-        const configuration = deserialize(Map(string, PluginConfiguration), serialized);
+        const configuration = deserialize(Map(string, Rule.Plugin), serialized);
 
         const parentPackage = Package.for(configuration.filename);
         const cache = `${parentCache}/${parentPackage.checksum}`;
@@ -96,7 +96,7 @@ function toToDestination(matches, entrypoint)
 Plugin.Plugin = Plugin;
 Plugin.Compile = Compile;
 Plugin.Compilation = Compilation;
-Plugin.Configuration = PluginConfiguration;
+Plugin.Configuration = Rule;
 
 module.exports = Plugin;
 

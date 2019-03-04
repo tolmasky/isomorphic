@@ -87,4 +87,6 @@ Rule.parse = function (plugins, directory, data, pattern)
     return [plugins_, Rule({ pattern, action })];
 }
 
+Rule.Plugin = Plugin;
+
 module.exports = Rule;

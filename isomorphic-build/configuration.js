@@ -1,16 +1,19 @@
 const DEBUG = process.env.NODE_ENV !== "production"
 
 const { data, string, number, object } = require("@algebraic/type");
-const { List, Map } = require("@algebraic/collections");
+const { List, Map, Set } = require("@algebraic/collections");
 const Rule = require("./plugin/configuration");
+const Route = require("route-parser");
+
 
 // FIXME: These lists should probaby be OrderedSets.
 const Configuration = data `Build.Configuration` (
-    root                    => string,
-    cache                   => string,
-    concurrency             => number,
-    entrypoints             => List(string),
-    pluginConfigurations    => List(PluginConfiguration) );
+    root        => string,
+    cache       => string,
+    concurrency => number,
+    rules       => List(Rule),
+    plugins     => Map(string, Rule.Plugin),
+    entrypoints => List(string));
 
 
 Configuration.parse = (function ()
@@ -33,21 +36,18 @@ Configuration.parse = (function ()
 
         const [plugins, rules] = Object
             .entries(options.entrypoints)
-            .reduce((plugins, [pattern, options]) =>
-                Rule.parse(plugins, relativeToPath, options, pattern),
-                Map(string, object)());
+            .reduce(([plugins, rules], [pattern, options]) =>
+            {
+                const [plugins_, rule] =
+                    Rule.parse(plugins, relativeToPath, options, pattern);
 
-        console.log(plugins);
-        console.log(rules);
-
-        List(string)(
-            [options.entrypoint, ...options.entrypoints]
-            .filter(entrypoint => entrypoint !== void(0)))
-            .map(path => resolve(path));
+                return [plugins_, rules.push(rule)];
+            }, [Map(string, object)(), List(Rule)()]);
+        const entrypoints = rules.map(rule => rule.pattern);
 
         if (entrypoints.size <= 0)
             return Error(`No entrypoints passed in.`);
-
+console.log(entrypoints);
         const root = resolve(options.root);
 
         return Configuration(
@@ -55,8 +55,9 @@ Configuration.parse = (function ()
             root,
             cache: resolve(options.cache),
             concurrency,
-            entrypoints,
-            pluginConfigurations
+            rules,
+            plugins,
+            entrypoints
         });
     }
 })();
