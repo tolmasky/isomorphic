@@ -70,7 +70,6 @@ module.exports = function (_, options)
 const pluginDescriptions =
 [
     [OR(browser, node("< 0.12")), "@babel/plugin-transform-for-of"],
-    [OR(browser, node("< 0.12")), "@babel/plugin-check-constants"],
     [OR(browser, node("< 0.12")), "@babel/plugin-transform-typeof-symbol"],
 
     [OR(browser, AND(node("< 0.13.0"), NOT(flag("--harmony-generators")))),
@@ -103,11 +102,6 @@ const pluginDescriptions =
     [ALWAYS, "@babel/plugin-transform-function-name"],
 
     [OR(browser, node("< 8.3.0")), "@babel/plugin-proposal-object-rest-spread"],
-    [node(">= 8.3.0"), () => ({
-        manipulateOptions: function manipulateOptions(opts, parserOpts) {
-          parserOpts.plugins.push("objectRestSpread");
-        }
-    })],
 
     [   option("react"),
         options =>
