@@ -138,13 +138,22 @@ function writeBundle(toDestination, entrypointIndex, compilations, outputs, impl
             write("}");
         }
 
-        write(") })(window)");
+        write(`) })((${AttemptToGetGlobal})())`);
 
         if (inlineSourceMapURL)
             write(`//# sourceMappingURL=./${basename(sourceMapDestination)}`);
 
         return [sourceMapProduct];
     });
+}
+
+function AttemptToGetGlobal()
+{
+    return  typeof globalThis !== "undefined" ? globalThis :
+            typeof self !== "undefined" ? self :
+            typeof window !== "undefined" ? window :
+            typeof global !== "undefined" ?  global :
+            (() => { throw Error("Could not get global") })();
 }
 
 function writeSourceMap(toDestination, offset, outputs)
